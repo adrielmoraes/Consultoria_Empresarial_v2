@@ -118,6 +118,7 @@ export default function MentorshipRoomPage() {
   const [showPlan, setShowPlan] = useState(false);
 
   const roomRef = useRef<Room | null>(null);
+  const connectingRef = useRef(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
 
@@ -145,6 +146,8 @@ export default function MentorshipRoomPage() {
 
   const connectToRoom = useCallback(async () => {
     if (!session?.user || !projectId) return;
+    if (connectingRef.current || roomRef.current) return;
+    connectingRef.current = true;
 
     try {
       const userId = (session.user as any).id;
@@ -171,20 +174,35 @@ export default function MentorshipRoomPage() {
       if (!tokenRes.ok) throw new Error("Falha ao obter token");
       const { token, url } = await tokenRes.json();
 
-      const room = new Room({ adaptiveStream: true, dynacast: true });
+      const room = new Room({
+        adaptiveStream: true,
+        dynacast: true,
+        audioCaptureDefaults: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      });
       roomRef.current = room;
 
-      room.on(RoomEvent.Connected, () => {
+      room.on(RoomEvent.Connected, async () => {
         setConnectionState("connected");
         addTranscriptMessage("Sistema", "Conectado. Aguardando os especialistas...");
+        try {
+          await room.localParticipant.setMicrophoneEnabled(true);
+        } catch (micErr) {
+          console.warn("Erro ao ativar microfone:", micErr);
+        }
       });
 
-      room.on(RoomEvent.Disconnected, () => setConnectionState("error"));
+      room.on(RoomEvent.Disconnected, () => {
+        connectingRef.current = false;
+        setConnectionState("error");
+      });
 
       room.on(RoomEvent.TrackSubscribed, (track, _pub, participant) => {
         if (track.kind === Track.Kind.Audio) {
-          const el = track.attach();
+          const existing = document.getElementById(`audio-${participant.identity}`);
+          if (existing) existing.remove();
+          const el = track.attach() as HTMLAudioElement;
           el.id = `audio-${participant.identity}`;
+          el.autoplay = true;
           document.body.appendChild(el);
         }
       });
@@ -232,9 +250,9 @@ export default function MentorshipRoomPage() {
       });
 
       await room.connect(url, token);
-      await room.localParticipant.setMicrophoneEnabled(true);
     } catch (error) {
       console.error("Erro ao conectar:", error);
+      connectingRef.current = false;
       setConnectionState("error");
       addTranscriptMessage("Sistema", "Erro ao conectar. Verifique sua conexão e recarregue.");
     }
