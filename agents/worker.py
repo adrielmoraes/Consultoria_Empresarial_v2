@@ -519,56 +519,136 @@ class HostAgent(Agent):
 # ENTRYPOINT
 # ============================================================
 
+async def _connect_specialist(
+    spec_id: str,
+    ws_url: str,
+    lk_api_key: str,
+    lk_api_secret: str,
+    room_name: str,
+) -> Optional["SpecialistSpeaker"]:
+    """Conecta um especialista ao room e retorna o SpecialistSpeaker ou None."""
+    try:
+        token = (
+            api.AccessToken(lk_api_key, lk_api_secret)
+            .with_identity(f"agent-{spec_id}")
+            .with_name(SPECIALIST_NAMES[spec_id])
+            .with_grants(
+                api.VideoGrants(
+                    room_join=True,
+                    room=room_name,
+                    can_publish=True,
+                    can_subscribe=False,
+                )
+            )
+            .to_jwt()
+        )
+
+        spec_room = rtc.Room()
+        await asyncio.wait_for(spec_room.connect(ws_url, token), timeout=15.0)
+
+        speaker = SpecialistSpeaker(spec_id, spec_room)
+        await speaker.setup()
+
+        logger.info(f"[{SPECIALIST_NAMES[spec_id]}] Conectado e pronto no room {room_name}.")
+        return speaker
+
+    except asyncio.TimeoutError:
+        logger.error(f"[{SPECIALIST_NAMES[spec_id]}] Timeout ao conectar (15s).")
+        return None
+    except Exception as exc:
+        logger.error(f"[{SPECIALIST_NAMES[spec_id]}] Erro ao conectar: {exc}", exc_info=True)
+        return None
+
+
 async def entrypoint(ctx: JobContext) -> None:
-    logger.info(f"Iniciando worker – sala: {ctx.room.name}")
+    # Logging em arquivo para diagnóstico de processo filho
+    _fh = logging.FileHandler("/tmp/mentoria_agent.log", mode="a")
+    _fh.setLevel(logging.INFO)
+    _fh.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+    logging.getLogger().addHandler(_fh)
+
+    logger.info(f"=== ENTRYPOINT INICIADO – sala: {ctx.room.name} ===")
 
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
+    logger.info(f"Conectado ao room {ctx.room.name}")
 
     blackboard = Blackboard(project_name=ctx.room.name)
 
-    # URL do servidor LiveKit (para conexões adicionais dos especialistas)
-    try:
-        ws_url: str = ctx._info.url  # type: ignore[attr-defined]
-    except AttributeError:
-        ws_url = os.getenv("LIVEKIT_URL", os.getenv("NEXT_PUBLIC_LIVEKIT_URL", ""))
-
-    # ========================================
-    # CONECTAR E PREPARAR ESPECIALISTAS
-    # ========================================
-
-    specialist_speakers: dict[str, SpecialistSpeaker] = {}
+    # URL LiveKit – usa env var diretamente (mais confiável que atributo privado)
+    ws_url: str = (
+        os.getenv("LIVEKIT_URL")
+        or os.getenv("NEXT_PUBLIC_LIVEKIT_URL")
+        or ""
+    )
+    if not ws_url:
+        # Fallback: tenta atributo privado do ctx._info
+        try:
+            ws_url = ctx._info.url  # type: ignore[attr-defined]
+        except AttributeError:
+            pass
+    logger.info(f"LiveKit URL para especialistas: {ws_url!r}")
 
     lk_api_key = os.getenv("LIVEKIT_API_KEY", "")
     lk_api_secret = os.getenv("LIVEKIT_API_SECRET", "")
 
-    for spec_id in ["cfo", "legal", "cmo", "cto", "plan"]:
-        try:
-            token = (
-                api.AccessToken(lk_api_key, lk_api_secret)
-                .with_identity(f"agent-{spec_id}")
-                .with_name(SPECIALIST_NAMES[spec_id])
-                .with_grants(
-                    api.VideoGrants(
-                        room_join=True,
-                        room=ctx.room.name,
-                        can_publish=True,
-                        can_subscribe=False,
-                    )
-                )
-                .to_jwt()
-            )
+    # ========================================
+    # CONECTAR ESPECIALISTAS EM PARALELO
+    # ========================================
 
-            spec_room = rtc.Room()
-            await spec_room.connect(ws_url, token)
+    logger.info("Conectando especialistas em paralelo...")
+    spec_ids = ["cfo", "legal", "cmo", "cto", "plan"]
 
-            speaker = SpecialistSpeaker(spec_id, spec_room)
-            await speaker.setup()
+    results = await asyncio.gather(
+        *[
+            _connect_specialist(spec_id, ws_url, lk_api_key, lk_api_secret, ctx.room.name)
+            for spec_id in spec_ids
+        ],
+        return_exceptions=False,
+    )
+
+    specialist_speakers: dict[str, SpecialistSpeaker] = {}
+    for spec_id, speaker in zip(spec_ids, results):
+        if speaker is not None:
             specialist_speakers[spec_id] = speaker
 
-            logger.info(f"[{SPECIALIST_NAMES[spec_id]}] Conectado e pronto.")
+    connected_count = len(specialist_speakers)
+    logger.info(f"Especialistas conectados: {connected_count}/{len(spec_ids)} – {list(specialist_speakers.keys())}")
 
+    # ========================================
+    # DESCOBRIR NOME DO USUÁRIO
+    # ========================================
+
+    def _get_user_name() -> str:
+        """Retorna o primeiro nome do participante humano na sala."""
+        for participant in ctx.room.remote_participants.values():
+            identity = participant.identity or ""
+            name = participant.name or ""
+            if not identity.startswith("agent-"):
+                first_name = name.split()[0] if name.strip() else "amigo"
+                return first_name
+        return "amigo"
+
+    # Aguarda o usuário entrar (até 30s)
+    user_name = _get_user_name()
+    if user_name == "amigo":
+        logger.info("Aguardando usuário entrar na sala (até 30s)...")
+        try:
+            user_joined = asyncio.Event()
+
+            @ctx.room.once("participant_connected")
+            def _on_first_participant(participant: rtc.RemoteParticipant) -> None:  # type: ignore[no-untyped-def]
+                if not participant.identity.startswith("agent-"):
+                    user_joined.set()
+
+            await asyncio.wait_for(user_joined.wait(), timeout=30.0)
+        except asyncio.TimeoutError:
+            logger.warning("Timeout: usuário não entrou em 30s. Continuando mesmo assim.")
         except Exception as exc:
-            logger.error(f"Erro ao conectar especialista {spec_id}: {exc}")
+            logger.warning(f"Erro aguardando usuário: {exc}")
+        user_name = _get_user_name()
+
+    blackboard.project_name = f"Sessão de {user_name}"
+    logger.info(f"Usuário identificado: {user_name!r}")
 
     # ========================================
     # HOST – Nathália
@@ -606,7 +686,6 @@ async def entrypoint(ctx: JobContext) -> None:
         role = getattr(item, "role", None)
         if role != "assistant":
             return
-        # Tenta extrair texto via text_content (propriedade do ChatMessage)
         content = ""
         if hasattr(item, "text_content") and item.text_content:
             content = item.text_content
@@ -627,7 +706,6 @@ async def entrypoint(ctx: JobContext) -> None:
         )
 
     # Mensagens de dados do frontend
-    # Assinatura correta para livekit-python 1.x: (data, participant, kind, topic)
     @ctx.room.on("data_received")
     def _on_data_received(data: bytes, participant=None, kind=None, topic=None) -> None:  # type: ignore[no-untyped-def]
         try:
@@ -651,78 +729,55 @@ async def entrypoint(ctx: JobContext) -> None:
             logger.warning(f"Erro ao processar dados: {e}")
 
     # ========================================
-    # DESCOBRIR NOME DO USUÁRIO
-    # ========================================
-
-    def _get_user_name() -> str:
-        """Retorna o primeiro nome do participante humano na sala."""
-        for participant in ctx.room.remote_participants.values():
-            identity = participant.identity or ""
-            name = participant.name or ""
-            # Pula participantes agentes (identidade começa com "agent-")
-            if not identity.startswith("agent-"):
-                first_name = name.split()[0] if name.strip() else "amigo"
-                return first_name
-        return "amigo"
-
-    # Se o usuário ainda não entrou, aguarda até 10s
-    user_name = _get_user_name()
-    if user_name == "amigo":
-        try:
-            user_joined = asyncio.Event()
-
-            @ctx.room.once("participant_connected")
-            def _on_first_participant(participant: rtc.RemoteParticipant) -> None:  # type: ignore[no-untyped-def]
-                if not participant.identity.startswith("agent-"):
-                    user_joined.set()
-
-            await asyncio.wait_for(user_joined.wait(), timeout=10.0)
-        except (asyncio.TimeoutError, Exception):
-            pass
-        user_name = _get_user_name()
-
-    blackboard.project_name = f"Sessão de {user_name}"
-    logger.info(f"Usuário identificado: {user_name}")
-
-    # ========================================
     # INICIAR SESSÃO DA HOST
     # ========================================
 
+    logger.info("Iniciando AgentSession com Gemini Realtime...")
     await host_session.start(agent=host_agent, room=ctx.room)
+    logger.info("AgentSession iniciada. Aguardando conexão Gemini...")
+    # Breve pausa para garantir que Gemini Realtime está conectado antes de say()
+    await asyncio.sleep(2.0)
 
     # ========================================
     # SEQUÊNCIA DE BOAS-VINDAS E APRESENTAÇÕES
     # ========================================
 
     async def run_introductions() -> None:
-        """Nathália cumprimenta pelo nome e pede a cada especialista que se apresente."""
+        """Nathália cumprimenta pelo nome e cada especialista se apresenta com voz própria."""
+        logger.info(f"Iniciando sequência de apresentações para {user_name!r}")
 
-        # 1 – Nathália abre a sessão saudando o usuário pelo nome
+        # 1 – Nathália abre a sessão
         greeting = (
             f"Olá, {user_name}! Seja muito bem-vindo ao Mentoria AI! "
-            "Eu sou a Nathália, sua apresentadora e guia durante toda essa sessão. "
+            f"Eu sou a Nathália, sua apresentadora e guia durante toda essa sessão. "
             f"É uma honra ter você aqui, {user_name}! "
             "Hoje você vai contar com um time de cinco especialistas prontos para ajudar a transformar seu projeto em realidade. "
-            "Vou pedir que cada um se apresente pessoalmente para você. "
+            "Vou pedir que cada um se apresente pessoalmente para você agora. "
             "Carlos, pode começar?"
         )
-        await host_session.say(greeting, allow_interruptions=False)
-        await asyncio.sleep(1.0)
+        logger.info("[Nathália] Enviando saudação inicial...")
+        try:
+            await host_session.say(greeting, allow_interruptions=False)
+        except Exception as e:
+            logger.error(f"[Nathália] Erro ao dizer saudação: {e}", exc_info=True)
+        await asyncio.sleep(1.5)
 
-        # 2 – Cada especialista se apresenta com sua própria voz, em sequência
+        # 2 – Cada especialista se apresenta, depois Nathália passa a palavra ao próximo
+        # Formato: (spec_id, prompt_para_o_proximo_ou_None)
         intro_order = [
-            ("cfo",   "Daniel, é a sua vez!"),
-            ("legal", "Rodrigo, pode se apresentar!"),
-            ("cmo",   "Ana, apresente-se por favor!"),
-            ("cto",   "E por último, Marco!"),
+            ("cfo",   f"Obrigada, Carlos! Daniel, é a sua vez!"),
+            ("legal", f"Muito bem, Daniel! Rodrigo, pode se apresentar!"),
+            ("cmo",   f"Ótimo, Rodrigo! Ana, apresente-se por favor!"),
+            ("cto",   f"Perfeito, Ana! E por último, Marco!"),
             ("plan",  None),
         ]
 
-        for idx, (spec_id, next_prompt) in enumerate(intro_order):
+        for spec_id, next_prompt in intro_order:
             speaker = specialist_speakers.get(spec_id)
             if speaker:
                 intro_text = SPECIALIST_INTROS[spec_id]
-                # Publica transcrição da apresentação no frontend
+                logger.info(f"[{SPECIALIST_NAMES[spec_id]}] Iniciando apresentação...")
+                # Publica transcrição no frontend
                 try:
                     payload = json.dumps({
                         "type": "transcript",
@@ -730,30 +785,44 @@ async def entrypoint(ctx: JobContext) -> None:
                         "text": intro_text,
                     }).encode()
                     await ctx.room.local_participant.publish_data(payload, reliable=True)
-                except Exception:
-                    pass
-                duration = await speaker.speak(intro_text)
-                # Aguarda o áudio terminar + pequena pausa entre apresentações
-                await asyncio.sleep(max(duration, 1.0) + 0.8)
+                except Exception as pub_err:
+                    logger.warning(f"Erro publicando transcrição: {pub_err}")
 
-            # Nathália faz a ponte para o próximo (exceto depois do último)
+                # Faz o especialista falar
+                try:
+                    duration = await speaker.speak(intro_text)
+                    logger.info(f"[{SPECIALIST_NAMES[spec_id]}] Falou por {duration:.1f}s")
+                    await asyncio.sleep(max(duration, 2.0) + 0.8)
+                except Exception as speak_err:
+                    logger.error(f"[{SPECIALIST_NAMES[spec_id]}] Erro ao falar: {speak_err}", exc_info=True)
+                    await asyncio.sleep(1.0)
+            else:
+                logger.warning(f"Especialista {spec_id} não disponível, pulando apresentação.")
+
+            # Nathália passa a palavra ao próximo
             if next_prompt:
-                await host_session.say(next_prompt, allow_interruptions=False)
-                await asyncio.sleep(0.8)
+                try:
+                    await host_session.say(next_prompt, allow_interruptions=False)
+                except Exception as e:
+                    logger.error(f"[Nathália] Erro passando palavra: {e}")
+                await asyncio.sleep(1.0)
 
-        # 3 – Nathália fecha o round de apresentações e convida o usuário a falar
+        # 3 – Nathália encerra as apresentações e convida o usuário a falar
         closing = (
             f"Que time incrível, não é mesmo, {user_name}? "
-            "Agora é a sua vez! Conta para a gente: qual é o seu projeto ou desafio empresarial? "
+            f"Agora é a sua vez! Conta para a gente: qual é o seu projeto ou desafio empresarial? "
             "Estamos todos aqui para te ouvir e ajudar!"
         )
-        await host_session.say(closing, allow_interruptions=True)
+        logger.info("[Nathália] Encerrando apresentações...")
+        try:
+            await host_session.say(closing, allow_interruptions=True)
+        except Exception as e:
+            logger.error(f"[Nathália] Erro ao encerrar apresentações: {e}", exc_info=True)
 
-        logger.info("Sequência de apresentações concluída.")
+        logger.info("=== Sequência de apresentações concluída ===")
 
     asyncio.create_task(run_introductions())
-
-    logger.info("Sessão de mentoria iniciada com sucesso.")
+    logger.info("Sessão de mentoria iniciada com sucesso. Introduções em andamento...")
 
 
 if __name__ == "__main__":

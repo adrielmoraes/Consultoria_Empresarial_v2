@@ -1,0 +1,25 @@
+Download the React DevTools for a better development experience: https://react.dev/link/react-devtools
+forward-logs-shared.ts:95 [HMR] connected
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 [Fast Refresh] done in 1386ms
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 [Fast Refresh] done in 170ms
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+warn @ forward-logs-shared.ts:95Understand this warning
+forward-logs-shared.ts:95 [Fast Refresh] done in 1404ms
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 [Fast Refresh] done in 1007ms
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 [Fast Refresh] done in 114ms
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 [Fast Refresh] done in 1140ms
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 [Fast Refresh] done in 145ms
+forward-logs-shared.ts:95 publishing track Object
+forward-logs-shared.ts:95 disconnect from room Object
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 [Fast Refresh] done in 376ms
+forward-logs-shared.ts:95 publishing track {room: 'mentoria-2426cff7-3efb-495b-8c6b-a134f09a7ae4', roomID: 'RM_LGqg4HuVmzKe', participant: 'user-f6e6c76a-e2af-4426-8eb1-c29a87e81220', pID: 'PA_ELppsP2ojxW2', trackID: undefined, …}enabled: truekind: "audio"muted: falsepID: "PA_ELppsP2ojxW2"participant: "user-f6e6c76a-e2af-4426-8eb1-c29a87e81220"room: "mentoria-2426cff7-3efb-495b-8c6b-a134f09a7ae4"roomID: "RM_LGqg4HuVmzKe"source: "microphone"streamID: "a114fbf4-4730-4e85-b7b4-3a2f84791440"streamTrackID: "a114fbf4-4730-4e85-b7b4-3a2f84791440"trackID: undefined[[Prototype]]: Objectconstructor: ƒ Object()hasOwnProperty: ƒ hasOwnProperty()isPrototypeOf: ƒ isPrototypeOf()propertyIsEnumerable: ƒ propertyIsEnumerable()toLocaleString: ƒ toLocaleString()toString: ƒ toString()valueOf: ƒ valueOf()__defineGetter__: ƒ __defineGetter__()__defineSetter__: ƒ __defineSetter__()__lookupGetter__: ƒ __lookupGetter__()__lookupSetter__: ƒ __lookupSetter__()__proto__: (...)get __proto__: ƒ __proto__()set __proto__: ƒ __proto__()
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 [Fast Refresh] done in 122ms
