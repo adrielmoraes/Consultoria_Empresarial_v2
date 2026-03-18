@@ -14,10 +14,8 @@ export async function POST(request: NextRequest) {
 
     const token = await generateLiveKitToken(roomName, participantName, participantIdentity);
 
-    return NextResponse.json({
-      token,
-      url: process.env.LIVEKIT_URL,
-    });
+    const url = process.env.LIVEKIT_URL || process.env.NEXT_PUBLIC_LIVEKIT_URL;
+    return NextResponse.json({ token, url });
   } catch (error) {
     console.error("Erro ao gerar token LiveKit:", error);
     return NextResponse.json(
