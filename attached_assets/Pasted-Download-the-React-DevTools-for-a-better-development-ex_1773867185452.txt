@@ -1,0 +1,624 @@
+Download the React DevTools for a better development experience: https://react.dev/link/react-devtools
+forward-logs-shared.ts:95 [HMR] connected
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 [Fast Refresh] done in 1236ms
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 [Fast Refresh] done in 402ms
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 [Fast Refresh] done in 114ms
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 [Fast Refresh] done in 105ms
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 [Fast Refresh] done in 803ms
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 [Fast Refresh] done in 797ms
+VM244 <anonymous>:1 Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+warn @ forward-logs-shared.ts:95
+warnOnce @ warn-once.ts:6
+disableSmoothScrollDuringRouteTransition @ disable-smooth-scroll.ts:27
+(anonymous) @ layout-router.tsx:197
+componentDidMount @ layout-router.tsx:243
+react_stack_bottom_frame @ react-dom-client.development.js:28264
+runWithFiberInDEV @ react-dom-client.development.js:986
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14989
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:15187
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:15187
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:15187
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:15187
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:15187
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14971
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14971
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14971
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:15187
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:15187
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:15187
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:15187
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:15082
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:15082
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:15187
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14971
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14971
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14971
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:15187
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:15187
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:15187
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:15187
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:15187
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:15187
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:15187
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14971
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:15187
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:14966
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:15187
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:15187
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:16358
+commitLayoutEffectOnFiber @ react-dom-client.development.js:15048
+flushLayoutEffects @ react-dom-client.development.js:19651
+commitRoot @ react-dom-client.development.js:19417
+completeRoot @ react-dom-client.development.js:19321
+completeRootWhenReady @ react-dom-client.development.js:18168
+performWorkOnRoot @ react-dom-client.development.js:18043
+performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:20471
+performWorkUntilDeadline @ scheduler.development.js:45
+<InnerScrollAndFocusHandlerOld>
+(anonymous) @ react-jsx-runtime.development.js:342
+ScrollAndMaybeFocusHandler @ layout-router.tsx:372
+react_stack_bottom_frame @ react-dom-client.development.js:28241
+renderWithHooksAgain @ react-dom-client.development.js:8025
+renderWithHooks @ react-dom-client.development.js:7937
+updateFunctionComponent @ react-dom-client.development.js:10442
+beginWork @ react-dom-client.development.js:12112
+runWithFiberInDEV @ react-dom-client.development.js:986
+performUnitOfWork @ react-dom-client.development.js:18988
+workLoopConcurrentByScheduler @ react-dom-client.development.js:18982
+renderRootConcurrent @ react-dom-client.development.js:18964
+performWorkOnRoot @ react-dom-client.development.js:17822
+performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:20471
+performWorkUntilDeadline @ scheduler.development.js:45
+<ScrollAndMaybeFocusHandler>
+(anonymous) @ react-jsx-runtime.development.js:360
+OuterLayoutRouter @ layout-router.tsx:764
+react_stack_bottom_frame @ react-dom-client.development.js:28241
+renderWithHooksAgain @ react-dom-client.development.js:8025
+renderWithHooks @ react-dom-client.development.js:7937
+updateFunctionComponent @ react-dom-client.development.js:10442
+beginWork @ react-dom-client.development.js:12052
+runWithFiberInDEV @ react-dom-client.development.js:986
+performUnitOfWork @ react-dom-client.development.js:18988
+workLoopConcurrentByScheduler @ react-dom-client.development.js:18982
+renderRootConcurrent @ react-dom-client.development.js:18964
+performWorkOnRoot @ react-dom-client.development.js:17822
+performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:20471
+performWorkUntilDeadline @ scheduler.development.js:45
+"use client"
+Function.all @ VM244 <anonymous>:1
+initializeElement @ react-server-dom-turbopack-client.browser.development.js:1974
+"use server"
+ResponseInstance @ react-server-dom-turbopack-client.browser.development.js:2833
+createResponseFromOptions @ react-server-dom-turbopack-client.browser.development.js:4788
+push.exports.createFromFetch @ react-server-dom-turbopack-client.browser.development.js:5158
+createFromNextFetch @ fetch-server-response.ts:631
+createFetch @ fetch-server-response.ts:512
+fetchServerResponse @ fetch-server-response.ts:186
+navigateToUnknownRoute @ navigation.ts:395
+navigateImpl @ navigation.ts:180
+navigate @ navigation.ts:88
+navigateReducer @ navigate-reducer.ts:44
+clientReducer @ router-reducer.ts:30
+action @ app-router-instance.ts:229
+runAction @ app-router-instance.ts:109
+dispatchAction @ app-router-instance.ts:186
+dispatch @ app-router-instance.ts:227
+(anonymous) @ use-action-queue.ts:94
+startTransition @ react-dom-client.development.js:9151
+nextDispatch @ use-action-queue.ts:93
+dispatchAppRouterAction @ use-action-queue.ts:39
+dispatchNavigateAction @ app-router-instance.ts:306
+(anonymous) @ app-router-instance.ts:464
+startTransition @ react.development.js:554
+push @ app-router-instance.ts:463
+handleSubmit @ page.tsx:37
+await in handleSubmit
+executeDispatch @ react-dom-client.development.js:20610
+runWithFiberInDEV @ react-dom-client.development.js:986
+processDispatchQueue @ react-dom-client.development.js:20660
+(anonymous) @ react-dom-client.development.js:21234
+batchedUpdates$1 @ react-dom-client.development.js:3377
+dispatchEventForPluginEventSystem @ react-dom-client.development.js:20814
+dispatchEvent @ react-dom-client.development.js:25817
+dispatchDiscreteEvent @ react-dom-client.development.js:25785
+<form>
+(anonymous) @ react-jsx-dev-runtime.development.js:342
+LoginPage @ page.tsx:85
+react_stack_bottom_frame @ react-dom-client.development.js:28241
+renderWithHooksAgain @ react-dom-client.development.js:8025
+renderWithHooks @ react-dom-client.development.js:7937
+updateFunctionComponent @ react-dom-client.development.js:10442
+beginWork @ react-dom-client.development.js:12112
+runWithFiberInDEV @ react-dom-client.development.js:986
+performUnitOfWork @ react-dom-client.development.js:18988
+workLoopConcurrentByScheduler @ react-dom-client.development.js:18982
+renderRootConcurrent @ react-dom-client.development.js:18964
+performWorkOnRoot @ react-dom-client.development.js:17822
+performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:20471
+performWorkUntilDeadline @ scheduler.development.js:45
+<LoginPage>
+(anonymous) @ react-jsx-runtime.development.js:342
+ClientPageRoot @ client-page.tsx:70
+react_stack_bottom_frame @ react-dom-client.development.js:28241
+renderWithHooksAgain @ react-dom-client.development.js:8025
+renderWithHooks @ react-dom-client.development.js:7937
+updateFunctionComponent @ react-dom-client.development.js:10442
+beginWork @ react-dom-client.development.js:12052
+runWithFiberInDEV @ react-dom-client.development.js:986
+performUnitOfWork @ react-dom-client.development.js:18988
+workLoopConcurrentByScheduler @ react-dom-client.development.js:18982
+renderRootConcurrent @ react-dom-client.development.js:18964
+performWorkOnRoot @ react-dom-client.development.js:17822
+performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:20471
+performWorkUntilDeadline @ scheduler.development.js:45
+"use client"
+Function.all @ VM244 <anonymous>:1
+Function.all @ VM244 <anonymous>:1
+initializeElement @ react-server-dom-turbopack-client.browser.development.js:1974
+"use server"
+ResponseInstance @ react-server-dom-turbopack-client.browser.development.js:2833
+createResponseFromOptions @ react-server-dom-turbopack-client.browser.development.js:4788
+(anonymous) @ react-server-dom-turbopack-client.browser.development.js:5191
+module evaluation @ app-index.tsx:265
+(anonymous) @ hmr-runtime.ts:650
+runModuleExecutionHooks @ dev-base.ts:213
+instantiateModuleShared @ hmr-runtime.ts:648
+instantiateModule @ dev-base.ts:181
+getOrInstantiateModuleFromParent @ dev-base.ts:135
+commonJsRequire @ runtime-utils.ts:440
+(anonymous) @ app-next-turbopack.ts:12
+(anonymous) @ app-bootstrap.ts:79
+loadScriptsInSequence @ app-bootstrap.ts:23
+appBootstrap @ app-bootstrap.ts:61
+module evaluation @ app-next-turbopack.ts:11
+(anonymous) @ hmr-runtime.ts:650
+runModuleExecutionHooks @ dev-base.ts:213
+instantiateModuleShared @ hmr-runtime.ts:648
+instantiateModule @ dev-base.ts:181
+getOrInstantiateRuntimeModule @ dev-base.ts:101
+registerChunk @ runtime-backend-dom.ts:68
+await in registerChunk
+registerChunk @ dev-base.ts:562
+(anonymous) @ dev-backend-dom.ts:126
+(anonymous) @ dev-backend-dom.ts:126Understand this warning
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 [Fast Refresh] done in 1035ms
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 [Fast Refresh] done in 102ms
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 [Fast Refresh] done in 111ms
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 [Fast Refresh] done in 3427ms
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 [Fast Refresh] done in 122ms
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 [Fast Refresh] done in 629ms
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 [Fast Refresh] done in 852ms
+forward-logs-shared.ts:95 publishing track {room: 'mentoria-4a04a05f-fe97-4c20-879a-ad886cb4e063', roomID: 'RM_A5xvwEoeG9yj', participant: 'user-f6e6c76a-e2af-4426-8eb1-c29a87e81220', pID: 'PA_SHNomFjWZadZ', trackID: undefined, …}
+forward-logs-shared.ts:95 Initial connection failed with ConnectionError: could not establish pc connection. Retrying with another region: https://empresarial-markting-8et4c4xw.osaopaulo1b.production.livekit.cloud {room: 'mentoria-4a04a05f-fe97-4c20-879a-ad886cb4e063', roomID: 'RM_A5xvwEoeG9yj', participant: 'user-f6e6c76a-e2af-4426-8eb1-c29a87e81220', pID: 'PA_6CXqgPpPxUSH'}
+page.tsx:234 could not createOffer with closed peer connection {room: 'mentoria-4a04a05f-fe97-4c20-879a-ad886cb4e063', roomID: 'RM_A5xvwEoeG9yj', participant: 'user-f6e6c76a-e2af-4426-8eb1-c29a87e81220', pID: 'PA_SHNomFjWZadZ'}
+warn @ forward-logs-shared.ts:95
+(anonymous) @ PCTransport.ts:285
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+(anonymous) @ DefaultReconnectPolicy.ts:33
+__awaiter @ DefaultReconnectPolicy.ts:33
+createAndSendOffer @ PCTransport.ts:258
+(anonymous) @ PCTransport.ts:248
+(anonymous) @ DefaultReconnectPolicy.ts:33
+__awaiter @ DefaultReconnectPolicy.ts:33
+(anonymous) @ PCTransport.ts:245
+invokeFunction @ debounce.ts:80
+setTimeout
+push.CriticalTimers.setTimeout @ timers.ts:10
+(anonymous) @ debounce.ts:94
+debouncedFunction @ debounce.ts:75
+(anonymous) @ PCTransportManager.ts:270
+(anonymous) @ DefaultReconnectPolicy.ts:33
+__awaiter @ DefaultReconnectPolicy.ts:33
+(anonymous) @ PCTransportManager.ts:231
+TypedPromise @ TypedPromise.ts:8
+(anonymous) @ PCTransportManager.ts:231
+(anonymous) @ DefaultReconnectPolicy.ts:33
+__awaiter @ DefaultReconnectPolicy.ts:33
+negotiate @ PCTransportManager.ts:230
+(anonymous) @ RTCEngine.ts:1544
+(anonymous) @ DefaultReconnectPolicy.ts:33
+__awaiter @ DefaultReconnectPolicy.ts:33
+(anonymous) @ RTCEngine.ts:1498
+TypedPromise @ TypedPromise.ts:8
+(anonymous) @ RTCEngine.ts:1498
+(anonymous) @ DefaultReconnectPolicy.ts:33
+__awaiter @ DefaultReconnectPolicy.ts:33
+negotiate @ RTCEngine.ts:1496
+(anonymous) @ LocalParticipant.ts:1577
+(anonymous) @ DefaultReconnectPolicy.ts:33
+__awaiter @ DefaultReconnectPolicy.ts:33
+unpublishTrack @ LocalParticipant.ts:1471
+(anonymous) @ Room.ts:1591
+handleDisconnect @ Room.ts:1589
+(anonymous) @ Room.ts:489
+emit @ events.js:153
+client.onLeave @ RTCEngine.ts:644
+handleSignalResponse @ SignalClient.ts:768
+(anonymous) @ SignalClient.ts:487
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+(anonymous) @ DefaultReconnectPolicy.ts:33
+__awaiter @ DefaultReconnectPolicy.ts:33
+startReadingLoop @ SignalClient.ts:473
+handleSignalConnected @ SignalClient.ts:928
+handleSignalConnected @ SignalClient.ts:352
+(anonymous) @ SignalClient.ts:458
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+(anonymous) @ DefaultReconnectPolicy.ts:33
+__awaiter @ DefaultReconnectPolicy.ts:33
+(anonymous) @ SignalClient.ts:312
+(anonymous) @ SignalClient.ts:312
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+(anonymous) @ DefaultReconnectPolicy.ts:33
+__awaiter @ DefaultReconnectPolicy.ts:33
+connect @ SignalClient.ts:293
+(anonymous) @ SignalClient.ts:256
+(anonymous) @ DefaultReconnectPolicy.ts:33
+__awaiter @ DefaultReconnectPolicy.ts:33
+join @ SignalClient.ts:245
+(anonymous) @ RTCEngine.ts:280
+(anonymous) @ DefaultReconnectPolicy.ts:33
+__awaiter @ DefaultReconnectPolicy.ts:33
+join @ RTCEngine.ts:265
+(anonymous) @ Room.ts:785
+(anonymous) @ DefaultReconnectPolicy.ts:33
+__awaiter @ DefaultReconnectPolicy.ts:33
+Room.connectSignal @ Room.ts:784
+(anonymous) @ Room.ts:890
+(anonymous) @ DefaultReconnectPolicy.ts:33
+__awaiter @ DefaultReconnectPolicy.ts:33
+Room.attemptConnection @ Room.ts:861
+(anonymous) @ Room.ts:700
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+(anonymous) @ DefaultReconnectPolicy.ts:33
+__awaiter @ DefaultReconnectPolicy.ts:33
+connectFn @ Room.ts:683
+(anonymous) @ Room.ts:767
+(anonymous) @ utils.ts:489
+(anonymous) @ DefaultReconnectPolicy.ts:33
+__awaiter @ DefaultReconnectPolicy.ts:33
+Future.promise.Promise.finally._isResolved @ utils.ts:485
+Future @ utils.ts:485
+(anonymous) @ Room.ts:765
+fulfilled @ DefaultReconnectPolicy.ts:33
+Promise.then
+step @ DefaultReconnectPolicy.ts:33
+(anonymous) @ DefaultReconnectPolicy.ts:33
+__awaiter @ DefaultReconnectPolicy.ts:33
+Room.connect @ Room.ts:629
+MentorshipRoomPage.useCallback[connectToRoom] @ page.tsx:234
+await in MentorshipRoomPage.useCallback[connectToRoom]
+MentorshipRoomPage.useEffect @ page.tsx:244
+react_stack_bottom_frame @ react-dom-client.development.js:28326
+runWithFiberInDEV @ react-dom-client.development.js:986
+commitHookEffectListMount @ react-dom-client.development.js:13663
+commitHookPassiveMountEffects @ react-dom-client.development.js:13750
+reconnectPassiveEffects @ react-dom-client.development.js:17112
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17165
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17165
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17165
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17165
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17165
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17165
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17165
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17165
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17165
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17165
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17165
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17165
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17165
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17165
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17165
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17165
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17165
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17165
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17165
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17165
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17165
+recursivelyTraverseReconnectPassiveEffects @ react-dom-client.development.js:17064
+reconnectPassiveEffects @ react-dom-client.development.js:17104
+doubleInvokeEffectsOnFiber @ react-dom-client.development.js:20217
+runWithFiberInDEV @ react-dom-client.development.js:986
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20181
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20187
+commitDoubleInvokeEffectsInDEV @ react-dom-client.development.js:20226
+flushPassiveEffects @ react-dom-client.development.js:19953
+(anonymous) @ react-dom-client.development.js:19370
+performWorkUntilDeadline @ scheduler.development.js:45
+<MentorshipRoomPage>
+(anonymous) @ react-jsx-runtime.development.js:342
+ClientPageRoot @ client-page.tsx:70
+react_stack_bottom_frame @ react-dom-client.development.js:28241
+renderWithHooksAgain @ react-dom-client.development.js:8025
+renderWithHooks @ react-dom-client.development.js:7937
+updateFunctionComponent @ react-dom-client.development.js:10442
+beginWork @ react-dom-client.development.js:12052
+runWithFiberInDEV @ react-dom-client.development.js:986
+performUnitOfWork @ react-dom-client.development.js:18988
+workLoopConcurrentByScheduler @ react-dom-client.development.js:18982
+renderRootConcurrent @ react-dom-client.development.js:18964
+performWorkOnRoot @ react-dom-client.development.js:17822
+performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:20471
+performWorkUntilDeadline @ scheduler.development.js:45
+"use client"
+Function.all @ VM244 <anonymous>:1
+Function.all @ VM244 <anonymous>:1
+initializeElement @ react-server-dom-turbopack-client.browser.development.js:1974Understand this warning
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 [Fast Refresh] done in 287ms
+forward-logs-shared.ts:95 publishing track {room: 'mentoria-4a04a05f-fe97-4c20-879a-ad886cb4e063', roomID: 'RM_A5xvwEoeG9yj', participant: 'user-f6e6c76a-e2af-4426-8eb1-c29a87e81220', pID: 'PA_uQbZXiEJuiN8', trackID: undefined, …}

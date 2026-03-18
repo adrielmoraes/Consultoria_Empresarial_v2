@@ -55,6 +55,7 @@ logger = logging.getLogger("mentoria-ai")
 # CONFIG
 # ============================================================
 
+GEMINI_REALTIME_MODEL = "gemini-2.5-flash-native-audio-preview-12-2025"
 GEMINI_CHAT_MODEL = "gemini-2.5-flash"
 GEMINI_TTS_MODEL = "gemini-2.5-flash-preview-tts"
 
@@ -339,11 +340,9 @@ class HostAgent(Agent):
         super().__init__(
             instructions=HOST_PROMPT,
             llm=google_plugin.realtime.RealtimeModel(
+                model=GEMINI_REALTIME_MODEL,
                 api_key=os.environ.get("GOOGLE_API_KEY", ""),
                 voice=AGENT_VOICES["host"],
-                language="pt-BR",
-                input_audio_transcription=genai_types.AudioTranscriptionConfig(),
-                output_audio_transcription=genai_types.AudioTranscriptionConfig(),
             ),
             allow_interruptions=True,
         )
@@ -566,7 +565,9 @@ async def entrypoint(ctx: JobContext) -> None:
     # ========================================
 
     host_agent = HostAgent(blackboard, specialist_speakers, ctx.room)
-    host_session = AgentSession()
+    host_session = AgentSession(
+        vad=silero.VAD.load(),
+    )
 
     # Transcrição do usuário → blackboard + frontend
     @host_session.on("user_input_transcribed")
