@@ -76,6 +76,38 @@ SPECIALIST_NAMES: dict[str, str] = {
     "plan":  "Marco (Estrategista)",
 }
 
+# Frases de auto-apresentação de cada especialista
+SPECIALIST_INTROS: dict[str, str] = {
+    "cfo": (
+        "Olá! Muito prazer, eu sou o Carlos, CFO e especialista em finanças. "
+        "Meu trabalho aqui é analisar a viabilidade econômica do seu projeto: "
+        "precificação, projeções de receita, estrutura de custos e fontes de financiamento. "
+        "Fico feliz em te ajudar a construir um negócio financeiramente sólido!"
+    ),
+    "legal": (
+        "Oi! Eu sou o Daniel, advogado especialista em direito empresarial. "
+        "Cuido dos aspectos jurídicos do seu negócio: tipo societário, contratos, "
+        "conformidade com a LGPD e proteção legal. "
+        "Pode ficar tranquilo que estarei aqui para te orientar em cada passo!"
+    ),
+    "cmo": (
+        "Ei, que bom ter você aqui! Sou o Rodrigo, CMO e especialista em marketing e vendas. "
+        "Vou ajudar a definir seu posicionamento de mercado, estratégias de aquisição de clientes "
+        "e como fazer o seu produto conquistar o mercado brasileiro. Bora crescer juntos!"
+    ),
+    "cto": (
+        "Olá! Eu sou a Ana, CTO e especialista em tecnologia. "
+        "Cuido da parte técnica: stack tecnológico, arquitetura de sistema, infraestrutura e escalabilidade. "
+        "Vou garantir que a tecnologia do seu projeto seja robusta, moderna e dentro do orçamento!"
+    ),
+    "plan": (
+        "Olá a todos! Muito prazer, eu sou o Marco, estrategista-chefe. "
+        "Meu papel é diferente dos demais: ao final da nossa sessão, vou sintetizar tudo que discutirmos "
+        "e entregar um Plano de Execução completo, com cronograma, riscos e próximos passos concretos. "
+        "Acompanharei toda a conversa e no final, entrego tudo organizado para você!"
+    ),
+}
+
 
 # ============================================================
 # PROMPTS
@@ -239,14 +271,18 @@ class SpecialistSpeaker:
         await self._room.local_participant.publish_track(self._audio_track, options)
         logger.info(f"[{self._name}] Track de áudio publicado.")
 
-    async def speak(self, text: str) -> None:
-        """Gera TTS com voz própria e publica no room."""
+    async def speak(self, text: str) -> float:
+        """Gera TTS com voz própria, publica no room e retorna duração em segundos."""
         async with self._speak_lock:
             try:
                 audio_bytes = await self._generate_tts(text)
                 await self._publish_pcm_audio(audio_bytes)
+                # PCM 16-bit 24kHz mono → 2 bytes/sample × 24000 samples/s
+                duration = len(audio_bytes) / (24000 * 2)
+                return duration
             except Exception as e:
                 logger.error(f"[{self._name}] Erro no TTS: {e}")
+                return 0.0
 
     async def _generate_tts(self, text: str) -> bytes:
         """Chama a API Gemini TTS e retorna áudio PCM 16-bit, 24kHz, mono."""
@@ -595,19 +631,108 @@ async def entrypoint(ctx: JobContext) -> None:
         except Exception as e:
             logger.warning(f"Erro ao processar dados: {e}")
 
-    # Iniciar sessão da host
+    # ========================================
+    # DESCOBRIR NOME DO USUÁRIO
+    # ========================================
+
+    def _get_user_name() -> str:
+        """Retorna o primeiro nome do participante humano na sala."""
+        for participant in ctx.room.remote_participants.values():
+            identity = participant.identity or ""
+            name = participant.name or ""
+            # Pula participantes agentes (identidade começa com "agent-")
+            if not identity.startswith("agent-"):
+                first_name = name.split()[0] if name.strip() else "amigo"
+                return first_name
+        return "amigo"
+
+    # Se o usuário ainda não entrou, aguarda até 10s
+    user_name = _get_user_name()
+    if user_name == "amigo":
+        try:
+            user_joined = asyncio.Event()
+
+            @ctx.room.once("participant_connected")
+            def _on_first_participant(participant: rtc.RemoteParticipant) -> None:  # type: ignore[no-untyped-def]
+                if not participant.identity.startswith("agent-"):
+                    user_joined.set()
+
+            await asyncio.wait_for(user_joined.wait(), timeout=10.0)
+        except (asyncio.TimeoutError, Exception):
+            pass
+        user_name = _get_user_name()
+
+    blackboard.project_name = f"Sessão de {user_name}"
+    logger.info(f"Usuário identificado: {user_name}")
+
+    # ========================================
+    # INICIAR SESSÃO DA HOST
+    # ========================================
+
     await host_session.start(agent=host_agent, room=ctx.room)
 
-    # Saudação inicial
-    await host_session.say(
-        "Olá! Seja muito bem-vindo ao Mentoria AI! "
-        "Eu sou a Nathália, sua apresentadora. "
-        "Aqui comigo estão Carlos, nosso CFO, Daniel, nosso advogado, "
-        "Rodrigo, nosso CMO, Ana, nossa CTO, e Marco, nosso estrategista-chefe. "
-        "Todos estamos prontos para te ajudar a transformar seu projeto em realidade! "
-        "Para começarmos: qual é o seu projeto ou desafio empresarial?",
-        allow_interruptions=True,
-    )
+    # ========================================
+    # SEQUÊNCIA DE BOAS-VINDAS E APRESENTAÇÕES
+    # ========================================
+
+    async def run_introductions() -> None:
+        """Nathália cumprimenta pelo nome e pede a cada especialista que se apresente."""
+
+        # 1 – Nathália abre a sessão saudando o usuário pelo nome
+        greeting = (
+            f"Olá, {user_name}! Seja muito bem-vindo ao Mentoria AI! "
+            "Eu sou a Nathália, sua apresentadora e guia durante toda essa sessão. "
+            f"É uma honra ter você aqui, {user_name}! "
+            "Hoje você vai contar com um time de cinco especialistas prontos para ajudar a transformar seu projeto em realidade. "
+            "Vou pedir que cada um se apresente pessoalmente para você. "
+            "Carlos, pode começar?"
+        )
+        await host_session.say(greeting, allow_interruptions=False)
+        await asyncio.sleep(1.0)
+
+        # 2 – Cada especialista se apresenta com sua própria voz, em sequência
+        intro_order = [
+            ("cfo",   "Daniel, é a sua vez!"),
+            ("legal", "Rodrigo, pode se apresentar!"),
+            ("cmo",   "Ana, apresente-se por favor!"),
+            ("cto",   "E por último, Marco!"),
+            ("plan",  None),
+        ]
+
+        for idx, (spec_id, next_prompt) in enumerate(intro_order):
+            speaker = specialist_speakers.get(spec_id)
+            if speaker:
+                intro_text = SPECIALIST_INTROS[spec_id]
+                # Publica transcrição da apresentação no frontend
+                try:
+                    payload = json.dumps({
+                        "type": "transcript",
+                        "speaker": SPECIALIST_NAMES[spec_id],
+                        "text": intro_text,
+                    }).encode()
+                    await ctx.room.local_participant.publish_data(payload, reliable=True)
+                except Exception:
+                    pass
+                duration = await speaker.speak(intro_text)
+                # Aguarda o áudio terminar + pequena pausa entre apresentações
+                await asyncio.sleep(max(duration, 1.0) + 0.8)
+
+            # Nathália faz a ponte para o próximo (exceto depois do último)
+            if next_prompt:
+                await host_session.say(next_prompt, allow_interruptions=False)
+                await asyncio.sleep(0.8)
+
+        # 3 – Nathália fecha o round de apresentações e convida o usuário a falar
+        closing = (
+            f"Que time incrível, não é mesmo, {user_name}? "
+            "Agora é a sua vez! Conta para a gente: qual é o seu projeto ou desafio empresarial? "
+            "Estamos todos aqui para te ouvir e ajudar!"
+        )
+        await host_session.say(closing, allow_interruptions=True)
+
+        logger.info("Sequência de apresentações concluída.")
+
+    asyncio.create_task(run_introductions())
 
     logger.info("Sessão de mentoria iniciada com sucesso.")
 
