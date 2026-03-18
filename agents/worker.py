@@ -26,7 +26,7 @@ from livekit.agents import (
     cli,
     llm,
 )
-from livekit.agents.voice_assistant import VoiceAssistant
+from livekit.agents.voice import Agent as VoiceAssistant
 from livekit.plugins import google as google_plugin
 from livekit.plugins import silero
 
@@ -204,7 +204,7 @@ class Blackboard:
 # FUNÇÕES DA HOST PARA ACIONAR ESPECIALISTAS
 # ============================================================
 
-class HostFunctions(llm.FunctionContext):
+class HostFunctions(llm.ToolContext):
     """Funções que a Host (Nathália) pode chamar para acionar especialistas."""
 
     def __init__(self, blackboard: Blackboard, specialist_agents: dict):
@@ -212,63 +212,63 @@ class HostFunctions(llm.FunctionContext):
         self.blackboard = blackboard
         self.specialist_agents = specialist_agents
 
-    @llm.ai_callable(
+    @llm.function_tool(
         description="Aciona o Carlos (CFO) para dar uma análise financeira sobre o tema atual. "
-                    "Use quando o assunto envolver finanças, custos, receita ou viabilidade econômica."
+                    "Use quando o assunto envolver finanças, custos, receita ou viabilidade econômica.\n"  
+                    "Args:\n"  
+                    "    contexto (str): Contexto específico ou pergunta para o Carlos analisar"
     )
     async def acionar_carlos_cfo(
         self,
-        contexto: str = llm.TypeInfo(
-            description="Contexto específico ou pergunta para o Carlos analisar"
-        ),
+        contexto: str,
     ) -> str:
         return await self._call_specialist("cfo", contexto)
 
-    @llm.ai_callable(
+    @llm.function_tool(
         description="Aciona o Daniel (Advogado) para dar orientação jurídica sobre o tema atual. "
-                    "Use quando o assunto envolver questões legais, contratos, LGPD ou conformidade."
+                    "Use quando o assunto envolver questões legais, contratos, LGPD ou conformidade.\n"  
+                    "Args:\n"  
+                    "    contexto (str): Contexto específico ou pergunta para o Daniel analisar"
     )
     async def acionar_daniel_advogado(
         self,
-        contexto: str = llm.TypeInfo(
-            description="Contexto específico ou pergunta para o Daniel analisar"
-        ),
+        contexto: str,
     ) -> str:
         return await self._call_specialist("legal", contexto)
 
-    @llm.ai_callable(
+    @llm.function_tool(
         description="Aciona o Rodrigo (CMO) para dar orientação de marketing sobre o tema atual. "
-                    "Use quando o assunto envolver marketing, vendas, aquisição de clientes ou branding."
+                    "Use quando o assunto envolver marketing, vendas, aquisição de clientes ou branding.\n"  
+                    "Args:\n"  
+                    "    contexto (str): Contexto específico ou pergunta para o Rodrigo analisar"
     )
     async def acionar_rodrigo_cmo(
         self,
-        contexto: str = llm.TypeInfo(
-            description="Contexto específico ou pergunta para o Rodrigo analisar"
-        ),
+        contexto: str,
     ) -> str:
         return await self._call_specialist("cmo", contexto)
 
-    @llm.ai_callable(
+    @llm.function_tool(
         description="Aciona a Ana (CTO) para dar orientação técnica sobre o tema atual. "
-                    "Use quando o assunto envolver tecnologia, arquitetura, infraestrutura ou stack."
+                    "Use quando o assunto envolver tecnologia, arquitetura, infraestrutura ou stack.\n"  
+                    "Args:\n"  
+                    "    contexto (str): Contexto específico ou pergunta para a Ana analisar"
     )
     async def acionar_ana_cto(
         self,
-        contexto: str = llm.TypeInfo(
-            description="Contexto específico ou pergunta para a Ana analisar"
-        ),
+        contexto: str,
     ) -> str:
         return await self._call_specialist("cto", contexto)
 
-    @llm.ai_callable(
+    @llm.function_tool(
         description="Aciona TODOS os especialistas para um debate completo sobre o tema. "
-                    "Use quando o usuário apresentar um projeto que precisa de visão multidisciplinar."
+                    "Use quando o usuário apresentar um projeto que precisa de visão multidisciplinar.\n"  
+                    "Args:\n"  
+                    "    tema (str): O tema ou projeto que os especialistas devem debater"
     )
     async def iniciar_debate_completo(
         self,
-        tema: str = llm.TypeInfo(
-            description="O tema ou projeto que os especialistas devem debater"
-        ),
+        tema: str,
     ) -> str:
         self.blackboard.user_query = tema
         results = []
@@ -277,7 +277,7 @@ class HostFunctions(llm.FunctionContext):
             results.append(resp)
         return "\n\n".join(results)
 
-    @llm.ai_callable(
+    @llm.function_tool(
         description="Encerra a sessão de mentoria e inicia a geração do Plano de Execução."
     )
     async def encerrar_mentoria(self) -> str:
@@ -364,7 +364,7 @@ async def entrypoint(ctx: JobContext):
             voice_name=voice_config["voice_name"],
         )
 
-        spec_stt = google_plugin.STT(language="pt-BR")
+        spec_stt = google_plugin.STT(languages=["pt-BR"])
 
         spec_llm = google_plugin.LLM(
             model=GEMINI_MODEL,
@@ -376,12 +376,8 @@ async def entrypoint(ctx: JobContext):
             stt=spec_stt,
             llm=spec_llm,
             tts=spec_tts,
-            chat_ctx=llm.ChatContext().append(
-                role="system",
-                text=SYSTEM_PROMPTS[spec_id].format(context="Aguardando início da sessão..."),
-            ),
+            instructions=SYSTEM_PROMPTS[spec_id].format(context="Aguardando início da sessão..."),
             allow_interruptions=True,
-            interrupt_min_words=1,
         )
 
         specialist_agents[spec_id] = spec_assistant
@@ -398,7 +394,7 @@ async def entrypoint(ctx: JobContext):
         voice_name=host_voice["voice_name"],
     )
 
-    host_stt = google_plugin.STT(language="pt-BR")
+    host_stt = google_plugin.STT(languages=["pt-BR"])
 
     host_llm = google_plugin.LLM(
         model=GEMINI_MODEL,
@@ -414,12 +410,8 @@ async def entrypoint(ctx: JobContext):
         stt=host_stt,
         llm=host_llm,
         tts=host_tts,
-        chat_ctx=llm.ChatContext().append(
-            role="system",
-            text=SYSTEM_PROMPTS["host"],
-        ),
-        fnc_ctx=fnc_ctx,
-        interrupt_min_words=1,
+        instructions=SYSTEM_PROMPTS["host"],
+        tools=[fnc_ctx],
         allow_interruptions=True,
     )
 
@@ -427,18 +419,21 @@ async def entrypoint(ctx: JobContext):
     # CALLBACKS
     # ========================================
 
-    @host_assistant.on("user_speech_committed")
+    @host_assistant.on("user_input_transcribed")
     def on_user_speech(msg):
-        blackboard.add_message("Usuário", msg.content)
-        blackboard.user_query = msg.content
-        logger.info(f"[USUÁRIO]: {msg.content[:100]}...")
+        if not msg.is_final:
+            return
+        text = msg.transcript
+        blackboard.add_message("Usuário", text)
+        blackboard.user_query = text
+        logger.info(f"[USUÁRIO]: {text[:100]}...")
 
         # Enviar transcrição ao frontend via data message
         try:
             data = json.dumps({
                 "type": "transcript",
                 "speaker": "Você",
-                "text": msg.content,
+                "text": text,
             }).encode()
             asyncio.create_task(
                 ctx.room.local_participant.publish_data(data, reliable=True)
@@ -446,16 +441,24 @@ async def entrypoint(ctx: JobContext):
         except Exception as e:
             logger.warning(f"Erro ao enviar transcrição: {e}")
 
-    @host_assistant.on("agent_speech_committed")
+    @host_assistant.on("conversation_item_added")
     def on_host_speech(msg):
-        blackboard.add_message("Nathália (Apresentadora)", msg.content)
+        from livekit.agents.llm import ChatMessage
+        if not hasattr(msg, "item") or not isinstance(msg.item, ChatMessage) or msg.item.role != "assistant":
+            return
+        
+        text = msg.item.content
+        if isinstance(text, list):
+            text = "".join([c for c in text if isinstance(c, str)])  # simplistic, could be improved
+
+        blackboard.add_message("Nathália (Apresentadora)", text)
 
         # Enviar transcrição ao frontend
         try:
             data = json.dumps({
                 "type": "transcript",
                 "speaker": "Nathália",
-                "text": msg.content,
+                "text": text,
             }).encode()
             asyncio.create_task(
                 ctx.room.local_participant.publish_data(data, reliable=True)
