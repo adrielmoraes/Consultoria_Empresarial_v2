@@ -276,13 +276,15 @@ class SpecialistSpeaker:
         """Gera TTS com voz própria, publica no room e retorna duração em segundos."""
         async with self._speak_lock:
             try:
+                logger.info(f"[{self._name}] Gerando TTS ({len(text)} chars)...")
                 audio_bytes = await self._generate_tts(text)
+                logger.info(f"[{self._name}] TTS gerado: {len(audio_bytes)} bytes")
                 await self._publish_pcm_audio(audio_bytes)
                 # PCM 16-bit 24kHz mono → 2 bytes/sample × 24000 samples/s
                 duration = len(audio_bytes) / (24000 * 2)
                 return duration
             except Exception as e:
-                logger.error(f"[{self._name}] Erro no TTS: {e}")
+                logger.error(f"[{self._name}] Erro no TTS: {e}", exc_info=True)
                 return 0.0
 
     async def _generate_tts(self, text: str) -> bytes:
@@ -311,14 +313,22 @@ class SpecialistSpeaker:
     async def _publish_pcm_audio(self, audio_bytes: bytes, sample_rate: int = 24000) -> None:
         """Publica bytes PCM 16-bit como AudioFrame no LiveKit."""
         if not self._audio_source:
+            logger.warning(f"[{self._name}] AudioSource não inicializado.")
             return
         # 16-bit PCM → 2 bytes por sample
         num_samples = len(audio_bytes) // 2
         if num_samples == 0:
+            logger.warning(f"[{self._name}] Áudio PCM vazio, nada a publicar.")
             return
-        frame = rtc.AudioFrame.create(sample_rate, 1, num_samples)
-        frame.data[:] = audio_bytes
+        # Criar AudioFrame passando os bytes diretamente ao construtor (evita erro de memoryview)
+        frame = rtc.AudioFrame(
+            data=audio_bytes,
+            sample_rate=sample_rate,
+            num_channels=1,
+            samples_per_channel=num_samples,
+        )
         await self._audio_source.capture_frame(frame)
+        logger.info(f"[{self._name}] Áudio publicado: {num_samples} samples ({num_samples/sample_rate:.2f}s)")
 
 
 # ============================================================
@@ -596,10 +606,17 @@ async def entrypoint(ctx: JobContext) -> None:
         role = getattr(item, "role", None)
         if role != "assistant":
             return
-        content = getattr(item, "content", "")
-        if isinstance(content, list):
-            content = " ".join(c for c in content if isinstance(c, str))
-        if not content:
+        # Tenta extrair texto via text_content (propriedade do ChatMessage)
+        content = ""
+        if hasattr(item, "text_content") and item.text_content:
+            content = item.text_content
+        else:
+            raw_content = getattr(item, "content", "")
+            if isinstance(raw_content, list):
+                content = " ".join(str(c) for c in raw_content if c and not isinstance(c, bytes))
+            elif isinstance(raw_content, str):
+                content = raw_content
+        if not content or not content.strip():
             return
         blackboard.add_message("Nathália (Apresentadora)", content)
         asyncio.create_task(
@@ -610,14 +627,15 @@ async def entrypoint(ctx: JobContext) -> None:
         )
 
     # Mensagens de dados do frontend
+    # Assinatura correta para livekit-python 1.x: (data, participant, kind, topic)
     @ctx.room.on("data_received")
-    def _on_data_received(data_packet) -> None:  # type: ignore[no-untyped-def]
+    def _on_data_received(data: bytes, participant=None, kind=None, topic=None) -> None:  # type: ignore[no-untyped-def]
         try:
-            if isinstance(data_packet, (bytes, bytearray)):
-                raw = bytes(data_packet)
-            else:
-                raw = bytes(getattr(data_packet, "data", b""))
+            raw = bytes(data) if isinstance(data, (bytes, bytearray, memoryview)) else b""
+            if not raw:
+                return
             msg = json.loads(raw.decode())
+            logger.info(f"Dados recebidos do frontend: {msg.get('type')}")
             if msg.get("type") == "end_session":
                 blackboard.is_active = False
                 asyncio.create_task(
