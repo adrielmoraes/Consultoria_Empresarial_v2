@@ -41,9 +41,10 @@ from livekit.agents import (
     cli,
     llm,
     function_tool,
+    Agent,
+    AgentSession,
+    RunContext,
 )
-from livekit.agents.voice import Agent, AgentSession, RunContext
-from livekit.agents.voice import room_io
 from livekit.plugins import google as google_plugin
 from livekit.plugins import silero
 
@@ -120,88 +121,49 @@ Seu papel é orquestrar a sessão de mentoria empresarial multi-agentes.
 REGRAS:
 - Receba o usuário de forma calorosa e profissional.
 - Identifique os tópicos do projeto/problema do usuário.
-- Acione os especialistas usando as ferramentas disponíveis.
+- Acione os especialistas chamando-os pelo nome na conversa (ex: "Carlos, o que você acha das finanças?").
 - SEMPRE faça pelo menos uma pergunta ao usuário por interação.
 - Após o especialista falar, resuma brevemente e pergunte ao usuário se tem dúvidas.
 - Mantenha respostas curtas (máximo 3 frases por turno).
-- Quando o usuário quiser encerrar ou pedir o plano, acione o Marco.
-- Fale sempre em português do Brasil com tom acolhedor.
-- IMPORTANTE: Avise antes de acionar cada especialista (ex: "Vou chamar Carlos, nosso CFO, para analisar isso.")."""
+- Quando o usuário quiser encerrar ou pedir o plano, chame o Marco.
+- Fale em português do Brasil."""
 
-SPECIALIST_PROMPTS: dict[str, str] = {
-    "cfo": """Você é Carlos, o CFO (Chief Financial Officer) do Mentoria AI.
-Especialista em finanças, viabilidade econômica, precificação e projeções.
-
-CONTEXTO DA SESSÃO:
-{context}
-
-REGRAS:
-- Análises financeiras práticas e diretas com números concretos.
-- Sugira modelos de negócio, fontes de receita e estrutura de custos.
-- Considere o contexto brasileiro (impostos, regulamentações locais).
-- Máximo 4 frases por resposta.
-- SEMPRE finalize com uma pergunta ao usuário sobre expectativas financeiras.
-- Fale em português do Brasil.""",
-
-    "legal": """Você é Daniel, o Advogado do Mentoria AI.
-Especialista em direito empresarial, contratos, LGPD e conformidade.
-
-CONTEXTO DA SESSÃO:
-{context}
-
-REGRAS:
-- Foco em conformidade legal e proteção jurídica.
-- Mencione tipos societários quando relevante (MEI, LTDA, S/A).
-- Alerte sobre riscos trabalhistas, fiscais e regulatórios (CLT, LGPD, Código Civil).
-- Máximo 4 frases por resposta.
-- SEMPRE finalize com uma pergunta ao usuário sobre aspectos legais.
-- Fale em português do Brasil.""",
-
-    "cmo": """Você é Rodrigo, o CMO (Chief Marketing Officer) do Mentoria AI.
-Especialista em marketing, aquisição de clientes, branding e go-to-market.
-
-CONTEXTO DA SESSÃO:
-{context}
-
-REGRAS:
-- Estratégias práticas de marketing e vendas com exemplos concretos.
-- Sugira canais de aquisição e estratégias de posicionamento no mercado brasileiro.
-- Máximo 4 frases por resposta.
-- SEMPRE finalize com uma pergunta ao usuário sobre público-alvo ou diferencial.
-- Fale em português do Brasil.""",
-
-    "cto": """Você é Ana, a CTO (Chief Technology Officer) do Mentoria AI.
-Especialista em arquitetura de software, infraestrutura e escolha de stack.
-
-CONTEXTO DA SESSÃO:
-{context}
-
-REGRAS:
-- Recomendações técnicas práticas e modernas.
-- Sugira stacks considerando custo, maturidade e facilidade de implementação.
-- Alerte sobre gargalos de escalabilidade e dependências críticas.
-- Máximo 4 frases por resposta.
-- SEMPRE finalize com uma pergunta ao usuário sobre requisitos técnicos.
-- Fale em português do Brasil.""",
-
-    "plan": """Você é Marco, o Estrategista Chefe do Mentoria AI.
-Sua missão é sintetizar toda a sessão e criar o PLANO DE EXECUÇÃO FINAL.
-
-TRANSCRIÇÃO COMPLETA DA SESSÃO:
-{context}
-
-CRIE UM PLANO DE EXECUÇÃO COMPLETO QUE INCLUA:
-1. **Resumo Executivo** – O projeto em 2-3 parágrafos
-2. **Análise Financeira** – Custos, receita, ponto de equilíbrio
-3. **Estrutura Jurídica** – Tipo societário, contratos, conformidade
-4. **Estratégia de Marketing** – Canais, posicionamento, go-to-market
-5. **Arquitetura Técnica** – Stack, infraestrutura, escalabilidade
-6. **Cronograma de Execução** – Fases e prazos realistas
-7. **Riscos e Mitigações** – Top 5 riscos e como mitigar
-8. **Próximos Passos** – 5 ações concretas para esta semana
-
-Seja específico, motivador e use o contexto completo da conversa.
-Fale em português do Brasil.""",
+SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
+    "cfo": (
+        "Você é Carlos, o CFO (Chief Financial Officer). Sua voz é Charon. "
+        "Você faz parte de uma mentoria empresarial multi-agentes. "
+        "Fique em silêncio e ouça atentamente até que Nathália (a apresentadora) ou o usuário chame seu nome ou peça uma análise financeira. "
+        "Ao ser acionado, analise custos, receitas e viabilidade. "
+        "Seja proativo mas breve (máximo 4 frases). Mantenha o tone profissional."
+    ),
+    "legal": (
+        "Você é Daniel, o Advogado. Sua voz é Fenrir. "
+        "Você faz parte de uma mentoria empresarial multi-agentes. "
+        "Fique em silêncio até ser chamado por Nathália ou o usuário. "
+        "Foque em contratos, estrutura societária e LGPD. "
+        "Seja formal e preciso (máximo 4 frases)."
+    ),
+    "cmo": (
+        "Você é Rodrigo, o CMO. Sua voz é Puck. "
+        "Você faz parte de uma mentoria empresarial multi-agentes. "
+        "Fique em silêncio até ser chamado. "
+        "Foque em marketing, aquisição de clientes e branding. "
+        "Seja dinâmico e entusiasmado (máximo 4 frases)."
+    ),
+    "cto": (
+        "Você é Ana, a CTO. Sua voz é Kore. "
+        "Você faz parte de uma mentoria empresarial multi-agentes. "
+        "Fique em silêncio até ser chamada. "
+        "Foque em tecnologia, escalabilidade e desenvolvimento. "
+        "Seja técnica e prática (máximo 4 frases)."
+    ),
+    "plan": (
+        "Você é Marco, o Estrategista. Sua voz é Zephyr. "
+        "Você faz parte de uma mentoria empresarial multi-agentes. "
+        "Fique em silêncio até ser chamado. "
+        "Sua função é consolidar as ideias e propor um plano de execução. "
+        "Apresente um resumo estruturado com próximos passos."
+    ),
 }
 
 
@@ -214,17 +176,10 @@ class Blackboard:
     project_name: str = ""
     user_query: str = ""
     transcript: list[dict] = field(default_factory=list)
-    specialist_responses: dict[str, list[str]] = field(default_factory=dict)
     is_active: bool = True
 
     def add_message(self, role: str, content: str) -> None:
         self.transcript.append({"role": role, "content": content})
-
-    def add_specialist_response(self, spec_id: str, response: str) -> None:
-        if spec_id not in self.specialist_responses:
-            self.specialist_responses[spec_id] = []
-        self.specialist_responses[spec_id].append(response)
-        self.add_message(SPECIALIST_NAMES.get(spec_id, spec_id), response)
 
     def get_context_summary(self) -> str:
         parts: list[str] = []
@@ -244,91 +199,51 @@ class Blackboard:
 
 
 # ============================================================
-# SPECIALIST SPEAKER – TTS + áudio publicado no room
+# SPECIALIST AGENT – Realtime Native Audio
 # ============================================================
 
-class SpecialistSpeaker:
+class SpecialistAgent(Agent):
     """
-    Gerencia a conexão e publicação de áudio TTS de um especialista.
-    Cada especialista entra no room com sua própria identidade (participante separado).
+    Especialista como um agente Realtime completo (voz-para-voz).
+    Ele escuta a sala e só fala quando provocado.
     """
 
-    def __init__(self, spec_id: str, room: rtc.Room) -> None:
-        self._spec_id = spec_id
-        self._room = room
-        self._voice = AGENT_VOICES[spec_id]
-        self._name = SPECIALIST_NAMES[spec_id]
-        self._audio_source: Optional[rtc.AudioSource] = None
-        self._audio_track: Optional[rtc.LocalAudioTrack] = None
-        self._speak_lock = asyncio.Lock()
-
-    async def setup(self) -> None:
-        """Cria AudioSource e publica track de áudio no room."""
-        self._audio_source = rtc.AudioSource(sample_rate=24000, num_channels=1)
-        self._audio_track = rtc.LocalAudioTrack.create_audio_track(
-            f"audio-{self._spec_id}", self._audio_source
-        )
-        options = rtc.TrackPublishOptions(source=rtc.TrackSource.SOURCE_MICROPHONE)
-        await self._room.local_participant.publish_track(self._audio_track, options)
-        logger.info(f"[{self._name}] Track de áudio publicado.")
-
-    async def speak(self, text: str) -> float:
-        """Gera TTS com voz própria, publica no room e retorna duração em segundos."""
-        async with self._speak_lock:
-            try:
-                logger.info(f"[{self._name}] Gerando TTS ({len(text)} chars)...")
-                audio_bytes = await self._generate_tts(text)
-                logger.info(f"[{self._name}] TTS gerado: {len(audio_bytes)} bytes")
-                await self._publish_pcm_audio(audio_bytes)
-                # PCM 16-bit 24kHz mono → 2 bytes/sample × 24000 samples/s
-                duration = len(audio_bytes) / (24000 * 2)
-                return duration
-            except Exception as e:
-                logger.error(f"[{self._name}] Erro no TTS: {e}", exc_info=True)
-                return 0.0
-
-    async def _generate_tts(self, text: str) -> bytes:
-        """Chama a API Gemini TTS e retorna áudio PCM 16-bit, 24kHz, mono."""
-        client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY", ""))
-        response = await client.aio.models.generate_content(
-            model=GEMINI_TTS_MODEL,
-            contents=text,
-            config=genai_types.GenerateContentConfig(
-                response_modalities=["AUDIO"],
-                speech_config=genai_types.SpeechConfig(
-                    voice_config=genai_types.VoiceConfig(
-                        prebuilt_voice_config=genai_types.PrebuiltVoiceConfig(
-                            voice_name=self._voice
-                        )
-                    )
-                ),
+    def __init__(self, spec_id: str, blackboard: Blackboard) -> None:
+        name = SPECIALIST_NAMES[spec_id]
+        super().__init__(
+            instructions=SPECIALIST_SYSTEM_PROMPTS[spec_id],
+            llm=google_plugin.realtime.RealtimeModel(
+                model=GEMINI_REALTIME_MODEL,
+                api_key=os.environ.get("GOOGLE_API_KEY", ""),
+                voice=AGENT_VOICES[spec_id],
             ),
+            allow_interruptions=True,
         )
-        raw = response.candidates[0].content.parts[0].inline_data.data
-        # A API retorna base64-encoded PCM
-        if isinstance(raw, str):
-            return base64.b64decode(raw)
-        return bytes(raw)
+        self._spec_id = spec_id
+        self._name = name
+        self._blackboard = blackboard
 
-    async def _publish_pcm_audio(self, audio_bytes: bytes, sample_rate: int = 24000) -> None:
-        """Publica bytes PCM 16-bit como AudioFrame no LiveKit."""
-        if not self._audio_source:
-            logger.warning(f"[{self._name}] AudioSource não inicializado.")
-            return
-        # 16-bit PCM → 2 bytes por sample
-        num_samples = len(audio_bytes) // 2
-        if num_samples == 0:
-            logger.warning(f"[{self._name}] Áudio PCM vazio, nada a publicar.")
-            return
-        # Criar AudioFrame passando os bytes diretamente ao construtor (evita erro de memoryview)
-        frame = rtc.AudioFrame(
-            data=audio_bytes,
-            sample_rate=sample_rate,
-            num_channels=1,
-            samples_per_channel=num_samples,
-        )
-        await self._audio_source.capture_frame(frame)
-        logger.info(f"[{self._name}] Áudio publicado: {num_samples} samples ({num_samples/sample_rate:.2f}s)")
+    async def run(self, room: rtc.Room) -> None:
+        """Inicia a sessão do especialista no room."""
+        # Nota: start() retorna a sessão
+        session = self.start(room)
+        
+        @session.on("conversation_item_added")
+        def _on_item_added(event) -> None:
+            # Captura a fala do especialista no Blackboard
+            item = getattr(event, "item", None)
+            if item and item.role == "assistant" and item.text_content:
+                content = item.text_content
+                self._blackboard.add_message(self._name, content)
+                # Publica transcrição para o frontend
+                asyncio.create_task(
+                    room.local_participant.publish_data(
+                        json.dumps({"type": "transcript", "speaker": self._name, "text": content}).encode(),
+                        reliable=True,
+                    )
+                )
+
+        logger.info(f"[{self._name}] Sessão Native Audio iniciada.")
 
 
 # ============================================================
@@ -338,13 +253,12 @@ class SpecialistSpeaker:
 class HostAgent(Agent):
     """
     Nathália – usa Google RealtimeModel (Gemini Live) para STT+LLM+TTS.
-    Aciona especialistas via function tools.
+    Aciona especialistas via voz na sala.
     """
 
     def __init__(
         self,
         blackboard: Blackboard,
-        specialist_speakers: dict[str, SpecialistSpeaker],
         room: rtc.Room,
     ) -> None:
         super().__init__(
@@ -357,207 +271,88 @@ class HostAgent(Agent):
             allow_interruptions=True,
         )
         self._blackboard = blackboard
-        self._specialist_speakers = specialist_speakers
         self._room = room
 
     # ------ function tools ------
 
     @function_tool
     async def acionar_carlos_cfo(self, context: RunContext, questao: str) -> str:
-        """Aciona Carlos (CFO) para dar análise financeira.
-        Use quando o usuário precisar de análise financeira, custos, receita ou precificação.
-
-        Args:
-            questao: Pergunta ou contexto específico para Carlos analisar.
-        """
-        return await self._call_specialist("cfo", questao)
+        """Aciona Carlos (CFO) para análise financeira."""
+        return f"Chamando Carlos para analisar: {questao}"
 
     @function_tool
     async def acionar_daniel_advogado(self, context: RunContext, questao: str) -> str:
-        """Aciona Daniel (Advogado) para dar orientação jurídica.
-        Use quando o usuário precisar de orientação legal, contratos, LGPD ou estrutura societária.
-
-        Args:
-            questao: Pergunta ou contexto específico para Daniel analisar.
-        """
-        return await self._call_specialist("legal", questao)
+        """Aciona Daniel (Advogado) para orientação jurídica."""
+        return f"Chamando Daniel para analisar: {questao}"
 
     @function_tool
     async def acionar_rodrigo_cmo(self, context: RunContext, questao: str) -> str:
-        """Aciona Rodrigo (CMO) para dar estratégia de marketing.
-        Use quando o usuário precisar de marketing, vendas, branding ou aquisição de clientes.
-
-        Args:
-            questao: Pergunta ou contexto específico para Rodrigo analisar.
-        """
-        return await self._call_specialist("cmo", questao)
+        """Aciona Rodrigo (CMO) para estratégia de marketing."""
+        return f"Chamando Rodrigo para analisar: {questao}"
 
     @function_tool
     async def acionar_ana_cto(self, context: RunContext, questao: str) -> str:
-        """Aciona Ana (CTO) para dar orientação técnica.
-        Use quando o usuário precisar de tecnologia, arquitetura, stack ou infraestrutura.
-
-        Args:
-            questao: Pergunta ou contexto específico para Ana analisar.
-        """
-        return await self._call_specialist("cto", questao)
+        """Aciona Ana (CTO) para orientação técnica."""
+        return f"Chamando Ana para analisar: {questao}"
 
     @function_tool
     async def debate_completo(self, context: RunContext, tema: str) -> str:
-        """Inicia debate com TODOS os especialistas sobre o tema apresentado.
-        Use quando o usuário apresentar um projeto novo que precisa de visão multidisciplinar.
-
-        Args:
-            tema: Tema ou projeto para debate completo.
-        """
-        self._blackboard.user_query = tema
-        results: list[str] = []
-        for spec_id in ["cfo", "legal", "cmo", "cto"]:
-            result = await self._call_specialist(spec_id, tema)
-            results.append(result)
-            await asyncio.sleep(0.5)
-        return "Debate completo realizado com todos os especialistas."
+        """Inicia debate com TODOS os especialistas."""
+        return f"Iniciando debate com todos sobre: {tema}"
 
     @function_tool
     async def gerar_plano_execucao(self, context: RunContext) -> str:
-        """Encerra a sessão e aciona Marco para gerar o Plano de Execução detalhado.
-        Use quando o usuário estiver satisfeito e quiser encerrar, ou pedir o plano final.
-        """
-        self._blackboard.is_active = False
-        full_transcript = self._blackboard.get_full_transcript()
-        asyncio.create_task(self._generate_and_speak_plan(full_transcript))
-        return "Marco está elaborando e apresentando seu Plano de Execução agora. Aguarde um momento."
-
-    # ------ internals ------
-
-    async def _call_specialist(self, spec_id: str, questao: str) -> str:
-        """Gera a resposta do especialista via LLM e faz ele falar com voz própria."""
-        context_summary = self._blackboard.get_context_summary()
-        if questao:
-            context_summary += f"\n\nQuestão específica: {questao}"
-
-        prompt = SPECIALIST_PROMPTS[spec_id].format(context=context_summary)
-        spec_llm = google_plugin.LLM(model=GEMINI_CHAT_MODEL, temperature=0.7)
-
-        chat_ctx = llm.ChatContext()
-        chat_ctx.append(role="system", text=prompt)
-        chat_ctx.append(
-            role="user",
-            text=questao or self._blackboard.user_query or "Analise o projeto e dê sua contribuição.",
-        )
-
-        response_text = ""
-        async for chunk in spec_llm.chat(chat_ctx=chat_ctx):
-            if chunk.choices and chunk.choices[0].delta.content:
-                response_text += chunk.choices[0].delta.content
-
-        if not response_text.strip():
-            response_text = "Preciso de mais informações para analisar este ponto."
-
-        self._blackboard.add_specialist_response(spec_id, response_text)
-
-        name = SPECIALIST_NAMES[spec_id]
-        await self._publish_transcript(name, response_text)
-
-        speaker = self._specialist_speakers.get(spec_id)
-        if speaker:
-            asyncio.create_task(speaker.speak(response_text))
-
-        logger.info(f"[{name}] {response_text[:120]}...")
-        return f"{name}: {response_text[:300]}"
-
-    async def _generate_and_speak_plan(self, full_transcript: str) -> None:
-        """Gera o plano de execução via Gemini e faz Marco apresentá-lo."""
-        try:
-            prompt = SPECIALIST_PROMPTS["plan"].format(context=full_transcript)
-            plan_llm = google_plugin.LLM(model=GEMINI_CHAT_MODEL, temperature=0.3)
-
-            chat_ctx = llm.ChatContext()
-            chat_ctx.append(role="system", text=prompt)
-            chat_ctx.append(
-                role="user",
-                text="Por favor, apresente o Plano de Execução completo agora.",
-            )
-
-            plan_text = ""
-            async for chunk in plan_llm.chat(chat_ctx=chat_ctx):
-                if chunk.choices and chunk.choices[0].delta.content:
-                    plan_text += chunk.choices[0].delta.content
-
-            if not plan_text.strip():
-                plan_text = "Não foi possível gerar o plano de execução. Por favor, solicite novamente."
-
-            self._blackboard.add_message("Marco (Estrategista)", plan_text)
-            await self._publish_transcript("Marco (Estrategista)", plan_text)
-
-            marco = self._specialist_speakers.get("plan")
-            if marco:
-                await marco.speak(plan_text)
-
-            # Envia plano completo ao frontend
-            payload = json.dumps({
-                "type": "execution_plan",
-                "speaker": "Marco",
-                "plan": plan_text,
-                "transcript": full_transcript,
-            }).encode()
-            await self._room.local_participant.publish_data(payload, reliable=True)
-
-            logger.info(f"[Marco] Plano de execução gerado ({len(plan_text)} chars).")
-        except Exception as e:
-            logger.error(f"[Marco] Erro ao gerar plano: {e}")
-
-    async def _publish_transcript(self, speaker: str, text: str) -> None:
-        try:
-            payload = json.dumps({"type": "transcript", "speaker": speaker, "text": text}).encode()
-            await self._room.local_participant.publish_data(payload, reliable=True)
-        except Exception as e:
-            logger.warning(f"Erro ao publicar transcrição: {e}")
+        """Aciona Marco para gerar o Plano de Execução."""
+        return "Marco está preparando o plano consolidado agora."
 
 
 # ============================================================
 # ENTRYPOINT
 # ============================================================
 
-async def _connect_specialist(
-    spec_id: str,
+async def _connect_agent(
+    agent: Agent,
     ws_url: str,
     lk_api_key: str,
     lk_api_secret: str,
     room_name: str,
-) -> Optional["SpecialistSpeaker"]:
-    """Conecta um especialista ao room e retorna o SpecialistSpeaker ou None."""
+    identity: str,
+    name: str,
+    delay: float = 0
+) -> bool:
+    """Conecta um agente individual ao room e inicia sua sessão com um atraso opcional."""
+    if delay > 0:
+        await asyncio.sleep(delay)
+        
+    logger.info(f"[{name}] Iniciando conexão após {delay}s de espera...")
     try:
         token = (
             api.AccessToken(lk_api_key, lk_api_secret)
-            .with_identity(f"agent-{spec_id}")
-            .with_name(SPECIALIST_NAMES[spec_id])
+            .with_identity(identity)
+            .with_name(name)
             .with_grants(
                 api.VideoGrants(
                     room_join=True,
                     room=room_name,
                     can_publish=True,
-                    can_subscribe=False,
+                    can_subscribe=True,
                 )
             )
             .to_jwt()
         )
-
-        spec_room = rtc.Room()
-        await asyncio.wait_for(spec_room.connect(ws_url, token), timeout=15.0)
-
-        speaker = SpecialistSpeaker(spec_id, spec_room)
-        await speaker.setup()
-
-        logger.info(f"[{SPECIALIST_NAMES[spec_id]}] Conectado e pronto no room {room_name}.")
-        return speaker
-
-    except asyncio.TimeoutError:
-        logger.error(f"[{SPECIALIST_NAMES[spec_id]}] Timeout ao conectar (15s).")
-        return None
-    except Exception as exc:
-        logger.error(f"[{SPECIALIST_NAMES[spec_id]}] Erro ao conectar: {exc}", exc_info=True)
-        return None
+        room = rtc.Room()
+        # Aumentamos o timeout para 60s devido a instabilidade regional do Gemini
+        await asyncio.wait_for(room.connect(ws_url, token), timeout=60.0)
+        
+        # Em 1.4+, usamos AgentSession para iniciar o Agent
+        session = AgentSession()
+        await session.start(agent, room=room)
+        
+        logger.info(f"[{name}] Conectado com sucesso.")
+        return True
+    except Exception as e:
+        logger.error(f"[{name}] Erro ao conectar: {e}")
+        return False
 
 
 async def entrypoint(ctx: JobContext) -> None:
@@ -567,109 +362,53 @@ async def entrypoint(ctx: JobContext) -> None:
     _fh.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
     logging.getLogger().addHandler(_fh)
 
-    logger.info(f"=== ENTRYPOINT INICIADO – sala: {ctx.room.name} ===")
+    logger.info(f"=== ENTRYPOINT NATIVE AUDIO – sala: {ctx.room.name} ===")
 
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
     logger.info(f"Conectado ao room {ctx.room.name}")
 
     blackboard = Blackboard(project_name=ctx.room.name)
 
-    # URL LiveKit – usa env var diretamente (mais confiável que atributo privado)
-    ws_url: str = (
-        os.getenv("LIVEKIT_URL")
-        or os.getenv("NEXT_PUBLIC_LIVEKIT_URL")
-        or ""
-    )
-    if not ws_url:
-        # Fallback: tenta atributo privado do ctx._info
-        try:
-            ws_url = ctx._info.url  # type: ignore[attr-defined]
-        except AttributeError:
-            pass
-    logger.info(f"LiveKit URL para especialistas: {ws_url!r}")
-
+    ws_url = os.getenv("LIVEKIT_URL", "ws://localhost:7880")
     lk_api_key = os.getenv("LIVEKIT_API_KEY", "")
     lk_api_secret = os.getenv("LIVEKIT_API_SECRET", "")
 
-    # ========================================
-    # CONECTAR ESPECIALISTAS EM PARALELO
-    # ========================================
-
-    logger.info("Conectando especialistas em paralelo...")
-    spec_ids = ["cfo", "legal", "cmo", "cto", "plan"]
-
-    results = await asyncio.gather(
-        *[
-            _connect_specialist(spec_id, ws_url, lk_api_key, lk_api_secret, ctx.room.name)
-            for spec_id in spec_ids
-        ],
-        return_exceptions=False,
-    )
-
-    specialist_speakers: dict[str, SpecialistSpeaker] = {}
-    for spec_id, speaker in zip(spec_ids, results):
-        if speaker is not None:
-            specialist_speakers[spec_id] = speaker
-
-    connected_count = len(specialist_speakers)
-    logger.info(f"Especialistas conectados: {connected_count}/{len(spec_ids)} – {list(specialist_speakers.keys())}")
-
-    # ========================================
-    # DESCOBRIR NOME DO USUÁRIO
-    # ========================================
-
-    def _get_user_name() -> str:
-        """Retorna o primeiro nome do participante humano na sala."""
-        for participant in ctx.room.remote_participants.values():
-            identity = participant.identity or ""
-            name = participant.name or ""
-            if not identity.startswith("agent-"):
-                first_name = name.split()[0] if name.strip() else "amigo"
-                return first_name
-        return "amigo"
-
-    # Aguarda o usuário entrar (até 30s)
-    user_name = _get_user_name()
-    if user_name == "amigo":
-        logger.info("Aguardando usuário entrar na sala (até 30s)...")
-        try:
-            user_joined = asyncio.Event()
-
-            @ctx.room.once("participant_connected")
-            def _on_first_participant(participant: rtc.RemoteParticipant) -> None:  # type: ignore[no-untyped-def]
-                if not participant.identity.startswith("agent-"):
-                    user_joined.set()
-
-            await asyncio.wait_for(user_joined.wait(), timeout=30.0)
-        except asyncio.TimeoutError:
-            logger.warning("Timeout: usuário não entrou em 30s. Continuando mesmo assim.")
-        except Exception as exc:
-            logger.warning(f"Erro aguardando usuário: {exc}")
-        user_name = _get_user_name()
-
-    blackboard.project_name = f"Sessão de {user_name}"
-    logger.info(f"Usuário identificado: {user_name!r}")
-
-    # ========================================
-    # HOST – Nathália
-    # ========================================
-
-    host_agent = HostAgent(blackboard, specialist_speakers, ctx.room)
+    # 1. Nathália (Host)
+    host_agent = HostAgent(blackboard, ctx.room)
     host_session = AgentSession(
-        vad=silero.VAD.load(),
+        vad=silero.VAD.load()
     )
+    try:
+        await host_session.start(host_agent, room=ctx.room)
+        logger.info("[Host] Nathália iniciada.")
+    except Exception as e:
+        logger.error(f"[Host] Erro ao iniciar a sessão da Nathália: {e}", exc_info=True)
+        return
+
+    # 2. Conectar especialistas de forma escalonada (Staggered)
+    spec_ids = ["cfo", "legal", "cmo", "cto", "plan"]
+    specialists = [SpecialistAgent(sid, blackboard) for sid in spec_ids]
+    
+    async def _connect_all_specs():
+        logger.info("[Especialistas] Iniciando conexão escalonada...")
+        for i, sid in enumerate(spec_ids):
+            # Atraso incremental para evitar sobrecarga
+            delay = i * 2.5
+            asyncio.create_task(_connect_agent(
+                specialists[i], ws_url, lk_api_key, lk_api_secret, 
+                ctx.room.name, f"agent-{sid}", SPECIALIST_NAMES[sid],
+                delay=delay
+            ))
+        logger.info("[Especialistas] Tarefas de conexão disparadas.")
+
+    asyncio.create_task(_connect_all_specs())
 
     # Transcrição do usuário → blackboard + frontend
     @host_session.on("user_input_transcribed")
-    def _on_user_speech(event) -> None:  # type: ignore[no-untyped-def]
-        if not getattr(event, "is_final", True):
-            return
+    def _on_user_speech(event) -> None:
         text: str = getattr(event, "transcript", "")
-        if not text:
-            return
+        if not text: return
         blackboard.add_message("Usuário", text)
-        blackboard.user_query = text
-        logger.info(f"[USUÁRIO] {text[:120]}")
         asyncio.create_task(
             ctx.room.local_participant.publish_data(
                 json.dumps({"type": "transcript", "speaker": "Você", "text": text}).encode(),
@@ -678,49 +417,54 @@ async def entrypoint(ctx: JobContext) -> None:
         )
 
     # Fala da host → blackboard + frontend
-    @host_session.on("conversation_item_added")
-    def _on_host_speech(event) -> None:  # type: ignore[no-untyped-def]
-        item = getattr(event, "item", None)
-        if item is None:
-            return
-        role = getattr(item, "role", None)
-        if role != "assistant":
-            return
-        content = ""
-        if hasattr(item, "text_content") and item.text_content:
-            content = item.text_content
-        else:
-            raw_content = getattr(item, "content", "")
-            if isinstance(raw_content, list):
-                content = " ".join(str(c) for c in raw_content if c and not isinstance(c, bytes))
-            elif isinstance(raw_content, str):
-                content = raw_content
-        if not content or not content.strip():
-            return
-        blackboard.add_message("Nathália (Apresentadora)", content)
+    @host_session.on("agent_speech_transcribed") # Ajustado para o evento correto de transcrição do agente
+    def _on_host_speech(event) -> None:
+        text: str = getattr(event, "transcript", "")
+        if not text: return
+        blackboard.add_message("Nathália (Host)", text)
         asyncio.create_task(
             ctx.room.local_participant.publish_data(
-                json.dumps({"type": "transcript", "speaker": "Nathália", "text": content}).encode(),
+                json.dumps({"type": "transcript", "speaker": "Nathália", "text": text}).encode(),
                 reliable=True,
             )
         )
 
+    # 3. Saudação Inicial (Nathália)
+    async def welcome_task():
+        await asyncio.sleep(1) # Espera 1s para o áudio estabilizar
+        user_name = blackboard.get_user_name()
+        greeting = (
+            f"Olá {user_name}! Sou a Nathália, sua apresentadora e mentor líder. "
+            "Estamos aqui com nosso time de especialistas para acelerar seu negócio. "
+            "Como podemos te ajudar hoje?"
+        )
+        logger.info(f"Enviando saudação da Nathália para {user_name}...")
+        try:
+            # Usando Native Audio do RealtimeModel
+            await host_session.say(greeting, allow_interruptions=True)
+        except Exception as e:
+            logger.error(f"Erro na saudação (Realtime): {e}")
+            # Fallback apenas texto
+            await ctx.room.local_participant.publish_data(
+                json.dumps({"type": "transcript", "speaker": "Nathália", "text": greeting}).encode(),
+                reliable=True,
+            )
+
+    asyncio.create_task(welcome_task())
+
     # Mensagens de dados do frontend
     @ctx.room.on("data_received")
-    def _on_data_received(data: bytes, participant=None, kind=None, topic=None) -> None:  # type: ignore[no-untyped-def]
+    def _on_data_received(dp: rtc.DataPacket) -> None:
         try:
-            raw = bytes(data) if isinstance(data, (bytes, bytearray, memoryview)) else b""
-            if not raw:
-                return
-            msg = json.loads(raw.decode())
-            logger.info(f"Dados recebidos do frontend: {msg.get('type')}")
+            # Em LiveKit RTC 1.x, recebemos um DataPacket
+            data = dp.data
+            msg = json.loads(data.decode())
             if msg.get("type") == "end_session":
-                blackboard.is_active = False
                 asyncio.create_task(
                     ctx.room.local_participant.publish_data(
                         json.dumps({
                             "type": "session_end",
-                            "transcript": blackboard.get_full_transcript(),
+                            "transcript": blackboard.get_context_summary(),
                         }).encode(),
                         reliable=True,
                     )
@@ -728,102 +472,19 @@ async def entrypoint(ctx: JobContext) -> None:
         except Exception as e:
             logger.warning(f"Erro ao processar dados: {e}")
 
-    # ========================================
-    # INICIAR SESSÃO DA HOST
-    # ========================================
-
-    logger.info("Iniciando AgentSession com Gemini Realtime...")
-    await host_session.start(agent=host_agent, room=ctx.room)
-    logger.info("AgentSession iniciada. Aguardando conexão Gemini...")
-    # Breve pausa para garantir que Gemini Realtime está conectado antes de say()
-    await asyncio.sleep(2.0)
-
-    # ========================================
-    # SEQUÊNCIA DE BOAS-VINDAS E APRESENTAÇÕES
-    # ========================================
-
-    async def run_introductions() -> None:
-        """Nathália cumprimenta pelo nome e cada especialista se apresenta com voz própria."""
-        logger.info(f"Iniciando sequência de apresentações para {user_name!r}")
-
-        # 1 – Nathália abre a sessão
-        greeting = (
-            f"Olá, {user_name}! Seja muito bem-vindo ao Mentoria AI! "
-            f"Eu sou a Nathália, sua apresentadora e guia durante toda essa sessão. "
-            f"É uma honra ter você aqui, {user_name}! "
-            "Hoje você vai contar com um time de cinco especialistas prontos para ajudar a transformar seu projeto em realidade. "
-            "Vou pedir que cada um se apresente pessoalmente para você agora. "
-            "Carlos, pode começar?"
-        )
-        logger.info("[Nathália] Enviando saudação inicial...")
-        try:
-            await host_session.say(greeting, allow_interruptions=False)
-        except Exception as e:
-            logger.error(f"[Nathália] Erro ao dizer saudação: {e}", exc_info=True)
-        await asyncio.sleep(1.5)
-
-        # 2 – Cada especialista se apresenta, depois Nathália passa a palavra ao próximo
-        # Formato: (spec_id, prompt_para_o_proximo_ou_None)
-        intro_order = [
-            ("cfo",   f"Obrigada, Carlos! Daniel, é a sua vez!"),
-            ("legal", f"Muito bem, Daniel! Rodrigo, pode se apresentar!"),
-            ("cmo",   f"Ótimo, Rodrigo! Ana, apresente-se por favor!"),
-            ("cto",   f"Perfeito, Ana! E por último, Marco!"),
-            ("plan",  None),
-        ]
-
-        for spec_id, next_prompt in intro_order:
-            speaker = specialist_speakers.get(spec_id)
-            if speaker:
-                intro_text = SPECIALIST_INTROS[spec_id]
-                logger.info(f"[{SPECIALIST_NAMES[spec_id]}] Iniciando apresentação...")
-                # Publica transcrição no frontend
-                try:
-                    payload = json.dumps({
-                        "type": "transcript",
-                        "speaker": SPECIALIST_NAMES[spec_id],
-                        "text": intro_text,
-                    }).encode()
-                    await ctx.room.local_participant.publish_data(payload, reliable=True)
-                except Exception as pub_err:
-                    logger.warning(f"Erro publicando transcrição: {pub_err}")
-
-                # Faz o especialista falar
-                try:
-                    duration = await speaker.speak(intro_text)
-                    logger.info(f"[{SPECIALIST_NAMES[spec_id]}] Falou por {duration:.1f}s")
-                    await asyncio.sleep(max(duration, 2.0) + 0.8)
-                except Exception as speak_err:
-                    logger.error(f"[{SPECIALIST_NAMES[spec_id]}] Erro ao falar: {speak_err}", exc_info=True)
-                    await asyncio.sleep(1.0)
-            else:
-                logger.warning(f"Especialista {spec_id} não disponível, pulando apresentação.")
-
-            # Nathália passa a palavra ao próximo
-            if next_prompt:
-                try:
-                    await host_session.say(next_prompt, allow_interruptions=False)
-                except Exception as e:
-                    logger.error(f"[Nathália] Erro passando palavra: {e}")
-                await asyncio.sleep(1.0)
-
-        # 3 – Nathália encerra as apresentações e convida o usuário a falar
-        closing = (
-            f"Que time incrível, não é mesmo, {user_name}? "
-            f"Agora é a sua vez! Conta para a gente: qual é o seu projeto ou desafio empresarial? "
-            "Estamos todos aqui para te ouvir e ajudar!"
-        )
-        logger.info("[Nathália] Encerrando apresentações...")
-        try:
-            await host_session.say(closing, allow_interruptions=True)
-        except Exception as e:
-            logger.error(f"[Nathália] Erro ao encerrar apresentações: {e}", exc_info=True)
-
-        logger.info("=== Sequência de apresentações concluída ===")
-
-    asyncio.create_task(run_introductions())
-    logger.info("Sessão de mentoria iniciada com sucesso. Introduções em andamento...")
+    # Loop principal
+    logger.info("=== Job em execução. Aguardando interação... ===")
+    try:
+        await host_session.wait_for_shutdown()
+        logger.info("Sessão da Host finalizada.")
+    except Exception as e:
+        logger.error(f"Erro no loop principal: {e}")
+    finally:
+        logger.info("Encerrando o Job.")
 
 
 if __name__ == "__main__":
-    cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint))
+    cli.run_app(WorkerOptions(
+        entrypoint_fnc=entrypoint,
+        agent_name="mentoria-agent"
+    ))

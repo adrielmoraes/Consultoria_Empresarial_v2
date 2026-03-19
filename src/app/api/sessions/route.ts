@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { mentoringSessions, projects } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { v4 as uuidv4 } from "uuid";
+import { AgentDispatchClient } from "livekit-server-sdk";
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,6 +44,20 @@ export async function POST(request: NextRequest) {
       .update(projects)
       .set({ status: "in_progress", updatedAt: new Date() })
       .where(eq(projects.id, projectId));
+
+    // Iniciar o Agente de Mentoria via Dispatch API
+    try {
+      const dispatchClient = new AgentDispatchClient(
+        process.env.LIVEKIT_URL!,
+        process.env.LIVEKIT_API_KEY!,
+        process.env.LIVEKIT_API_SECRET!
+      );
+      await dispatchClient.createDispatch(roomName, "mentoria-agent");
+      console.log(`[Sessions API] Agent dispatch criado para a sala ${roomName}`);
+    } catch (dispatchError) {
+      console.error("[Sessions API] Erro ao disparar agente:", dispatchError);
+      // Não falha a resposta, mas loga o erro de dispatch
+    }
 
     return NextResponse.json({
       sessionId: session.id,
