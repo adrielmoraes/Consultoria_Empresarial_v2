@@ -434,10 +434,12 @@ async def _start_specialist_in_room(
     lk_api_secret: str,
     room_name: str,
     delay: float = 0.0,
+    auto_introduce: bool = False,
 ) -> Optional[AgentSession]:
     """
     Conecta um SpecialistAgent ao room como participante separado.
     Retorna a AgentSession para que possa ser usada para say() na apresentação.
+    Se auto_introduce=True, o especialista se apresenta automaticamente ao entrar.
     """
     if delay > 0:
         await asyncio.sleep(delay)
@@ -496,6 +498,40 @@ async def _start_specialist_in_room(
 
         # Registra a sessão no Blackboard para uso na apresentação
         blackboard.specialist_sessions[spec_id] = session
+
+        # Auto-apresentação: o especialista se apresenta ao entrar na sala
+        if auto_introduce:
+            intro_text = SPECIALIST_INTRODUCTIONS[spec_id]
+            logger.info(f"[{name}] Iniciando auto-apresentação...")
+            try:
+                await asyncio.wait_for(
+                    session.generate_reply(
+                        instructions=(
+                            f"Apresente-se com esta frase exata, sem alterar nada: {intro_text}"
+                        )
+                    ),
+                    timeout=30.0,
+                )
+            except asyncio.TimeoutError:
+                logger.warning(f"[{name}] Timeout na auto-apresentação.")
+                await room.local_participant.publish_data(
+                    json.dumps({
+                        "type": "transcript",
+                        "speaker": name,
+                        "text": intro_text,
+                    }).encode(),
+                    reliable=True,
+                )
+            except Exception as e:
+                logger.warning(f"[{name}] Erro na auto-apresentação: {e}")
+                await room.local_participant.publish_data(
+                    json.dumps({
+                        "type": "transcript",
+                        "speaker": name,
+                        "text": intro_text,
+                    }).encode(),
+                    reliable=True,
+                )
 
         # Captura transcrição do especialista via evento correto
         @session.on("agent_speech_committed")
@@ -644,13 +680,24 @@ async def entrypoint(ctx: JobContext) -> None:
         )
 
     # ------------------------------------------------------------------
-    # 2. Iniciar especialistas de forma escalonada
+    # 2. Fluxo de Abertura: Nathália entra primeiro e se apresenta,
+    #    depois cada especialista entra e se apresenta individualmente.
     # ------------------------------------------------------------------
-    spec_ids = ["cfo", "legal", "cmo", "cto", "plan"]
-    spec_sessions: dict[str, AgentSession] = {}
 
-    for i, sid in enumerate(spec_ids):
-        delay = (i + 1) * 7.0  # 7s, 14s, 21s, 28s, 35s
+    # Delays escalonados para cada especialista (em segundos).
+    # Nathália já está na sala. Os especialistas entram um a um
+    # após ela terminar sua apresentação inicial (~8s).
+    SPECIALIST_DELAYS = {
+        "cfo":   8.0,   # Carlos entra após 8s
+        "legal": 13.0,  # Daniel entra após 13s
+        "cmo":   18.0,  # Rodrigo entra após 18s
+        "cto":   23.0,  # Ana entra após 23s
+        "plan":  28.0,  # Marco entra após 28s
+    }
+
+    spec_ids = ["cfo", "legal", "cmo", "cto", "plan"]
+
+    for sid in spec_ids:
         asyncio.create_task(
             _start_specialist_in_room(
                 spec_id=sid,
@@ -659,34 +706,29 @@ async def entrypoint(ctx: JobContext) -> None:
                 lk_api_key=lk_api_key,
                 lk_api_secret=lk_api_secret,
                 room_name=ctx.room.name,
-                delay=delay,
+                delay=SPECIALIST_DELAYS[sid],
+                auto_introduce=True,
             )
         )
 
     logger.info("[Especialistas] Tarefas de conexão escalonada disparadas.")
 
     # ------------------------------------------------------------------
-    # 3. Fluxo de Apresentação: Nathália apresenta o time
+    # 3. Fluxo de Apresentação: Nathália entra primeiro e apresenta o time
     # ------------------------------------------------------------------
     async def welcome_and_introductions() -> None:
-        # Aguarda Nathália conectar
-        await asyncio.sleep(8.0)
+        # Aguarda Nathália estabilizar no room
+        await asyncio.sleep(3.0)
 
-        # 3a. Nathália se apresenta e apresenta o time (via generate_reply com RealtimeModel)
+        # 3a. Nathália se apresenta (somente ela)
         host_greeting = (
             "Olá! Seja muito bem-vindo ao Mentoria AI! "
-            "Sou a Nathália, sua apresentadora e mentora líder. "
-            "Estou aqui com nosso time completo! "
-            "Temos Carlos, nosso CFO para finanças. "
-            "Daniel, nosso advogado para questões jurídicas. "
-            "Rodrigo, CMO para marketing e crescimento. "
-            "Ana, CTO para tecnologia e sistemas. "
-            "E Marco, nosso estrategista-chefe. "
-            "Todos prontos para ajudar no seu projeto!"
+            "Sou a Nathália, sua apresentadora e mentora líder desta sessão. "
+            "Em instantes nosso time completo de especialistas vai se juntar a nós e cada um vai se apresentar. "
+            "Aguarde um momento!"
         )
-        logger.info("[Host] Enviando saudação inicial...")
+        logger.info("[Host] Nathália enviando apresentação inicial...")
         try:
-            # Usar generate_reply em vez de say() com RealtimeModel
             await host_session.generate_reply(
                 instructions=(
                     "Fale esta mensagem exatamente como está escrita, sem adicionar nada: "
@@ -694,8 +736,7 @@ async def entrypoint(ctx: JobContext) -> None:
                 )
             )
         except Exception as e:
-            logger.warning(f"[Host] Erro ao gerar reply: {e}")
-            # Fallback: publica apenas o texto para o frontend
+            logger.warning(f"[Host] Erro ao gerar reply inicial: {e}")
             await ctx.room.local_participant.publish_data(
                 json.dumps({
                     "type": "transcript",
@@ -705,12 +746,18 @@ async def entrypoint(ctx: JobContext) -> None:
                 reliable=True,
             )
 
-        # 3b. Pausa e Nathália faz a pergunta inicial
-        await asyncio.sleep(3.0)
+        # 3b. Aguarda todos os especialistas entrarem e se apresentarem
+        # (o último entra em 28s + ~5s para falar = ~33s desde o início)
+        # Nathália aguarda esse tempo antes de fazer a pergunta inicial.
+        await asyncio.sleep(30.0)
+
+        # 3c. Nathália retoma e faz a pergunta inicial ao usuário
         closing = (
-            "Agora me conte: qual é o seu projeto ou principal desafio de negócio hoje? "
+            "Agora que você já conhece toda a nossa equipe, me conte: "
+            "qual é o seu projeto ou principal desafio de negócio hoje? "
             "Estou aqui para ouvir você!"
         )
+        logger.info("[Host] Nathália fazendo pergunta inicial...")
         try:
             await host_session.generate_reply(
                 instructions=f"Fale esta mensagem: {closing}"
@@ -726,7 +773,7 @@ async def entrypoint(ctx: JobContext) -> None:
                 reliable=True,
             )
 
-        logger.info("[Host] Apresentação concluída.")
+        logger.info("[Host] Fluxo de abertura concluído.")
 
     asyncio.create_task(welcome_and_introductions())
 
