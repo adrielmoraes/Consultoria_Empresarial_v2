@@ -4,6 +4,18 @@ import { mentoringSessions, projects } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { AgentDispatchClient } from "livekit-server-sdk";
 
+const DISPATCH_DEDUP_WINDOW_MS = 30_000; // 30 segundos
+
+async function dispatchAgent(roomName: string) {
+  const dispatchClient = new AgentDispatchClient(
+    process.env.LIVEKIT_URL!,
+    process.env.LIVEKIT_API_KEY!,
+    process.env.LIVEKIT_API_SECRET!
+  );
+  await dispatchClient.createDispatch(roomName, "mentoria-agent");
+  console.log(`[Sessions API] Agent dispatch criado para a sala ${roomName}`);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { projectId, userId } = await request.json();
@@ -26,10 +38,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Projeto não encontrado" }, { status: 404 });
     }
 
-    // Criar nome da sala com o ID do projeto
     const roomName = `mentoria-${projectId}`;
 
-    // Idempotência: se já existe sessão ativa para este projeto, reutiliza sem criar nova dispatch
+    // Busca sessão ativa existente
     const [existingSession] = await db
       .select()
       .from(mentoringSessions)
@@ -40,14 +51,26 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (existingSession) {
-      console.log(`[Sessions API] Sessão ativa já existe para ${roomName} — reutilizando.`);
-      return NextResponse.json({
-        sessionId: existingSession.id,
-        roomName: existingSession.livekitRoomId ?? roomName,
-      });
+      const ageMs = Date.now() - existingSession.startedAt.getTime();
+
+      if (ageMs <= DISPATCH_DEDUP_WINDOW_MS) {
+        // Sessão recente (< 30s): é o double-mount do React — reutiliza sem novo dispatch
+        console.log(`[Sessions API] Sessão recente reutilizada (${Math.round(ageMs / 1000)}s) para ${roomName}`);
+        return NextResponse.json({
+          sessionId: existingSession.id,
+          roomName: existingSession.livekitRoomId ?? roomName,
+        });
+      }
+
+      // Sessão antiga (> 30s): é fantasma — cancela e cria nova com dispatch
+      console.log(`[Sessions API] Sessão fantasma encontrada (${Math.round(ageMs / 1000)}s) — cancelando e criando nova.`);
+      await db
+        .update(mentoringSessions)
+        .set({ status: "cancelled", endedAt: new Date() })
+        .where(eq(mentoringSessions.id, existingSession.id));
     }
 
-    // Criar sessão de mentoria no banco
+    // Criar nova sessão
     const [session] = await db
       .insert(mentoringSessions)
       .values({
@@ -57,30 +80,20 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    // Atualizar o status do projeto para "in_progress"
+    // Atualizar status do projeto
     await db
       .update(projects)
       .set({ status: "in_progress", updatedAt: new Date() })
       .where(eq(projects.id, projectId));
 
-    // Iniciar o Agente de Mentoria via Dispatch API
+    // Despachar agente
     try {
-      const dispatchClient = new AgentDispatchClient(
-        process.env.LIVEKIT_URL!,
-        process.env.LIVEKIT_API_KEY!,
-        process.env.LIVEKIT_API_SECRET!
-      );
-      await dispatchClient.createDispatch(roomName, "mentoria-agent");
-      console.log(`[Sessions API] Agent dispatch criado para a sala ${roomName}`);
+      await dispatchAgent(roomName);
     } catch (dispatchError) {
       console.error("[Sessions API] Erro ao disparar agente:", dispatchError);
-      // Não falha a resposta, mas loga o erro de dispatch
     }
 
-    return NextResponse.json({
-      sessionId: session.id,
-      roomName,
-    });
+    return NextResponse.json({ sessionId: session.id, roomName });
   } catch (error) {
     console.error("Erro ao criar sessão:", error);
     return NextResponse.json(
