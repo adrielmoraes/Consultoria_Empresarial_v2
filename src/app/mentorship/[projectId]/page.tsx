@@ -33,6 +33,7 @@ import {
   RemoteParticipant,
   ConnectionState,
   DisconnectReason,
+  DefaultReconnectPolicy,
 } from "livekit-client";
 
 // ─── NextAuth type extension ──────────────────────────────────────────────────
@@ -171,7 +172,7 @@ export default function MentorshipRoomPage() {
   const [showTranscript, setShowTranscript] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [executionPlan, setExecutionPlan] = useState<string | null>(null);
-  const [showPlan, setShowPlan] = useState(false);
+  const [showPlan, setShowPlan] = useState<boolean | "content" | "checklist">(false);
 
   const roomRef = useRef<Room | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
@@ -179,6 +180,41 @@ export default function MentorshipRoomPage() {
   // CORREÇÃO P1 / P6: container de áudio dentro do componente, controlado
   // pelo React, em vez de injetar no document.body.
   const audioContainerRef = useRef<HTMLDivElement>(null);
+
+  // Refs para gerenciar estado de visibilidade e reconexão
+  const isVisibleRef = useRef(true);
+  const isReconnectingRef = useRef(false);
+  const sessionDataRef = useRef<{ sessionId?: string; roomName?: string; token?: string; url?: string } | null>(null);
+
+  // CORREÇÃO: Page Visibility API - mantém conexão ativa mesmo com aba minimizada
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      isVisibleRef.current = document.visibilityState === "visible";
+      
+      if (document.visibilityState === "visible") {
+        console.log("[Visibility] Aba voltou a ficar visível");
+        
+        // Se estava reconnecting, tenta manter a conexão existente
+        if (roomRef.current && isReconnectingRef.current) {
+          console.log("[Visibility] Verificando estado da sala...");
+          const roomState = roomRef.current.state;
+          if (roomState === ConnectionState.Reconnecting) {
+            console.log("[Visibility] Sala em reconexão, aguardando...");
+          } else if (roomState === ConnectionState.Disconnected) {
+            console.log("[Visibility] Sala desconectada, tentando reconnect...");
+            // Não reconecta automaticamente - deixa o reconnectPolicy cuidar
+          }
+        }
+      } else {
+        console.log("[Visibility] Aba minimizada, mantendo conexão...");
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
 
   // Redireciona para login se não autenticado
   useEffect(() => {
@@ -216,6 +252,12 @@ export default function MentorshipRoomPage() {
   useEffect(() => {
     if (authStatus !== "authenticated" || !session?.user) return;
 
+    // CORREÇÃO: se a sala já está conectada, não recria
+    if (roomRef.current?.state === ConnectionState.Connected) {
+      console.log("[Room] Sala já conectada, pulando reconexão...");
+      return;
+    }
+
     // CORREÇÃO P3 / P8: acesso tipado via AuthUser, sem cast (as any)
     const user = session.user as AuthUser;
     const userId = user.id;
@@ -235,6 +277,9 @@ export default function MentorshipRoomPage() {
         if (cancelled) return;
         const { sessionId: sid, roomName } = await sessionRes.json();
         setSessionId(sid);
+        
+        // Salva dados da sessão para possível reconexão
+        sessionDataRef.current = { sessionId: sid, roomName };
 
         // Obtém token LiveKit
         const tokenRes = await safeFetch("/api/livekit/token", {
@@ -248,17 +293,20 @@ export default function MentorshipRoomPage() {
         });
         if (cancelled) return;
         const { token, url } = await tokenRes.json();
+        
+        // Salva token e url para reconexão
+        sessionDataRef.current = { ...sessionDataRef.current, token, url };
 
         // Configura a sala
         room = new Room({
           adaptiveStream: true,
           dynacast: true,
-          // CORREÇÃO P9: política de reconexão automática em quedas transitórias
-          reconnectPolicy: {
-            maxRetryDelay: 5000,
-            retryDelayIncrease: 1000,
-            maxRetries: 5,
-          },
+          // CORREÇÃO P9: política de reconexão automática - não desconecta ao minimizar aba
+          disconnectOnPageLeave: false,
+          reconnectPolicy: new DefaultReconnectPolicy(
+            // Retry delays em ms: 1s, 2s, 3s, 5s, 10s, 15s, 30s
+            [1000, 2000, 3000, 5000, 10000, 15000, 30000]
+          ),
           audioCaptureDefaults: {
             echoCancellation: true,
             noiseSuppression: true,
@@ -289,11 +337,13 @@ export default function MentorshipRoomPage() {
 
         // CORREÇÃO P9: eventos de reconexão automática do SDK
         room.on(RoomEvent.Reconnecting, () => {
+          isReconnectingRef.current = true;
           setConnectionState("reconnecting");
           addTranscriptMessage("Sistema", "Reconectando...");
         });
 
         room.on(RoomEvent.Reconnected, () => {
+          isReconnectingRef.current = false;
           setConnectionState("connected");
           addTranscriptMessage("Sistema", "Reconectado com sucesso.");
         });
@@ -607,30 +657,66 @@ export default function MentorshipRoomPage() {
           {showPlan && executionPlan && (
             <motion.div
               initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 380, opacity: 1 }}
+              animate={{ width: 420, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               className="bg-gray-900/90 border-l border-violet-500/20 flex flex-col overflow-hidden shrink-0"
             >
-              <div className="p-4 border-b border-white/5 flex items-center gap-2">
-                <Star className="w-4 h-4 text-violet-400 shrink-0" />
-                <div>
-                  <h3 className="text-sm font-semibold text-white">
-                    Plano de Execução
-                  </h3>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    por Marco – Estrategista Chefe
-                  </p>
+              <div className="p-4 border-b border-white/5">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Star className="w-4 h-4 text-violet-400 shrink-0" />
+                    <div>
+                      <h3 className="text-sm font-semibold text-white">
+                        Plano de Execução
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        por Marco – Estrategista Chefe
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (sessionId) {
+                        window.open(`/api/execution-plan/${sessionId}`, "_blank");
+                      }
+                    }}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/20 text-violet-300 text-xs font-medium hover:bg-violet-500/30 transition-colors border border-violet-500/30"
+                    title="Baixar PDF do Plano"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    PDF
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowPlan("content")}
+                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                      (showPlan as string) === "content"
+                        ? "bg-violet-500/20 text-violet-300 border border-violet-500/30"
+                        : "bg-white/5 text-gray-400 hover:text-white border border-transparent"
+                    }`}
+                  >
+                    Conteúdo
+                  </button>
+                  <button
+                    onClick={() => setShowPlan("checklist")}
+                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                      (showPlan as string) === "checklist"
+                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                        : "bg-white/5 text-gray-400 hover:text-white border border-transparent"
+                    }`}
+                  >
+                    Checklist
+                  </button>
                 </div>
               </div>
 
-              {/*
-                CORREÇÃO P7: renderer de markdown sem dependências externas.
-                Trata h1/h2/h3, listas ordenadas e não-ordenadas, listas
-                aninhadas, negrito, itálico, código inline, blocos de código,
-                separadores e parágrafos — sem precisar de react-markdown.
-              */}
               <div className="flex-1 overflow-y-auto p-4">
-                <MarkdownRenderer content={executionPlan} />
+                {(showPlan as string) === "content" ? (
+                  <ExecutionPlanRenderer content={executionPlan} />
+                ) : (
+                  <ChecklistView content={executionPlan} />
+                )}
               </div>
             </motion.div>
           )}
@@ -921,6 +1007,213 @@ function MarkdownRenderer({ content }: { content: string }) {
             return null;
         }
       })}
+    </div>
+  );
+}
+
+// ─── ExecutionPlanRenderer ─────────────────────────────────────────────────────
+
+function ExecutionPlanRenderer({ content }: { content: string }) {
+  const tokens = tokenize(content);
+
+  return (
+    <div className="space-y-1">
+      {tokens.map((tok, i) => {
+        switch (tok.type) {
+          case "h1":
+            return (
+              <h1 key={i} className="text-white font-bold text-base mt-4 mb-2 first:mt-0 flex items-center gap-2">
+                <Star className="w-4 h-4 text-violet-400" />
+                {parseInline(tok.text)}
+              </h1>
+            );
+          case "h2":
+            return (
+              <h2 key={i} className="text-violet-300 font-semibold text-xs mt-4 mb-2 first:mt-0 border-b border-violet-500/20 pb-1">
+                {parseInline(tok.text)}
+              </h2>
+            );
+          case "h3":
+            return (
+              <h3 key={i} className="text-emerald-300 font-medium text-xs mt-3 mb-1 flex items-center gap-1.5">
+                <div className="w-1 h-1 rounded-full bg-emerald-400" />
+                {parseInline(tok.text)}
+              </h3>
+            );
+          case "hr":
+            return <hr key={i} className="border-white/10 my-4" />;
+          case "code_block":
+            return (
+              <pre key={i} className="bg-gray-950 border border-white/10 rounded-lg p-3 overflow-x-auto my-2">
+                <code className="text-violet-300 text-[11px] font-mono">{tok.code}</code>
+              </pre>
+            );
+          case "ul":
+            return (
+              <ul key={i} className="list-disc pl-5 my-1.5 space-y-1">
+                {renderListItems(tok.items)}
+              </ul>
+            );
+          case "ol":
+            return (
+              <ol key={i} className="list-decimal pl-5 my-1.5 space-y-1">
+                {renderListItems(tok.items)}
+              </ol>
+            );
+          case "p":
+            return <p key={i} className="text-gray-300 text-xs leading-relaxed">{parseInline(tok.text)}</p>;
+          case "blank":
+            return <div key={i} className="h-2" />;
+          default:
+            return null;
+        }
+      })}
+    </div>
+  );
+}
+
+// ─── ChecklistView ────────────────────────────────────────────────────────────
+
+type ChecklistItem = {
+  id: string;
+  text: string;
+  category: string;
+  completed: boolean;
+};
+
+function ChecklistView({ content }: { content: string }) {
+  const [checklist, setChecklist] = useState<ChecklistItem[]>(() => {
+    const items: ChecklistItem[] = [];
+    const lines = content.split("\n");
+    let category = "Ações";
+    
+    lines.forEach((line, idx) => {
+      const trimmed = line.trim();
+      
+      if (trimmed.startsWith("# ")) {
+        category = trimmed.substring(2).replace(/\*\*/g, "");
+      }
+      
+      if (trimmed.includes("[ ]") || trimmed.includes("☐")) {
+        const text = trimmed
+          .replace(/^[-*\d.]\s*/, "")
+          .replace(/[ ]\s*$/, "")
+          .replace(/\[ \]/g, "")
+          .replace(/☐/g, "")
+          .replace(/\*\*/g, "")
+          .trim();
+        
+        if (text) {
+          items.push({
+            id: `item-${idx}`,
+            text,
+            category,
+            completed: false,
+          });
+        }
+      }
+    });
+    
+    return items;
+  });
+
+  const [completedCount, setCompletedCount] = useState(0);
+
+  const toggleItem = (id: string) => {
+    setChecklist((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, completed: !item.completed } : item
+      )
+    );
+  };
+
+  useEffect(() => {
+    setCompletedCount(checklist.filter((item) => item.completed).length);
+  }, [checklist]);
+
+  const progress = checklist.length > 0 ? (completedCount / checklist.length) * 100 : 0;
+
+  const groupedItems = checklist.reduce((acc, item) => {
+    if (!acc[item.category]) {
+      acc[item.category] = [];
+    }
+    acc[item.category].push(item);
+    return acc;
+  }, {} as Record<string, ChecklistItem[]>);
+
+  return (
+    <div className="space-y-4">
+      {/* Progress bar */}
+      <div className="bg-gray-800/50 rounded-xl p-3">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs text-gray-400 font-medium">Progresso</span>
+          <span className="text-xs text-emerald-400 font-bold">
+            {completedCount}/{checklist.length}
+          </span>
+        </div>
+        <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+          <motion.div
+            className="h-full bg-gradient-to-r from-emerald-500 to-teal-400"
+            initial={{ width: 0 }}
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.3 }}
+          />
+        </div>
+      </div>
+
+      {/* Checklist items */}
+      {Object.entries(groupedItems).map(([category, items]) => (
+        <div key={category}>
+          <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+            {category}
+          </h4>
+          <div className="space-y-1.5">
+            {items.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => toggleItem(item.id)}
+                className={`w-full text-left flex items-start gap-2.5 p-2.5 rounded-lg transition-all ${
+                  item.completed
+                    ? "bg-emerald-500/10 border border-emerald-500/20"
+                    : "bg-white/5 border border-white/10 hover:border-white/20"
+                }`}
+              >
+                <div
+                  className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all ${
+                    item.completed
+                      ? "bg-emerald-500 border-emerald-500"
+                      : "border-gray-500"
+                  }`}
+                >
+                  {item.completed && (
+                    <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </div>
+                <span
+                  className={`text-xs leading-relaxed transition-all ${
+                    item.completed ? "text-gray-500 line-through" : "text-gray-300"
+                  }`}
+                >
+                  {item.text}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {checklist.length === 0 && (
+        <div className="text-center py-8">
+          <p className="text-gray-500 text-xs">
+            Nenhuma ação encontrada no plano.
+          </p>
+          <p className="text-gray-600 text-[10px] mt-1">
+            Solicite a Marco para gerar o checklist de ações.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

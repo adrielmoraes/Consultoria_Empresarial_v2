@@ -53,30 +53,18 @@ from livekit.agents import (
     AgentSession,
     RunContext,
 )
-from livekit.agents.types import APIConnectOptions
 from livekit.plugins import google as google_plugin
-from google.genai import types as genai_types
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("mentoria-ai")
 
 
-# Modelo Realtime nativo do Gemini (voz-para-voz)
-GEMINI_REALTIME_MODEL = "gemini-2.5-flash-native-audio-preview-12-2025"
+# ============================================================
+# CONFIG
+# ============================================================
 
-# Configurações avançadas do Gemini Realtime (baseadas no código base fornecido)
-GEMINI_REALTIME_CONFIG = {
-    "media_resolution": "MEDIUM",  # Atualmente não suportado diretamente pelo plugin LiveKit
-    "compression_trigger": 104857,
-    "compression_sliding_window": 52428,
-    "speech_config": {
-        "voice_config": {
-            "prebuilt_voice_config": {
-                "voice_name": "Zephyr",
-            }
-        }
-    }
-}
+# Modelo Realtime nativo do Gemini (voz-para-voz, sem pipeline STT+TTS separado)
+GEMINI_REALTIME_MODEL = "gemini-2.5-flash-native-audio-preview-12-2025"
 
 # Vozes por agente (Gemini TTS nativo)
 AGENT_VOICES: dict[str, str] = {
@@ -276,14 +264,6 @@ class SpecialistAgent(Agent):
                 model=GEMINI_REALTIME_MODEL,
                 api_key=os.environ.get("GOOGLE_API_KEY", ""),
                 voice=AGENT_VOICES[spec_id],
-                realtime_input_config=genai_types.RealtimeInputConfig(),
-                context_window_compression=genai_types.ContextWindowCompressionConfig(
-                    trigger_tokens=GEMINI_REALTIME_CONFIG["compression_trigger"],
-                    sliding_window=genai_types.SlidingWindow(
-                        target_tokens=GEMINI_REALTIME_CONFIG["compression_sliding_window"]
-                    ),
-                ),
-                conn_options=APIConnectOptions(timeout=20.0),
             ),
             allow_interruptions=True,
         )
@@ -298,32 +278,25 @@ class SpecialistAgent(Agent):
 
 class HostAgent(Agent):
     """
-    Nathália usa o modelo multimodal para orquestrar a sessão.
+    Nathália usa Google RealtimeModel (Gemini Live) para pipeline
+    voz-para-voz completo nativo.
+
+    As function tools publicam data packets no room para coordenar
+    qual especialista deve falar a seguir.
     """
+
     def __init__(
         self,
         blackboard: Blackboard,
         room: rtc.Room,
     ) -> None:
-        # Configuração do modelo baseada no código base Node.js
-        llm = google_plugin.realtime.RealtimeModel(
-            model=GEMINI_REALTIME_MODEL,
-            api_key=os.environ.get("GOOGLE_API_KEY", ""),
-            voice=AGENT_VOICES["host"],
-            # Atribuindo as configurações do exemplo via realtime_input_config
-            realtime_input_config=genai_types.RealtimeInputConfig(),
-            context_window_compression=genai_types.ContextWindowCompressionConfig(
-                trigger_tokens=GEMINI_REALTIME_CONFIG["compression_trigger"],
-                sliding_window=genai_types.SlidingWindow(
-                    target_tokens=GEMINI_REALTIME_CONFIG["compression_sliding_window"]
-                ),
-            ),
-            conn_options=APIConnectOptions(timeout=20.0),
-        )
-
         super().__init__(
             instructions=HOST_PROMPT,
-            llm=llm,
+            llm=google_plugin.realtime.RealtimeModel(
+                model=GEMINI_REALTIME_MODEL,
+                api_key=os.environ.get("GOOGLE_API_KEY", ""),
+                voice=AGENT_VOICES["host"],
+            ),
             allow_interruptions=True,
         )
         self._blackboard = blackboard
@@ -465,15 +438,10 @@ async def _start_specialist_in_room(
 
         # Conecta ao room
         room = rtc.Room()
-        try:
-            await asyncio.wait_for(
-                room.connect(ws_url, token),
-                timeout=30.0,
-            )
-        except asyncio.TimeoutError:
-            logger.warning(f"[{name}] Timeout ao conectar ao room.")
-            return None
-
+        await asyncio.wait_for(
+            room.connect(ws_url, token),
+            timeout=60.0,
+        )
         logger.info(f"[{name}] Room conectado.")
 
         # Instancia o agent e a sessão
@@ -537,6 +505,9 @@ async def _start_specialist_in_room(
 
         return session
 
+    except asyncio.TimeoutError:
+        logger.error(f"[{name}] Timeout ao conectar ao room após 60s.")
+        return None
     except Exception as e:
         logger.error(f"[{name}] Erro ao iniciar: {e}", exc_info=True)
         return None
@@ -642,7 +613,7 @@ async def entrypoint(ctx: JobContext) -> None:
     spec_sessions: dict[str, AgentSession] = {}
 
     for i, sid in enumerate(spec_ids):
-        delay = (i + 1) * 7.0  # 7s, 14s, 21s, 28s, 35s
+        delay = i * 3.0  # 0s, 3s, 6s, 9s, 12s
         asyncio.create_task(
             _start_specialist_in_room(
                 spec_id=sid,
@@ -658,35 +629,25 @@ async def entrypoint(ctx: JobContext) -> None:
     logger.info("[Especialistas] Tarefas de conexão escalonada disparadas.")
 
     # ------------------------------------------------------------------
-    # 3. Fluxo de Apresentação: Nathália apresenta o time
+    # 3. Fluxo de Apresentação: Nathália + cada especialista, um a um
     # ------------------------------------------------------------------
     async def welcome_and_introductions() -> None:
-        # Aguarda Nathália conectar
-        await asyncio.sleep(8.0)
+        # Aguarda áudio estabilizar e especialistas conectarem
+        # O último especialista conecta com delay de 12s, +5s margem
+        await asyncio.sleep(18.0)
 
-        # 3a. Nathália se apresenta e apresenta o time (via generate_reply com RealtimeModel)
+        # 3a. Nathália se apresenta e apresenta o time
         host_greeting = (
             "Olá! Seja muito bem-vindo ao Mentoria AI! "
             "Sou a Nathália, sua apresentadora e mentora líder. "
-            "Estou aqui com nosso time completo! "
-            "Temos Carlos, nosso CFO para finanças. "
-            "Daniel, nosso advogado para questões jurídicas. "
-            "Rodrigo, CMO para marketing e crescimento. "
-            "Ana, CTO para tecnologia e sistemas. "
-            "E Marco, nosso estrategista-chefe. "
-            "Todos prontos para ajudar no seu projeto!"
+            "Estou aqui com nosso time completo de cinco especialistas incríveis. "
+            "Deixa eu apresentar cada um deles para você!"
         )
         logger.info("[Host] Enviando saudação inicial...")
         try:
-            # Usar generate_reply em vez de say() com RealtimeModel
-            await host_session.generate_reply(
-                instructions=(
-                    "Fale esta mensagem exatamente como está escrita, sem adicionar nada: "
-                    f"{host_greeting}"
-                )
-            )
+            await host_session.say(host_greeting, allow_interruptions=True)
         except Exception as e:
-            logger.warning(f"[Host] Erro ao gerar reply: {e}")
+            logger.error(f"[Host] Erro na saudação: {e}", exc_info=True)
             # Fallback: publica apenas o texto para o frontend
             await ctx.room.local_participant.publish_data(
                 json.dumps({
@@ -697,28 +658,40 @@ async def entrypoint(ctx: JobContext) -> None:
                 reliable=True,
             )
 
-        # 3b. Pausa e Nathália faz a pergunta inicial
-        await asyncio.sleep(3.0)
+        # 3b. Cada especialista se apresenta individualmente com sua voz
+        for sid in spec_ids:
+            await asyncio.sleep(2.0)  # Pausa entre apresentações
+            session = blackboard.specialist_sessions.get(sid)
+            if session:
+                intro_text = SPECIALIST_INTRODUCTIONS[sid]
+                name = SPECIALIST_NAMES[sid]
+                logger.info(f"[{name}] Fazendo apresentação individual...")
+                try:
+                    await session.say(intro_text, allow_interruptions=True)
+                except Exception as e:
+                    logger.warning(f"[{name}] Erro na apresentação: {e}")
+                    # Fallback: publica texto
+                    await ctx.room.local_participant.publish_data(
+                        json.dumps({
+                            "type": "transcript",
+                            "speaker": name,
+                            "text": intro_text,
+                        }).encode(),
+                        reliable=True,
+                    )
+            else:
+                logger.warning(f"[{SPECIALIST_NAMES[sid]}] Session não encontrada para apresentação.")
+
+        # 3c. Nathália retoma e pergunta ao usuário
+        await asyncio.sleep(2.0)
         closing = (
-            "Agora me conte: qual é o seu projeto ou principal desafio de negócio hoje? "
-            "Estou aqui para ouvir você!"
+            "Pronto! Esse é nosso time completo à sua disposição. "
+            "Agora me conte: qual é o seu projeto ou principal desafio de negócio hoje?"
         )
         try:
-            await host_session.generate_reply(
-                instructions=f"Fale esta mensagem: {closing}"
-            )
+            await host_session.say(closing, allow_interruptions=True)
         except Exception as e:
-            logger.warning(f"[Host] Erro na pergunta inicial: {e}")
-            await ctx.room.local_participant.publish_data(
-                json.dumps({
-                    "type": "transcript",
-                    "speaker": "Nathália",
-                    "text": closing,
-                }).encode(),
-                reliable=True,
-            )
-
-        logger.info("[Host] Apresentação concluída.")
+            logger.error(f"[Host] Erro na frase final da apresentação: {e}", exc_info=True)
 
     asyncio.create_task(welcome_and_introductions())
 

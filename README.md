@@ -47,8 +47,9 @@ O sistema conta com 5 agentes, cada um com sua própria voz, personalidade e ár
 - **Python Worker (LiveKit Agents)**: O "cérebro" da operação. Um serviço Python rodando o LiveKit Agents SDK para orquestrar os 5 LLMs em paralelo.
 
 ### Componentes de IA
-- **LLM**: Google Gemini 1.5 Pro e Gemini 2.5 Flash para geração de texto rápida e raciocínio multi-modal.
-- **STT & TTS**: Google Cloud Speech-to-Text e Text-to-Speech (para dar uma voz única a cada agente).
+- **LLM**:Gemini gemini-2.5-flash-native-audio-preview-12-2025 multi-modal.
+
+- **Live **: agente).
 - **VAD**: Modelo Silero VAD local no worker Python para latência ultra-baixa de interrupção.
 
 ## ⚙️ Como Rodar Localmente
