@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { mentoringSessions, projects } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { AgentDispatchClient } from "livekit-server-sdk";
 
 export async function POST(request: NextRequest) {
@@ -28,6 +28,24 @@ export async function POST(request: NextRequest) {
 
     // Criar nome da sala com o ID do projeto
     const roomName = `mentoria-${projectId}`;
+
+    // Idempotência: se já existe sessão ativa para este projeto, reutiliza sem criar nova dispatch
+    const [existingSession] = await db
+      .select()
+      .from(mentoringSessions)
+      .where(and(
+        eq(mentoringSessions.projectId, projectId),
+        eq(mentoringSessions.status, "active")
+      ))
+      .limit(1);
+
+    if (existingSession) {
+      console.log(`[Sessions API] Sessão ativa já existe para ${roomName} — reutilizando.`);
+      return NextResponse.json({
+        sessionId: existingSession.id,
+        roomName: existingSession.livekitRoomId ?? roomName,
+      });
+    }
 
     // Criar sessão de mentoria no banco
     const [session] = await db

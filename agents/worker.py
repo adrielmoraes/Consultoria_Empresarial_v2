@@ -476,6 +476,14 @@ async def _start_specialist_in_room(
 
         logger.info(f"[{name}] Room conectado.")
 
+        # Silencia text stream topics que chegam de outros AgentSessions
+        # (lk.agent.events e lk.transcription) — evita INFO logs de "no callback attached"
+        async def _noop_stream_handler(reader, participant_info):
+            pass
+
+        room.register_text_stream_handler("lk.agent.events", _noop_stream_handler)
+        room.register_text_stream_handler("lk.transcription", _noop_stream_handler)
+
         # Instancia o agent e a sessão
         agent = SpecialistAgent(spec_id, blackboard)
 

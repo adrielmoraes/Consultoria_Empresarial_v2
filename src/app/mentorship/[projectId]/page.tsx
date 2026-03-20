@@ -176,6 +176,7 @@ export default function MentorshipRoomPage() {
 
   const roomRef = useRef<Room | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
+  const sessionCreatingRef = useRef(false);
 
   // CORREÇÃO P1 / P6: container de áudio dentro do componente, controlado
   // pelo React, em vez de injetar no document.body.
@@ -257,6 +258,13 @@ export default function MentorshipRoomPage() {
       console.log("[Room] Sala já conectada, pulando reconexão...");
       return;
     }
+
+    // Guard: evita dupla chamada simultânea (React Strict Mode double-mount)
+    if (sessionCreatingRef.current) {
+      console.log("[Room] Criação de sessão já em andamento, ignorando.");
+      return;
+    }
+    sessionCreatingRef.current = true;
 
     // CORREÇÃO P3 / P8: acesso tipado via AuthUser, sem cast (as any)
     const user = session.user as AuthUser;
@@ -453,6 +461,7 @@ export default function MentorshipRoomPage() {
     // CORREÇÃO P1: remove todos os elementos de áudio ao desmontar.
     return () => {
       cancelled = true;
+      sessionCreatingRef.current = false;
       room?.disconnect();
       roomRef.current = null;
       audioContainerRef.current
