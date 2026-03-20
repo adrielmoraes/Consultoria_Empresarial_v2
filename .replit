@@ -47,8 +47,8 @@ args = "python3 agents/worker.py start"
 
 [[ports]]
 localPort = 5000
-externalPort = 80
+externalPort = 5000
 
 [[ports]]
 localPort = 8081
-externalPort = 8081
+externalPort = 80
