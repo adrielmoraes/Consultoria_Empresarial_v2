@@ -84,14 +84,14 @@ export default function DashboardPage() {
     if (status === "unauthenticated") {
       router.replace("/login");
     }
-  }, [status, router]);
+  }, [status]);
 
-  // Buscar dados do dashboard
+  // Buscar dados do dashboard (apenas quando autenticação é confirmada)
   useEffect(() => {
     if (status === "authenticated" && session?.user?.id) {
       fetchDashboard();
     }
-  }, [status, session]);
+  }, [status]);
 
   const fetchDashboard = async () => {
     try {

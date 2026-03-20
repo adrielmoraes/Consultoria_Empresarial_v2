@@ -182,47 +182,25 @@ export default function MentorshipRoomPage() {
   // pelo React, em vez de injetar no document.body.
   const audioContainerRef = useRef<HTMLDivElement>(null);
 
-  // Refs para gerenciar estado de visibilidade e reconexão
-  const isVisibleRef = useRef(true);
+  // Refs para gerenciar estado de conexão
+  const connectionStartedRef = useRef(false);
   const isReconnectingRef = useRef(false);
-  const sessionDataRef = useRef<{ sessionId?: string; roomName?: string; token?: string; url?: string } | null>(null);
+  const sessionDataRef = useRef<{
+    sessionId?: string;
+    roomName?: string;
+    token?: string;
+    url?: string;
+    userId?: string;
+  } | null>(null);
 
-  // CORREÇÃO: Page Visibility API - mantém conexão ativa mesmo com aba minimizada
+  // Redireciona para login se não autenticado (executa apenas quando authStatus muda)
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      isVisibleRef.current = document.visibilityState === "visible";
-      
-      if (document.visibilityState === "visible") {
-        console.log("[Visibility] Aba voltou a ficar visível");
-        
-        // Se estava reconnecting, tenta manter a conexão existente
-        if (roomRef.current && isReconnectingRef.current) {
-          console.log("[Visibility] Verificando estado da sala...");
-          const roomState = roomRef.current.state;
-          if (roomState === ConnectionState.Reconnecting) {
-            console.log("[Visibility] Sala em reconexão, aguardando...");
-          } else if (roomState === ConnectionState.Disconnected) {
-            console.log("[Visibility] Sala desconectada, tentando reconnect...");
-            // Não reconecta automaticamente - deixa o reconnectPolicy cuidar
-          }
-        }
-      } else {
-        console.log("[Visibility] Aba minimizada, mantendo conexão...");
-      }
-    };
+    if (authStatus === "unauthenticated") {
+      router.replace("/login");
+    }
+  }, [authStatus]);
 
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, []);
-
-  // Redireciona para login se não autenticado
-  useEffect(() => {
-    if (authStatus === "unauthenticated") router.replace("/login");
-  }, [authStatus, router]);
-
-  // CORREÇÃO P10: timer com deps vazias explícitas e cleanup garantido.
+  // Timer (executa apenas uma vez na montagem)
   useEffect(() => {
     const id = setInterval(() => setElapsedTime((t) => t + 1), 1000);
     return () => clearInterval(id);
@@ -230,32 +208,39 @@ export default function MentorshipRoomPage() {
 
   // Auto-scroll do transcript
   useEffect(() => {
-    transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [transcript]);
+    if (transcriptEndRef.current) {
+      transcriptEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [transcript.length]);
 
   const addTranscriptMessage = useCallback((speaker: string, text: string) => {
-    const timestamp = new Date().toLocaleTimeString("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit",
+    setTranscript((prev) => {
+      // Evita duplicatas
+      const lastMsg = prev[prev.length - 1];
+      if (lastMsg && lastMsg.speaker === speaker && lastMsg.text === text) {
+        return prev;
+      }
+      const timestamp = new Date().toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      return [...prev, { speaker, text, timestamp }];
     });
-    setTranscript((prev) => [...prev, { speaker, text, timestamp }]);
   }, []);
 
   // ─── Conexão LiveKit ────────────────────────────────────────────────────────
-  //
-  // CORREÇÃO P2: a lógica de conexão fica inline no useEffect, com flag
-  // `cancelled` que descarta a sala se o efeito for limpo antes do connect
-  // terminar (Strict Mode monta 2x em dev; flag previne dupla conexão).
-  //
-  // CORREÇÃO P5: sem useCallback para connectToRoom — deps ficam naturalmente
-  // corretas porque a função lê tudo do closure do efeito.
+  // Esta conexão é inicializada apenas uma vez e persiste enquanto o componente existir.
+  // O LiveKit SDK gerencia reconexões automaticamente quando a aba é minimizada.
 
   useEffect(() => {
+    // Só conecta se autenticado e ainda não iniciou
     if (authStatus !== "authenticated" || !session?.user) return;
+    if (connectionStartedRef.current) return;
+    connectionStartedRef.current = true;
 
-    // CORREÇÃO: se a sala já está conectada, não recria
+    // Verifica se já existe uma sala conectada (por exemplo, em caso de hot reload)
     if (roomRef.current?.state === ConnectionState.Connected) {
-      console.log("[Room] Sala já conectada, pulando reconexão...");
+      console.log("[Room] Sala já conectada.");
       return;
     }
 
@@ -271,23 +256,24 @@ export default function MentorshipRoomPage() {
     const userId = user.id;
     const userName = user.name ?? "Usuário";
 
-    let cancelled = false;
     let room: Room | null = null;
+    let isMounted = true;
 
     async function connect() {
       try {
+        setConnectionState("connecting");
+
         // Cria a sessão de mentoria no backend
         const sessionRes = await safeFetch("/api/sessions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ projectId, userId }),
         });
-        if (cancelled) return;
+        if (!isMounted) return;
+
         const { sessionId: sid, roomName } = await sessionRes.json();
         setSessionId(sid);
-        
-        // Salva dados da sessão para possível reconexão
-        sessionDataRef.current = { sessionId: sid, roomName };
+        sessionDataRef.current = { sessionId: sid, roomName, userId };
 
         // Obtém token LiveKit
         const tokenRes = await safeFetch("/api/livekit/token", {
@@ -299,21 +285,20 @@ export default function MentorshipRoomPage() {
             participantIdentity: `user-${userId}`,
           }),
         });
-        if (cancelled) return;
+        if (!isMounted) return;
+
         const { token, url } = await tokenRes.json();
-        
-        // Salva token e url para reconexão
         sessionDataRef.current = { ...sessionDataRef.current, token, url };
 
         // Configura a sala
         room = new Room({
           adaptiveStream: true,
           dynacast: true,
-          // CORREÇÃO P9: política de reconexão automática - não desconecta ao minimizar aba
+          // IMPORTANTE: não desconecta quando a aba é minimizada
           disconnectOnPageLeave: false,
+          // Reconexão automática com delays progressivos
           reconnectPolicy: new DefaultReconnectPolicy(
-            // Retry delays em ms: 1s, 2s, 3s, 5s, 10s, 15s, 30s
-            [1000, 2000, 3000, 5000, 10000, 15000, 30000]
+            [500, 1000, 2000, 5000, 10000, 30000]
           ),
           audioCaptureDefaults: {
             echoCancellation: true,
@@ -325,10 +310,10 @@ export default function MentorshipRoomPage() {
         // ── Eventos da sala ──────────────────────────────────────────────────
 
         room.on(RoomEvent.Connected, async () => {
-          if (cancelled) { room?.disconnect(); return; }
+          if (!isMounted) { room?.disconnect(); return; }
           roomRef.current = room;
           setConnectionState("connected");
-          addTranscriptMessage("Sistema", "Conectado. Aguardando os especialistas...");
+          addTranscriptMessage("Sistema", "Conectado! Aguardando os especialistas...");
           try {
             await room!.localParticipant.setMicrophoneEnabled(true);
           } catch (micErr) {
@@ -336,33 +321,33 @@ export default function MentorshipRoomPage() {
           }
         });
 
-        // CORREÇÃO P9: distingue desconexão intencional de falha de rede
+        // Desconexão intencional vs. perda de conexão
         room.on(RoomEvent.Disconnected, (reason?: DisconnectReason) => {
-          if (reason === DisconnectReason.CLIENT_INITIATED) return;
-          setConnectionState("error");
-          addTranscriptMessage("Sistema", "Conexão perdida. Recarregue a página para reconectar.");
+          if (reason === DisconnectReason.CLIENT_INITIATED) {
+            console.log("[Room] Desconexão intencional.");
+            return;
+          }
+          console.log("[Room] Desconectado pelo servidor, tentando reconectar...");
+          setConnectionState("reconnecting");
         });
 
-        // CORREÇÃO P9: eventos de reconexão automática do SDK
+        // Eventos de reconexão automática
         room.on(RoomEvent.Reconnecting, () => {
           isReconnectingRef.current = true;
           setConnectionState("reconnecting");
-          addTranscriptMessage("Sistema", "Reconectando...");
         });
 
         room.on(RoomEvent.Reconnected, () => {
           isReconnectingRef.current = false;
           setConnectionState("connected");
-          addTranscriptMessage("Sistema", "Reconectado com sucesso.");
+          addTranscriptMessage("Sistema", "Reconectado!");
         });
 
-        // CORREÇÃO P1 / P6: elementos de áudio vão para o container ref,
-        // não para document.body.
+        // Track de áudio
         room.on(
           RoomEvent.TrackSubscribed,
           (track, _pub, participant: RemoteParticipant) => {
             if (track.kind === Track.Kind.Audio && audioContainerRef.current) {
-              // Remove elemento anterior do mesmo participante, se existir
               audioContainerRef.current
                 .querySelector(`#audio-${participant.identity}`)
                 ?.remove();
@@ -402,7 +387,7 @@ export default function MentorshipRoomPage() {
 
         room.on(
           RoomEvent.DataReceived,
-          (payload: Uint8Array, participant?: RemoteParticipant) => {
+          (payload: Uint8Array) => {
             try {
               const data = JSON.parse(new TextDecoder().decode(payload));
 
@@ -412,14 +397,14 @@ export default function MentorshipRoomPage() {
                 setExecutionPlan(data.plan ?? data.text ?? "");
                 setShowPlan(true);
                 addTranscriptMessage(
-                  "Marco (Estrategista)",
-                  "Plano de Execução gerado! Veja o painel lateral."
+                  "Marco",
+                  "Plano de Execução gerado!"
                 );
               } else if (data.type === "session_end") {
                 handleSessionCompleted(data.transcript);
               }
             } catch {
-              // payload malformado — ignorar silenciosamente
+              // ignorar
             }
           }
         );
@@ -432,43 +417,39 @@ export default function MentorshipRoomPage() {
               const agentId = id.replace("agent-", "");
               const agent = AGENTS_MAP[agentId];
               if (agent) {
-                addTranscriptMessage(
-                  "Sistema",
-                  `${agent.name} (${agent.role}) entrou na sessão.`
-                );
+                addTranscriptMessage("Sistema", `${agent.name} entrou.`);
               }
             }
           }
         );
 
-        if (!cancelled) await room.connect(url, token);
-        else room.disconnect();
+        // Conecta ao room
+        await room.connect(url, token);
+        console.log("[Room] Conectado com sucesso.");
 
       } catch (error) {
-        if (cancelled) return;
+        if (!isMounted) return;
         console.error("[LiveKit] Erro ao conectar:", error);
         setConnectionState("error");
-        addTranscriptMessage(
-          "Sistema",
-          "Erro ao conectar. Verifique sua conexão e recarregue a página."
-        );
+        addTranscriptMessage("Sistema", "Erro ao conectar.");
+        connectionStartedRef.current = false; // Permite tentar novamente
       }
     }
 
     connect();
 
-    // CORREÇÃO P2: cleanup com flag cancelled previne uso da sala após unmount.
-    // CORREÇÃO P1: remove todos os elementos de áudio ao desmontar.
+    // Cleanup: não desconecta a sala quando o componente unmounta
+    // A sala será desconectada apenas quando o usuário sair explicitamente
     return () => {
-      cancelled = true;
+      isMounted = false;
       sessionCreatingRef.current = false;
-      room?.disconnect();
-      roomRef.current = null;
+      // NÃO desconecta aqui para permitir reconexão em caso de remount
+      // A desconexão é tratada pelo handleEndSession
       audioContainerRef.current
         ?.querySelectorAll("audio")
         .forEach((el) => el.remove());
     };
-  }, [authStatus, session, projectId, addTranscriptMessage]);
+  }, []); // DEPENDÊNCIA VAZIA = executa apenas uma vez
 
   // ─── Handlers ───────────────────────────────────────────────────────────────
 

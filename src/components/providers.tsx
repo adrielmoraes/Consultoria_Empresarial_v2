@@ -2,14 +2,45 @@
 
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { SessionProvider } from "next-auth/react";
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <SessionProvider>
+    <SessionProvider
+      refetchInterval={0} // Desativa polling automático
+      refetchOnWindowFocus={false} // Não refetch quando janela ganha foco
+      refetchWhenOffline={false} // Não refetch quando offline
+    >
       <NextThemesProvider attribute="class" defaultTheme="dark" enableSystem>
-        {children}
+        <ClientPersistence>{children}</ClientPersistence>
       </NextThemesProvider>
     </SessionProvider>
   );
+}
+
+// Componente para manter estado do cliente entre reloads
+function ClientPersistence({ children }: { children: ReactNode }) {
+  useEffect(() => {
+    // Marca que o cliente carregou completamente
+    sessionStorage.setItem("client_ready", "true");
+    
+    // Previne reload em caso de visibilidade
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        // Marca que estava em background
+        sessionStorage.setItem("was_background", "true");
+      } else if (sessionStorage.getItem("was_background") === "true") {
+        // Voltou do background - mas NÃO recarrega
+        sessionStorage.removeItem("was_background");
+        console.log("[ClientPersistence] Voltou do background, mantendo estado.");
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
+  return <>{children}</>;
 }

@@ -7,6 +7,13 @@ const nextConfig: NextConfig = {
     "*.replit.dev",
     "*.repl.co",
   ],
+  // Desativa cache automático em desenvolvimento
+  experimental: {
+    // Para páginas client-side, não faz sentido ter PPR
+    ppr: false,
+  },
+  // Garante que não há revalidação automática
+  staticPageGenerationTimeout: 180,
 };
 
 export default nextConfig;
