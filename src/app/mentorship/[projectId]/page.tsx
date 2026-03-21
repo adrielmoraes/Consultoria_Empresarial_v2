@@ -62,6 +62,7 @@ type AgentInfo = {
   icon: React.ElementType;
   gradient: string;
   speaking: boolean;
+  connected?: boolean;
 };
 
 const AGENTS_MAP: Record<string, Omit<AgentInfo, "speaking">> = {
@@ -173,6 +174,8 @@ export default function MentorshipRoomPage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [executionPlan, setExecutionPlan] = useState<string | null>(null);
   const [showPlan, setShowPlan] = useState<boolean | "content" | "checklist">(false);
+  const [connectedAgents, setConnectedAgents] = useState<Set<string>>(new Set());
+  const [connectionTimeout, setConnectionTimeout] = useState(false);
 
   const roomRef = useRef<Room | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
@@ -228,6 +231,82 @@ export default function MentorshipRoomPage() {
     });
   }, []);
 
+  // CORREÇÃO P4: usa safeFetch — erros de HTTP são logados e não engolidos.
+  const handleEndSession = async () => {
+    setEnding(true);
+    try {
+      if (
+        roomRef.current &&
+        roomRef.current.state === ConnectionState.Connected
+      ) {
+        try {
+          const data = new TextEncoder().encode(
+            JSON.stringify({ type: "end_session" })
+          );
+          await roomRef.current.localParticipant.publishData(data, {
+            reliable: true,
+          });
+          await new Promise((r) => setTimeout(r, 1000));
+        } catch {
+          // best-effort — não bloqueia o encerramento
+        }
+      }
+
+      if (sessionId) {
+        const fullTranscript = transcript
+          .map((m) => `[${m.speaker}]: ${m.text}`)
+          .join("\n");
+        try {
+          await safeFetch("/api/sessions/finalize", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sessionId,
+              transcript: fullTranscript,
+              markdownContent: executionPlan ?? null,
+            }),
+          });
+        } catch (err) {
+          console.error("[Sessão] Falha ao finalizar:", err);
+          // Não bloqueia o redirect — o usuário não deve ficar preso na sala
+        }
+      }
+
+      await roomRef.current?.disconnect();
+      router.push("/dashboard");
+    } catch {
+      setEnding(false);
+      router.push("/dashboard");
+    }
+  };
+
+  // CORREÇÃO P4: mesma aplicação de safeFetch aqui.
+  const handleSessionCompleted = useCallback(
+    async (fullTranscript?: string) => {
+      if (sessionId) {
+        const text =
+          fullTranscript ??
+          transcript.map((m) => `[${m.speaker}]: ${m.text}`).join("\n");
+        try {
+          await safeFetch("/api/sessions/finalize", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sessionId,
+              transcript: text,
+              markdownContent: executionPlan ?? null,
+            }),
+          });
+        } catch (err) {
+          console.error("[Sessão] Falha ao finalizar automaticamente:", err);
+        }
+      }
+      roomRef.current?.disconnect();
+      router.push("/dashboard");
+    },
+    [sessionId, transcript, executionPlan, router]
+  );
+
   // ─── Conexão LiveKit ────────────────────────────────────────────────────────
   // Esta conexão é inicializada apenas uma vez e persiste enquanto o componente existir.
   // O LiveKit SDK gerencia reconexões automaticamente quando a aba é minimizada.
@@ -261,6 +340,14 @@ export default function MentorshipRoomPage() {
 
     async function connect() {
       try {
+        // F4: Timeout de fallback para a fase inicial
+        const timeoutId = setTimeout(() => {
+          if (isMounted && !roomRef.current?.state && connectionStartedRef.current) {
+            setConnectionTimeout(true);
+            setConnectionState("error");
+          }
+        }, 30000);
+
         setConnectionState("connecting");
 
         // Cria a sessão de mentoria no backend
@@ -273,6 +360,9 @@ export default function MentorshipRoomPage() {
 
         const { sessionId: sid, roomName } = await sessionRes.json();
         setSessionId(sid);
+        
+        clearTimeout(timeoutId);
+
         sessionDataRef.current = { sessionId: sid, roomName, userId };
 
         // Obtém token LiveKit
@@ -376,8 +466,16 @@ export default function MentorshipRoomPage() {
             const ids = new Set(
               speakers.map((s) => {
                 const id = s.identity;
-                if (id.startsWith("agent-")) return id.replace("agent-", "");
+                if (id.startsWith("agent-")) {
+                  const agentId = id.replace("agent-", "");
+                  // FIX F2: Mapeia identity do worker principal (host) para "host"
+                  if (agentId in AGENTS_MAP) return agentId;
+                  // Identidades como "mentoria-agent" ou "agent" → host
+                  return "host";
+                }
                 if (id.startsWith("user-")) return "user";
+                // Qualquer outra identity de agente → host
+                if (id.includes("mentoria") || id === "agent") return "host";
                 return id;
               })
             );
@@ -393,6 +491,14 @@ export default function MentorshipRoomPage() {
 
               if (data.type === "transcript") {
                 addTranscriptMessage(data.speaker, data.text);
+                if (data.speaker === "Nathália") {
+                  setConnectedAgents((prev) => new Set(prev).add("host"));
+                }
+              } else if (data.type === "agent_ready") {
+                setConnectedAgents((prev) => new Set(prev).add(data.agent_id));
+                addTranscriptMessage("Sistema", `${data.name} pronto.`);
+              } else if (data.type === "agent_error") {
+                addTranscriptMessage("Sistema", `Falha ao iniciar ${data.name}.`);
               } else if (data.type === "execution_plan") {
                 setExecutionPlan(data.plan ?? data.text ?? "");
                 setShowPlan(true);
@@ -418,7 +524,10 @@ export default function MentorshipRoomPage() {
               const agent = AGENTS_MAP[agentId];
               if (agent) {
                 addTranscriptMessage("Sistema", `${agent.name} entrou.`);
+                setConnectedAgents((prev) => new Set(prev).add(agentId));
               }
+            } else if (id.includes("mentoria") || id === "host") {
+              setConnectedAgents((prev) => new Set(prev).add("host"));
             }
           }
         );
@@ -426,6 +535,24 @@ export default function MentorshipRoomPage() {
         // Conecta ao room
         await room.connect(url, token);
         console.log("[Room] Conectado com sucesso.");
+
+        room.remoteParticipants.forEach((participant) => {
+          const id = participant.identity;
+          if (id.startsWith("agent-")) {
+            setConnectedAgents((prev) => new Set(prev).add(id.replace("agent-", "")));
+          } else if (id.includes("mentoria") || id === "host") {
+            setConnectedAgents((prev) => new Set(prev).add("host"));
+          }
+        });
+
+        room.remoteParticipants.forEach((participant) => {
+          const id = participant.identity;
+          if (id.startsWith("agent-")) {
+            setConnectedAgents((prev) => new Set(prev).add(id.replace("agent-", "")));
+          } else if (id.includes("mentoria") || id === "host") {
+            setConnectedAgents((prev) => new Set(prev).add("host"));
+          }
+        });
 
       } catch (error) {
         if (!isMounted) return;
@@ -443,13 +570,17 @@ export default function MentorshipRoomPage() {
     return () => {
       isMounted = false;
       sessionCreatingRef.current = false;
-      // NÃO desconecta aqui para permitir reconexão em caso de remount
+      connectionStartedRef.current = false; // FIX: Permite reconexão após re-render/HMR
+      
+      // NÃO desconecta aqui para permitir reconexão em caso de remount temporário
       // A desconexão é tratada pelo handleEndSession
       audioContainerRef.current
         ?.querySelectorAll("audio")
         .forEach((el) => el.remove());
     };
-  }, []); // DEPENDÊNCIA VAZIA = executa apenas uma vez
+  // FIX F1: authStatus e session no dependency array para garantir
+  // que o efeito re-execute quando autenticação for resolvida.
+  }, [authStatus, session, projectId, router, addTranscriptMessage, handleSessionCompleted]);
 
   // ─── Handlers ───────────────────────────────────────────────────────────────
 
@@ -459,82 +590,6 @@ export default function MentorshipRoomPage() {
     await lp.setMicrophoneEnabled(isMuted);
     setIsMuted((m) => !m);
   };
-
-  // CORREÇÃO P4: usa safeFetch — erros de HTTP são logados e não engolidos.
-  const handleEndSession = async () => {
-    setEnding(true);
-    try {
-      if (
-        roomRef.current &&
-        roomRef.current.state === ConnectionState.Connected
-      ) {
-        try {
-          const data = new TextEncoder().encode(
-            JSON.stringify({ type: "end_session" })
-          );
-          await roomRef.current.localParticipant.publishData(data, {
-            reliable: true,
-          });
-          await new Promise((r) => setTimeout(r, 1000));
-        } catch {
-          // best-effort — não bloqueia o encerramento
-        }
-      }
-
-      if (sessionId) {
-        const fullTranscript = transcript
-          .map((m) => `[${m.speaker}]: ${m.text}`)
-          .join("\n");
-        try {
-          await safeFetch("/api/sessions/finalize", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              sessionId,
-              transcript: fullTranscript,
-              markdownContent: executionPlan ?? null,
-            }),
-          });
-        } catch (err) {
-          console.error("[Sessão] Falha ao finalizar:", err);
-          // Não bloqueia o redirect — o usuário não deve ficar preso na sala
-        }
-      }
-
-      await roomRef.current?.disconnect();
-      router.push("/dashboard");
-    } catch {
-      setEnding(false);
-      router.push("/dashboard");
-    }
-  };
-
-  // CORREÇÃO P4: mesma aplicação de safeFetch aqui.
-  const handleSessionCompleted = useCallback(
-    async (fullTranscript?: string) => {
-      if (sessionId) {
-        const text =
-          fullTranscript ??
-          transcript.map((m) => `[${m.speaker}]: ${m.text}`).join("\n");
-        try {
-          await safeFetch("/api/sessions/finalize", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              sessionId,
-              transcript: text,
-              markdownContent: executionPlan ?? null,
-            }),
-          });
-        } catch (err) {
-          console.error("[Sessão] Falha ao finalizar automaticamente:", err);
-        }
-      }
-      roomRef.current?.disconnect();
-      router.push("/dashboard");
-    },
-    [sessionId, transcript, executionPlan, router]
-  );
 
   // ─── Guards de render ────────────────────────────────────────────────────────
 
@@ -548,16 +603,37 @@ export default function MentorshipRoomPage() {
 
   if (authStatus === "unauthenticated") return null;
 
+  // FIX F3: Handler de reconexão manual quando connectionState === "error"
+  const handleRetryConnection = () => {
+    connectionStartedRef.current = false;
+    sessionCreatingRef.current = false;
+    setConnectionState("connecting");
+    // Força o useEffect a re-executar atualizando uma ref
+    // O useEffect com [authStatus, session] vai re-rodar
+    // pois connectionStartedRef foi resetado
+    window.location.reload();
+  };
+
   const agents = Object.values(AGENTS_MAP).map((a) => ({
     ...a,
-    speaking: activeSpeakers.has(a.id),
+    speaking: activeSpeakers.has(a.id) || (a.id === "host" && activeSpeakers.has("mentoria-agent")),
+    connected: connectionState === "connected" ? connectedAgents.has(a.id) : false,
   }));
 
   const connectionIcon = {
     connected: <Wifi className="w-3.5 h-3.5 text-emerald-400" />,
     connecting: <Loader2 className="w-3.5 h-3.5 text-amber-400 animate-spin" />,
     reconnecting: <Loader2 className="w-3.5 h-3.5 text-amber-400 animate-spin" />,
-    error: <WifiOff className="w-3.5 h-3.5 text-red-400" />,
+    error: (
+      <button
+        onClick={handleRetryConnection}
+        title="Tentar novamente"
+        className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 transition-colors"
+      >
+        <WifiOff className="w-3.5 h-3.5 text-red-400" />
+        <span className="text-[10px] text-red-300 font-medium">Reconectar</span>
+      </button>
+    ),
   }[connectionState];
 
   // ─── Render ──────────────────────────────────────────────────────────────────
@@ -1259,6 +1335,16 @@ function AgentCard({
           />
         </motion.div>
       </div>
+
+      {/* Connection Indicator F5 */}
+      {!agent.connected && (
+        <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-[1px] flex flex-col justify-end p-4 pb-12 z-10 transition-opacity">
+          <div className="flex items-center gap-2 text-amber-400/80 mx-auto">
+            <Loader2 className="w-3 h-3 animate-spin shrink-0" />
+            <span className="text-[10px] font-medium tracking-wide">Aguardando...</span>
+          </div>
+        </div>
+      )}
 
       {/* Speaking indicator */}
       {agent.speaking && (

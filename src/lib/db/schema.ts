@@ -76,3 +76,33 @@ export const executionPlans = pgTable("execution_plans", {
   markdownContent: text("markdown_content"),
   generatedAt: timestamp("generated_at", { mode: "date" }).defaultNow().notNull(),
 });
+
+// ========== RELATIONS ==========
+import { relations } from "drizzle-orm";
+
+export const usersRelations = relations(users, ({ many }) => ({
+  projects: many(projects),
+}));
+
+export const projectsRelations = relations(projects, ({ one, many }) => ({
+  user: one(users, {
+    fields: [projects.userId],
+    references: [users.id],
+  }),
+  mentoringSessions: many(mentoringSessions),
+}));
+
+export const mentoringSessionsRelations = relations(mentoringSessions, ({ one, many }) => ({
+  project: one(projects, {
+    fields: [mentoringSessions.projectId],
+    references: [projects.id],
+  }),
+  executionPlans: many(executionPlans),
+}));
+
+export const executionPlansRelations = relations(executionPlans, ({ one }) => ({
+  session: one(mentoringSessions, {
+    fields: [executionPlans.sessionId],
+    references: [mentoringSessions.id],
+  }),
+}));

@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { projects, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/auth";
 import { z } from "zod";
 
 // ─── Schemas de validação ────────────────────────────────────────────────────
@@ -49,7 +48,7 @@ export async function POST(request: NextRequest) {
     // CORREÇÃO P1: autenticação via sessão do servidor.
     // O userId NUNCA vem do body — vem da sessão autenticada.
     // Isso elimina o IDOR: um usuário só pode criar projetos para si mesmo.
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -163,7 +162,7 @@ export async function GET(request: NextRequest) {
     // CORREÇÃO P3: mesmo problema de IDOR do POST.
     // O userId original vinha da query string — qualquer um podia listar
     // os projetos de qualquer userId. Agora vem exclusivamente da sessão.
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
     if (!session?.user?.id) {
       return NextResponse.json(
