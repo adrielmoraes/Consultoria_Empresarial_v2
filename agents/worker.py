@@ -57,6 +57,10 @@ from google.genai import types as genai_types
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("mentoria-ai")
 
+# C4: Guard global contra jobs duplicados na mesma sala.
+# Rastreia salas que já possuem um job ativo para rejeitar dispatches duplicados.
+_active_rooms: set[str] = set()
+
 
 # Modelo Realtime nativo do Gemini (voz-para-voz)
 GEMINI_REALTIME_MODEL = "gemini-2.5-flash-native-audio-preview-12-2025"
@@ -947,7 +951,40 @@ async def entrypoint(ctx: JobContext) -> None:
             except Exception as e:
                 logger.warning(f"[Job] Erro ao desconectar room de especialista: {e}")
 
-        logger.info("[Job] Encerrado.")
+        # C4: Libera a sala do guard global para permitir novos jobs futuros
+        _active_rooms.discard(ctx.room.name)
+        logger.info(f"[Job] Sala '{ctx.room.name}' liberada do guard. Encerrado.")
+
+
+# ============================================================
+# C4: Guard contra jobs duplicados — rejeita segundo job na mesma sala
+# ============================================================
+
+async def on_job_request(req) -> None:
+    """
+    Chamado pelo LiveKit antes de despachar cada job.
+    Se a sala já tem um job ativo, rejeita o novo pedido.
+    Isso evita que múltiplas instâncias dos agentes rodem
+    simultaneamente no mesmo room, causando embaralhamento de vozes.
+    """
+    room_name = req.room.name
+    if room_name in _active_rooms:
+        logger.warning(
+            f"[Guard] Job REJEITADO para sala '{room_name}' — "
+            f"já existe um job ativo. Salas ativas: {_active_rooms}"
+        )
+        await req.reject()
+        return
+
+    _active_rooms.add(room_name)
+    logger.info(
+        f"[Guard] Job ACEITO para sala '{room_name}'. "
+        f"Salas ativas: {_active_rooms}"
+    )
+    await req.accept(
+        name="Nathália (Host)",
+        identity="agent-host",
+    )
 
 
 # ============================================================
@@ -958,6 +995,7 @@ if __name__ == "__main__":
     cli.run_app(
         WorkerOptions(
             entrypoint_fnc=entrypoint,
+            request_fnc=on_job_request,
             agent_name="mentoria-agent",
         )
     )
