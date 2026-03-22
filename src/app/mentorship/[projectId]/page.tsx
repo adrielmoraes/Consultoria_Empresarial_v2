@@ -174,6 +174,13 @@ export default function MentorshipRoomPage() {
   const [executionPlan, setExecutionPlan] = useState<string | null>(null);
   const [showPlan, setShowPlan] = useState<boolean | "content" | "checklist">(false);
 
+  // F4: Timeout de connecting
+  const [connectingTooLong, setConnectingTooLong] = useState(false);
+  const [connectingTimedOut, setConnectingTimedOut] = useState(false);
+
+  // F5: Status individual dos agentes conectados
+  const [connectedAgents, setConnectedAgents] = useState<Set<string>>(new Set());
+
   const roomRef = useRef<Room | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
   const sessionCreatingRef = useRef(false);
@@ -205,6 +212,30 @@ export default function MentorshipRoomPage() {
     const id = setInterval(() => setElapsedTime((t) => t + 1), 1000);
     return () => clearInterval(id);
   }, []);
+
+  // F4: Timeout de connecting — aviso visual após 15s, retry após 60s
+  useEffect(() => {
+    if (connectionState !== "connecting") {
+      setConnectingTooLong(false);
+      setConnectingTimedOut(false);
+      return;
+    }
+
+    const timer15s = setTimeout(() => {
+      setConnectingTooLong(true);
+      console.log("[Room] Connecting por mais de 15s...");
+    }, 15_000);
+
+    const timer60s = setTimeout(() => {
+      setConnectingTimedOut(true);
+      console.warn("[Room] Connecting por mais de 60s — timeout.");
+    }, 60_000);
+
+    return () => {
+      clearTimeout(timer15s);
+      clearTimeout(timer60s);
+    };
+  }, [connectionState]);
 
   // Auto-scroll do transcript
   useEffect(() => {
@@ -313,6 +344,8 @@ export default function MentorshipRoomPage() {
           if (!isMounted) { room?.disconnect(); return; }
           roomRef.current = room;
           setConnectionState("connected");
+          // F5: Host (Nathália) conecta com o room principal — marcar como conectado
+          setConnectedAgents((prev) => new Set(prev).add("host"));
           addTranscriptMessage("Sistema", "Conectado! Aguardando os especialistas...");
           try {
             await room!.localParticipant.setMicrophoneEnabled(true);
@@ -402,6 +435,12 @@ export default function MentorshipRoomPage() {
                 );
               } else if (data.type === "session_end") {
                 handleSessionCompleted(data.transcript);
+              } else if (data.type === "agent_ready") {
+                // F5: Marca o agente como conectado quando recebe health-check do backend
+                const agentId = data.agent_id as string;
+                if (agentId) {
+                  setConnectedAgents((prev) => new Set(prev).add(agentId));
+                }
               }
             } catch {
               // ignorar
@@ -417,6 +456,8 @@ export default function MentorshipRoomPage() {
               const agentId = id.replace("agent-", "");
               const agent = AGENTS_MAP[agentId];
               if (agent) {
+                // F5: Fallback — também marca como conectado via ParticipantConnected
+                setConnectedAgents((prev) => new Set(prev).add(agentId));
                 addTranscriptMessage("Sistema", `${agent.name} entrou.`);
               }
             }
@@ -551,6 +592,7 @@ export default function MentorshipRoomPage() {
   const agents = Object.values(AGENTS_MAP).map((a) => ({
     ...a,
     speaking: activeSpeakers.has(a.id),
+    connected: connectedAgents.has(a.id),
   }));
 
   const connectionIcon = {
@@ -623,6 +665,28 @@ export default function MentorshipRoomPage() {
           </button>
         </div>
       </div>
+
+      {/* F4: Aviso de conexão lenta */}
+      {connectionState === "connecting" && connectingTooLong && (
+        <div className="px-4 py-2 bg-amber-900/30 border-b border-amber-500/20 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2">
+            <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />
+            <span className="text-xs text-amber-300 font-medium">
+              {connectingTimedOut
+                ? "A conexão está demorando demais. Tente recarregar a página."
+                : "Conectando ao servidor... Aguarde um momento."}
+            </span>
+          </div>
+          {connectingTimedOut && (
+            <button
+              onClick={() => window.location.reload()}
+              className="px-3 py-1 rounded-lg bg-amber-500/20 text-amber-300 text-xs font-medium hover:bg-amber-500/30 transition-colors border border-amber-500/30"
+            >
+              Recarregar
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Main */}
       <div className="flex-1 flex overflow-hidden">
@@ -1206,7 +1270,7 @@ function AgentCard({
   agent,
   compact = false,
 }: {
-  agent: AgentInfo;
+  agent: AgentInfo & { connected?: boolean };
   compact?: boolean;
 }) {
   const Icon = agent.icon;
@@ -1217,7 +1281,9 @@ function AgentCard({
       className={`relative rounded-2xl overflow-hidden border-2 transition-all duration-500 ${compact ? "h-40" : "h-full"
         } ${agent.speaking
           ? "border-indigo-500/70 shadow-lg shadow-indigo-500/20"
-          : "border-white/5 hover:border-white/10"
+          : agent.connected
+            ? "border-emerald-500/30 hover:border-emerald-500/50"
+            : "border-white/5 hover:border-white/10"
         }`}
     >
       <div
@@ -1231,7 +1297,7 @@ function AgentCard({
           animate={
             agent.speaking
               ? { scale: [1, 1.1, 1], opacity: [0.6, 1, 0.6] }
-              : { scale: 1, opacity: 0.35 }
+              : { scale: 1, opacity: agent.connected ? 0.6 : 0.35 }
           }
           transition={
             agent.speaking
@@ -1247,6 +1313,27 @@ function AgentCard({
           />
         </motion.div>
       </div>
+
+      {/* F5: Status badge — Conectado ou Aguardando */}
+      {!agent.speaking && (
+        <div className="absolute top-3 right-3">
+          {agent.connected ? (
+            <div className="flex items-center gap-1 bg-emerald-500/20 border border-emerald-500/30 rounded-full px-2 py-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span className="text-[10px] text-emerald-300 font-medium">
+                Conectado
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-full px-2 py-1">
+              <Loader2 className="w-2.5 h-2.5 text-gray-400 animate-spin" />
+              <span className="text-[10px] text-gray-400 font-medium">
+                Aguardando...
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Speaking indicator */}
       {agent.speaking && (
