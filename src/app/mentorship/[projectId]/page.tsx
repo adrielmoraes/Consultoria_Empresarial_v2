@@ -62,7 +62,6 @@ type AgentInfo = {
   icon: React.ElementType;
   gradient: string;
   speaking: boolean;
-  connected?: boolean;
 };
 
 const AGENTS_MAP: Record<string, Omit<AgentInfo, "speaking">> = {
@@ -174,8 +173,6 @@ export default function MentorshipRoomPage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [executionPlan, setExecutionPlan] = useState<string | null>(null);
   const [showPlan, setShowPlan] = useState<boolean | "content" | "checklist">(false);
-  const [connectedAgents, setConnectedAgents] = useState<Set<string>>(new Set());
-  const [connectionTimeout, setConnectionTimeout] = useState(false);
 
   const roomRef = useRef<Room | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
@@ -231,82 +228,6 @@ export default function MentorshipRoomPage() {
     });
   }, []);
 
-  // CORREÇÃO P4: usa safeFetch — erros de HTTP são logados e não engolidos.
-  const handleEndSession = async () => {
-    setEnding(true);
-    try {
-      if (
-        roomRef.current &&
-        roomRef.current.state === ConnectionState.Connected
-      ) {
-        try {
-          const data = new TextEncoder().encode(
-            JSON.stringify({ type: "end_session" })
-          );
-          await roomRef.current.localParticipant.publishData(data, {
-            reliable: true,
-          });
-          await new Promise((r) => setTimeout(r, 1000));
-        } catch {
-          // best-effort — não bloqueia o encerramento
-        }
-      }
-
-      if (sessionId) {
-        const fullTranscript = transcript
-          .map((m) => `[${m.speaker}]: ${m.text}`)
-          .join("\n");
-        try {
-          await safeFetch("/api/sessions/finalize", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              sessionId,
-              transcript: fullTranscript,
-              markdownContent: executionPlan ?? null,
-            }),
-          });
-        } catch (err) {
-          console.error("[Sessão] Falha ao finalizar:", err);
-          // Não bloqueia o redirect — o usuário não deve ficar preso na sala
-        }
-      }
-
-      await roomRef.current?.disconnect();
-      router.push("/dashboard");
-    } catch {
-      setEnding(false);
-      router.push("/dashboard");
-    }
-  };
-
-  // CORREÇÃO P4: mesma aplicação de safeFetch aqui.
-  const handleSessionCompleted = useCallback(
-    async (fullTranscript?: string) => {
-      if (sessionId) {
-        const text =
-          fullTranscript ??
-          transcript.map((m) => `[${m.speaker}]: ${m.text}`).join("\n");
-        try {
-          await safeFetch("/api/sessions/finalize", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              sessionId,
-              transcript: text,
-              markdownContent: executionPlan ?? null,
-            }),
-          });
-        } catch (err) {
-          console.error("[Sessão] Falha ao finalizar automaticamente:", err);
-        }
-      }
-      roomRef.current?.disconnect();
-      router.push("/dashboard");
-    },
-    [sessionId, transcript, executionPlan, router]
-  );
-
   // ─── Conexão LiveKit ────────────────────────────────────────────────────────
   // Esta conexão é inicializada apenas uma vez e persiste enquanto o componente existir.
   // O LiveKit SDK gerencia reconexões automaticamente quando a aba é minimizada.
@@ -340,14 +261,6 @@ export default function MentorshipRoomPage() {
 
     async function connect() {
       try {
-        // F4: Timeout de fallback para a fase inicial
-        const timeoutId = setTimeout(() => {
-          if (isMounted && !roomRef.current?.state && connectionStartedRef.current) {
-            setConnectionTimeout(true);
-            setConnectionState("error");
-          }
-        }, 30000);
-
         setConnectionState("connecting");
 
         // Cria a sessão de mentoria no backend
@@ -360,9 +273,6 @@ export default function MentorshipRoomPage() {
 
         const { sessionId: sid, roomName } = await sessionRes.json();
         setSessionId(sid);
-        
-        clearTimeout(timeoutId);
-
         sessionDataRef.current = { sessionId: sid, roomName, userId };
 
         // Obtém token LiveKit
@@ -466,16 +376,8 @@ export default function MentorshipRoomPage() {
             const ids = new Set(
               speakers.map((s) => {
                 const id = s.identity;
-                if (id.startsWith("agent-")) {
-                  const agentId = id.replace("agent-", "");
-                  // FIX F2: Mapeia identity do worker principal (host) para "host"
-                  if (agentId in AGENTS_MAP) return agentId;
-                  // Identidades como "mentoria-agent" ou "agent" → host
-                  return "host";
-                }
+                if (id.startsWith("agent-")) return id.replace("agent-", "");
                 if (id.startsWith("user-")) return "user";
-                // Qualquer outra identity de agente → host
-                if (id.includes("mentoria") || id === "agent") return "host";
                 return id;
               })
             );
@@ -491,14 +393,6 @@ export default function MentorshipRoomPage() {
 
               if (data.type === "transcript") {
                 addTranscriptMessage(data.speaker, data.text);
-                if (data.speaker === "Nathália") {
-                  setConnectedAgents((prev) => new Set(prev).add("host"));
-                }
-              } else if (data.type === "agent_ready") {
-                setConnectedAgents((prev) => new Set(prev).add(data.agent_id));
-                addTranscriptMessage("Sistema", `${data.name} pronto.`);
-              } else if (data.type === "agent_error") {
-                addTranscriptMessage("Sistema", `Falha ao iniciar ${data.name}.`);
               } else if (data.type === "execution_plan") {
                 setExecutionPlan(data.plan ?? data.text ?? "");
                 setShowPlan(true);
@@ -524,10 +418,7 @@ export default function MentorshipRoomPage() {
               const agent = AGENTS_MAP[agentId];
               if (agent) {
                 addTranscriptMessage("Sistema", `${agent.name} entrou.`);
-                setConnectedAgents((prev) => new Set(prev).add(agentId));
               }
-            } else if (id.includes("mentoria") || id === "host") {
-              setConnectedAgents((prev) => new Set(prev).add("host"));
             }
           }
         );
@@ -535,24 +426,6 @@ export default function MentorshipRoomPage() {
         // Conecta ao room
         await room.connect(url, token);
         console.log("[Room] Conectado com sucesso.");
-
-        room.remoteParticipants.forEach((participant) => {
-          const id = participant.identity;
-          if (id.startsWith("agent-")) {
-            setConnectedAgents((prev) => new Set(prev).add(id.replace("agent-", "")));
-          } else if (id.includes("mentoria") || id === "host") {
-            setConnectedAgents((prev) => new Set(prev).add("host"));
-          }
-        });
-
-        room.remoteParticipants.forEach((participant) => {
-          const id = participant.identity;
-          if (id.startsWith("agent-")) {
-            setConnectedAgents((prev) => new Set(prev).add(id.replace("agent-", "")));
-          } else if (id.includes("mentoria") || id === "host") {
-            setConnectedAgents((prev) => new Set(prev).add("host"));
-          }
-        });
 
       } catch (error) {
         if (!isMounted) return;
@@ -570,17 +443,13 @@ export default function MentorshipRoomPage() {
     return () => {
       isMounted = false;
       sessionCreatingRef.current = false;
-      connectionStartedRef.current = false; // FIX: Permite reconexão após re-render/HMR
-      
-      // NÃO desconecta aqui para permitir reconexão em caso de remount temporário
+      // NÃO desconecta aqui para permitir reconexão em caso de remount
       // A desconexão é tratada pelo handleEndSession
       audioContainerRef.current
         ?.querySelectorAll("audio")
         .forEach((el) => el.remove());
     };
-  // FIX F1: authStatus e session no dependency array para garantir
-  // que o efeito re-execute quando autenticação for resolvida.
-  }, [authStatus, session, projectId, router, addTranscriptMessage, handleSessionCompleted]);
+  }, []); // DEPENDÊNCIA VAZIA = executa apenas uma vez
 
   // ─── Handlers ───────────────────────────────────────────────────────────────
 
@@ -590,6 +459,82 @@ export default function MentorshipRoomPage() {
     await lp.setMicrophoneEnabled(isMuted);
     setIsMuted((m) => !m);
   };
+
+  // CORREÇÃO P4: usa safeFetch — erros de HTTP são logados e não engolidos.
+  const handleEndSession = async () => {
+    setEnding(true);
+    try {
+      if (
+        roomRef.current &&
+        roomRef.current.state === ConnectionState.Connected
+      ) {
+        try {
+          const data = new TextEncoder().encode(
+            JSON.stringify({ type: "end_session" })
+          );
+          await roomRef.current.localParticipant.publishData(data, {
+            reliable: true,
+          });
+          await new Promise((r) => setTimeout(r, 1000));
+        } catch {
+          // best-effort — não bloqueia o encerramento
+        }
+      }
+
+      if (sessionId) {
+        const fullTranscript = transcript
+          .map((m) => `[${m.speaker}]: ${m.text}`)
+          .join("\n");
+        try {
+          await safeFetch("/api/sessions/finalize", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sessionId,
+              transcript: fullTranscript,
+              markdownContent: executionPlan ?? null,
+            }),
+          });
+        } catch (err) {
+          console.error("[Sessão] Falha ao finalizar:", err);
+          // Não bloqueia o redirect — o usuário não deve ficar preso na sala
+        }
+      }
+
+      await roomRef.current?.disconnect();
+      router.push("/dashboard");
+    } catch {
+      setEnding(false);
+      router.push("/dashboard");
+    }
+  };
+
+  // CORREÇÃO P4: mesma aplicação de safeFetch aqui.
+  const handleSessionCompleted = useCallback(
+    async (fullTranscript?: string) => {
+      if (sessionId) {
+        const text =
+          fullTranscript ??
+          transcript.map((m) => `[${m.speaker}]: ${m.text}`).join("\n");
+        try {
+          await safeFetch("/api/sessions/finalize", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sessionId,
+              transcript: text,
+              markdownContent: executionPlan ?? null,
+            }),
+          });
+        } catch (err) {
+          console.error("[Sessão] Falha ao finalizar automaticamente:", err);
+        }
+      }
+      roomRef.current?.disconnect();
+      router.push("/dashboard");
+    },
+    [sessionId, transcript, executionPlan, router]
+  );
 
   // ─── Guards de render ────────────────────────────────────────────────────────
 
@@ -603,37 +548,16 @@ export default function MentorshipRoomPage() {
 
   if (authStatus === "unauthenticated") return null;
 
-  // FIX F3: Handler de reconexão manual quando connectionState === "error"
-  const handleRetryConnection = () => {
-    connectionStartedRef.current = false;
-    sessionCreatingRef.current = false;
-    setConnectionState("connecting");
-    // Força o useEffect a re-executar atualizando uma ref
-    // O useEffect com [authStatus, session] vai re-rodar
-    // pois connectionStartedRef foi resetado
-    window.location.reload();
-  };
-
   const agents = Object.values(AGENTS_MAP).map((a) => ({
     ...a,
-    speaking: activeSpeakers.has(a.id) || (a.id === "host" && activeSpeakers.has("mentoria-agent")),
-    connected: connectionState === "connected" ? connectedAgents.has(a.id) : false,
+    speaking: activeSpeakers.has(a.id),
   }));
 
   const connectionIcon = {
     connected: <Wifi className="w-3.5 h-3.5 text-emerald-400" />,
     connecting: <Loader2 className="w-3.5 h-3.5 text-amber-400 animate-spin" />,
     reconnecting: <Loader2 className="w-3.5 h-3.5 text-amber-400 animate-spin" />,
-    error: (
-      <button
-        onClick={handleRetryConnection}
-        title="Tentar novamente"
-        className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 transition-colors"
-      >
-        <WifiOff className="w-3.5 h-3.5 text-red-400" />
-        <span className="text-[10px] text-red-300 font-medium">Reconectar</span>
-      </button>
-    ),
+    error: <WifiOff className="w-3.5 h-3.5 text-red-400" />,
   }[connectionState];
 
   // ─── Render ──────────────────────────────────────────────────────────────────
@@ -678,11 +602,10 @@ export default function MentorshipRoomPage() {
           {executionPlan && (
             <button
               onClick={() => setShowPlan((v) => !v)}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                showPlan
-                  ? "bg-violet-500/20 text-violet-300 border border-violet-500/30"
-                  : "bg-white/5 text-gray-400 hover:text-white"
-              }`}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${showPlan
+                ? "bg-violet-500/20 text-violet-300 border border-violet-500/30"
+                : "bg-white/5 text-gray-400 hover:text-white"
+                }`}
             >
               <FileText className="w-3.5 h-3.5" />
               Plano
@@ -691,11 +614,10 @@ export default function MentorshipRoomPage() {
 
           <button
             onClick={() => setShowTranscript((v) => !v)}
-            className={`p-2 rounded-lg transition-colors ${
-              showTranscript
-                ? "bg-indigo-500/20 text-indigo-400"
-                : "bg-white/5 text-gray-400 hover:text-white"
-            }`}
+            className={`p-2 rounded-lg transition-colors ${showTranscript
+              ? "bg-indigo-500/20 text-indigo-400"
+              : "bg-white/5 text-gray-400 hover:text-white"
+              }`}
           >
             <MessageSquare className="w-4 h-4" />
           </button>
@@ -756,21 +678,19 @@ export default function MentorshipRoomPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setShowPlan("content")}
-                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                      (showPlan as string) === "content"
-                        ? "bg-violet-500/20 text-violet-300 border border-violet-500/30"
-                        : "bg-white/5 text-gray-400 hover:text-white border border-transparent"
-                    }`}
+                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${(showPlan as string) === "content"
+                      ? "bg-violet-500/20 text-violet-300 border border-violet-500/30"
+                      : "bg-white/5 text-gray-400 hover:text-white border border-transparent"
+                      }`}
                   >
                     Conteúdo
                   </button>
                   <button
                     onClick={() => setShowPlan("checklist")}
-                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                      (showPlan as string) === "checklist"
-                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                        : "bg-white/5 text-gray-400 hover:text-white border border-transparent"
-                    }`}
+                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${(showPlan as string) === "checklist"
+                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                      : "bg-white/5 text-gray-400 hover:text-white border border-transparent"
+                      }`}
                   >
                     Checklist
                   </button>
@@ -833,11 +753,10 @@ export default function MentorshipRoomPage() {
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={toggleMute}
-          className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
-            isMuted
-              ? "bg-red-500/20 border border-red-500/50 text-red-400"
-              : "bg-white/10 border border-white/10 text-white hover:bg-white/20"
-          }`}
+          className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${isMuted
+            ? "bg-red-500/20 border border-red-500/50 text-red-400"
+            : "bg-white/10 border border-white/10 text-white hover:bg-white/20"
+            }`}
           title={isMuted ? "Ativar microfone" : "Silenciar microfone"}
         >
           {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
@@ -1152,14 +1071,14 @@ function ChecklistView({ content }: { content: string }) {
     const items: ChecklistItem[] = [];
     const lines = content.split("\n");
     let category = "Ações";
-    
+
     lines.forEach((line, idx) => {
       const trimmed = line.trim();
-      
+
       if (trimmed.startsWith("# ")) {
         category = trimmed.substring(2).replace(/\*\*/g, "");
       }
-      
+
       if (trimmed.includes("[ ]") || trimmed.includes("☐")) {
         const text = trimmed
           .replace(/^[-*\d.]\s*/, "")
@@ -1168,7 +1087,7 @@ function ChecklistView({ content }: { content: string }) {
           .replace(/☐/g, "")
           .replace(/\*\*/g, "")
           .trim();
-        
+
         if (text) {
           items.push({
             id: `item-${idx}`,
@@ -1179,7 +1098,7 @@ function ChecklistView({ content }: { content: string }) {
         }
       }
     });
-    
+
     return items;
   });
 
@@ -1238,18 +1157,16 @@ function ChecklistView({ content }: { content: string }) {
               <button
                 key={item.id}
                 onClick={() => toggleItem(item.id)}
-                className={`w-full text-left flex items-start gap-2.5 p-2.5 rounded-lg transition-all ${
-                  item.completed
-                    ? "bg-emerald-500/10 border border-emerald-500/20"
-                    : "bg-white/5 border border-white/10 hover:border-white/20"
-                }`}
+                className={`w-full text-left flex items-start gap-2.5 p-2.5 rounded-lg transition-all ${item.completed
+                  ? "bg-emerald-500/10 border border-emerald-500/20"
+                  : "bg-white/5 border border-white/10 hover:border-white/20"
+                  }`}
               >
                 <div
-                  className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all ${
-                    item.completed
-                      ? "bg-emerald-500 border-emerald-500"
-                      : "border-gray-500"
-                  }`}
+                  className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all ${item.completed
+                    ? "bg-emerald-500 border-emerald-500"
+                    : "border-gray-500"
+                    }`}
                 >
                   {item.completed && (
                     <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1258,9 +1175,8 @@ function ChecklistView({ content }: { content: string }) {
                   )}
                 </div>
                 <span
-                  className={`text-xs leading-relaxed transition-all ${
-                    item.completed ? "text-gray-500 line-through" : "text-gray-300"
-                  }`}
+                  className={`text-xs leading-relaxed transition-all ${item.completed ? "text-gray-500 line-through" : "text-gray-300"
+                    }`}
                 >
                   {item.text}
                 </span>
@@ -1298,13 +1214,11 @@ function AgentCard({
   return (
     <motion.div
       layout
-      className={`relative rounded-2xl overflow-hidden border-2 transition-all duration-500 ${
-        compact ? "h-40" : "h-full"
-      } ${
-        agent.speaking
+      className={`relative rounded-2xl overflow-hidden border-2 transition-all duration-500 ${compact ? "h-40" : "h-full"
+        } ${agent.speaking
           ? "border-indigo-500/70 shadow-lg shadow-indigo-500/20"
           : "border-white/5 hover:border-white/10"
-      }`}
+        }`}
     >
       <div
         className={`absolute inset-0 bg-gradient-to-br ${agent.gradient} opacity-10`}
@@ -1324,27 +1238,15 @@ function AgentCard({
               ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" }
               : {}
           }
-          className={`${
-            compact ? "w-14 h-14" : "w-20 h-20 sm:w-24 sm:h-24"
-          } rounded-full bg-gradient-to-r ${agent.gradient} flex items-center justify-center`}
+          className={`${compact ? "w-14 h-14" : "w-20 h-20 sm:w-24 sm:h-24"
+            } rounded-full bg-gradient-to-r ${agent.gradient} flex items-center justify-center`}
         >
           <Icon
-            className={`${
-              compact ? "w-7 h-7" : "w-10 h-10 sm:w-12 sm:h-12"
-            } text-white`}
+            className={`${compact ? "w-7 h-7" : "w-10 h-10 sm:w-12 sm:h-12"
+              } text-white`}
           />
         </motion.div>
       </div>
-
-      {/* Connection Indicator F5 */}
-      {!agent.connected && (
-        <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-[1px] flex flex-col justify-end p-4 pb-12 z-10 transition-opacity">
-          <div className="flex items-center gap-2 text-amber-400/80 mx-auto">
-            <Loader2 className="w-3 h-3 animate-spin shrink-0" />
-            <span className="text-[10px] font-medium tracking-wide">Aguardando...</span>
-          </div>
-        </div>
-      )}
 
       {/* Speaking indicator */}
       {agent.speaking && (
@@ -1374,9 +1276,8 @@ function AgentCard({
       {/* Name badge */}
       <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
         <p
-          className={`font-semibold text-white ${
-            compact ? "text-xs" : "text-sm"
-          }`}
+          className={`font-semibold text-white ${compact ? "text-xs" : "text-sm"
+            }`}
         >
           {agent.name}
         </p>

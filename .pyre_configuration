@@ -1,0 +1,3 @@
+[pyre]
+search_path = ["C:/Mentoria/agents/venv/Lib/site-packages"]
+project_root = "C:/Mentoria"
