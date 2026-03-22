@@ -488,15 +488,48 @@ async def _start_specialist_in_room(
             .to_jwt()
         )
 
-        # Conecta ao room LiveKit com retry (somente áudio do usuário)
+        # C5: Conecta ao room SEM subscrever ao áudio do usuário.
+        # Especialistas só ouvem o usuário quando são explicitamente ativados.
+        # Isso evita que todos respondam simultaneamente ao usuário.
         room_options = rtc.RoomOptions(auto_subscribe=False)
         room = rtc.Room()
-        
-        def _subscribe_to_user_audio(publication, participant):
-            if participant.identity.startswith("user-") and publication.kind == rtc.TrackKind.KIND_AUDIO:
+
+        # C5: Controle de subscrição de áudio — ativado/desativado por data packet
+        _audio_subscribed = False
+
+        def _subscribe_user_audio():
+            """Subscreve ao áudio do usuário (chamado quando o especialista é ativado)."""
+            nonlocal _audio_subscribed
+            if _audio_subscribed:
+                return
+            _audio_subscribed = True
+            for p in room.remote_participants.values():
+                if p.identity.startswith("user-"):
+                    for pub in p.track_publications.values():
+                        if pub.kind == rtc.TrackKind.KIND_AUDIO:
+                            pub.set_subscribed(True)
+            logger.info(f"[{name}] Áudio do usuário SUBSCRITO (ativado).")
+
+        def _unsubscribe_user_audio():
+            """Dessubscreve do áudio do usuário (chamado quando outro especialista é ativado)."""
+            nonlocal _audio_subscribed
+            if not _audio_subscribed:
+                return
+            _audio_subscribed = False
+            for p in room.remote_participants.values():
+                if p.identity.startswith("user-"):
+                    for pub in p.track_publications.values():
+                        if pub.kind == rtc.TrackKind.KIND_AUDIO:
+                            pub.set_subscribed(False)
+            logger.info(f"[{name}] Áudio do usuário DESSUBSCRITO (silenciado).")
+
+        # Quando o usuário publicar áudio depois, subscreve SOMENTE se ativado
+        def _on_track_published(publication, participant):
+            if _audio_subscribed and participant.identity.startswith("user-") and publication.kind == rtc.TrackKind.KIND_AUDIO:
                 publication.set_subscribed(True)
-                
-        room.on("track_published", _subscribe_to_user_audio)
+
+        room.on("track_published", _on_track_published)
+
         connected = False
         for attempt in range(1, MAX_RETRIES + 1):
             try:
@@ -505,12 +538,7 @@ async def _start_specialist_in_room(
                     timeout=30.0,
                 )
                 connected = True
-                
-                # Se o usuário já estiver na sala, inscreve-se no áudio dele
-                for participant in room.remote_participants.values():
-                    for publication in participant.track_publications.values():
-                        _subscribe_to_user_audio(publication, participant)
-                        
+                # NÃO subscreve ao áudio aqui — será feito apenas quando ativado
                 break
             except (asyncio.TimeoutError, Exception) as conn_err:
                 retry_delay = RETRY_BASE_DELAY * (2 ** (attempt - 1))
@@ -664,14 +692,20 @@ async def _start_specialist_in_room(
                 )
             )
 
-        # Escuta data packets para ativação coordenada
+        # C5: Escuta data packets para ativação/desativação coordenada.
+        # Quando ativado: subscreve ao áudio do usuário + gera resposta.
+        # Quando outro é ativado: dessubscreve do áudio (silencia).
         @room.on("data_received")
         def _on_data(dp: rtc.DataPacket) -> None:
             try:
                 msg = json.loads(dp.data.decode())
                 if msg.get("type") == "activate_agent":
                     if msg.get("agent_id") == spec_id:
+                        # === ATIVAÇÃO: este especialista foi chamado ===
                         ctx_summary = msg.get("transcript_summary", "")
+                        context_text = msg.get("context", "")
+
+                        # Atualiza instruções com contexto da sessão
                         if ctx_summary:
                             new_instructions = (
                                 SPECIALIST_SYSTEM_PROMPTS[spec_id]
@@ -680,9 +714,24 @@ async def _start_specialist_in_room(
                             asyncio.create_task(
                                 agent.update_instructions(new_instructions)
                             )
-                        logger.info(f"[{name}] Ativado via data packet.")
+
+                        # C5: Subscreve ao áudio do usuário
+                        _subscribe_user_audio()
+
+                        # Gera resposta forçada com o contexto da questão
+                        prompt = (
+                            f"Nathália acabou de te acionar. O contexto é: {context_text}. "
+                            f"Responda de forma objetiva e profissional."
+                        )
+                        asyncio.create_task(
+                            session.generate_reply(instructions=prompt)
+                        )
+
+                        logger.info(f"[{name}] ATIVADO via data packet — áudio ON + reply gerado.")
                     else:
-                        logger.debug(f"[{name}] Em silêncio (ativo: {msg.get('agent_id')}).")
+                        # === DESATIVAÇÃO: outro especialista foi chamado ===
+                        _unsubscribe_user_audio()
+                        logger.debug(f"[{name}] DESATIVADO (ativo agora: {msg.get('agent_id')}).")
             except Exception as e:
                 logger.warning(f"[{name}] Erro ao processar data packet: {e}")
 
