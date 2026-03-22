@@ -617,9 +617,9 @@ async def _start_specialist_in_room(
                 )
                 logger.info(f"[{name}] Auto-apresentação concluída.")
             except asyncio.TimeoutError:
-                logger.warning(f"[{name}] Timeout na auto-apresentação.")
+                logger.warning(f"[{name}] Timeout na auto-apresentação (30s).")
             except Exception as e:
-                logger.warning(f"[{name}] Erro na auto-apresentação: {e}")
+                logger.warning(f"[{name}] Erro na auto-apresentação: {type(e).__name__}: {e}", exc_info=True)
 
         # Captura transcrição do especialista via evento
         @session.on("conversation_item_added")
@@ -817,8 +817,8 @@ async def entrypoint(ctx: JobContext) -> None:
     #    próximo conectar. Isso evita sobrecarga na API Gemini.
     # ------------------------------------------------------------------
     async def welcome_and_introductions() -> None:
-        # Aguarda Nathália estabilizar no room
-        await asyncio.sleep(3.0)
+        # Aguarda Nathália estabilizar no room e o RealtimeModel conectar ao Gemini
+        await asyncio.sleep(5.0)
 
         # 2a. Nathália se apresenta e anuncia o time
         host_greeting = (
@@ -835,8 +835,10 @@ async def entrypoint(ctx: JobContext) -> None:
                 ),
                 timeout=30.0,
             )
+        except asyncio.TimeoutError:
+            logger.warning("[Host] Timeout (30s) ao gerar reply inicial - RealtimeModel pode não ter conectado ao Gemini.")
         except Exception as e:
-            logger.warning(f"[Host] Erro ao gerar reply inicial: {e}")
+            logger.warning(f"[Host] Erro ao gerar reply inicial: {type(e).__name__}: {e}", exc_info=True)
 
         # Aguarda a fala da Nathália terminar
         await asyncio.sleep(8.0)

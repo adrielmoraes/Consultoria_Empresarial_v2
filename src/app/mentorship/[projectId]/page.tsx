@@ -341,12 +341,26 @@ export default function MentorshipRoomPage() {
         // ── Eventos da sala ──────────────────────────────────────────────────
 
         room.on(RoomEvent.Connected, async () => {
-          if (!isMounted) { room?.disconnect(); return; }
+          // CORREÇÃO StrictMode: NÃO desconectar quando isMounted=false.
+          // Apenas ignora — o cleanup do useEffect cuida da desconexão.
+          if (!isMounted) return;
           roomRef.current = room;
           setConnectionState("connected");
           // F5: Host (Nathália) conecta com o room principal — marcar como conectado
           setConnectedAgents((prev) => new Set(prev).add("host"));
           addTranscriptMessage("Sistema", "Conectado! Aguardando os especialistas...");
+
+          // Detecta agentes que já estavam na sala antes do frontend conectar
+          for (const [, p] of room!.remoteParticipants) {
+            const pid = p.identity;
+            if (pid.startsWith("agent-")) {
+              const agId = pid.replace("agent-", "");
+              if (AGENTS_MAP[agId]) {
+                setConnectedAgents((prev) => new Set(prev).add(agId));
+              }
+            }
+          }
+
           try {
             await room!.localParticipant.setMicrophoneEnabled(true);
           } catch (micErr) {
@@ -479,18 +493,20 @@ export default function MentorshipRoomPage() {
 
     connect();
 
-    // Cleanup: não desconecta a sala quando o componente unmounta
-    // A sala será desconectada apenas quando o usuário sair explicitamente
+    // CORREÇÃO StrictMode: cleanup desconecta a sala e reseta os refs
+    // para que o re-mount possa reconectar normalmente.
     return () => {
       isMounted = false;
       sessionCreatingRef.current = false;
-      // NÃO desconecta aqui para permitir reconexão em caso de remount
-      // A desconexão é tratada pelo handleEndSession
+      connectionStartedRef.current = false; // Permite re-mount reconectar
+      if (room && room.state !== ConnectionState.Disconnected) {
+        room.disconnect();
+      }
       audioContainerRef.current
         ?.querySelectorAll("audio")
         .forEach((el) => el.remove());
     };
-  }, []); // DEPENDÊNCIA VAZIA = executa apenas uma vez
+  }, [authStatus, session]); // Re-executa quando auth muda de loading→authenticated
 
   // ─── Handlers ───────────────────────────────────────────────────────────────
 
