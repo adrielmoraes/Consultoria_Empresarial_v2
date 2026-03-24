@@ -160,7 +160,8 @@ ESPECIALISTAS DISPONÍVEIS:
 
 REGRAS:
 - Receba o usuário de forma calorosa e profissional.
-- Identifique os tópicos do projeto/problema do usuário.
+- Identifique o NOME do usuário e os tópicos do projeto/problema.
+- SEMPRE chame o usuário pelo nome.
 - Quando precisar de análise financeira, use a função acionar_carlos_cfo.
 - Quando precisar de orientação jurídica, use acionar_daniel_advogado.
 - Quando precisar de estratégia de marketing, use acionar_rodrigo_cmo.
@@ -174,8 +175,8 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
     "cfo": (
         "Você é Carlos, o CFO (Chief Financial Officer) do Mentoria AI. "
         "Você participa de uma sessão de mentoria empresarial multi-agentes. "
-        "AGUARDE em silêncio até que Nathália (a apresentadora) ou o usuário chame seu nome "
-        "ou peça uma análise financeira. "
+        "AGUARDE em silêncio absoluto. Você SÓ PODE FALAR quando Nathália (a apresentadora) o acionar. "
+        "Se souber o nome do usuário pelas transcrições anteriores, use-o para chamá-lo pelo nome. "
         "Quando acionado, analise custos, receitas, precificação e viabilidade financeira. "
         "Seja preciso, profissional e objetivo. Máximo 4 frases por resposta. "
         "Fale em português do Brasil."
@@ -183,8 +184,8 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
     "legal": (
         "Você é Daniel, o Advogado do Mentoria AI. "
         "Você participa de uma sessão de mentoria empresarial multi-agentes. "
-        "AGUARDE em silêncio até que Nathália ou o usuário chame seu nome "
-        "ou peça orientação jurídica. "
+        "AGUARDE em silêncio absoluto. Você SÓ PODE FALAR quando Nathália (a apresentadora) o acionar. "
+        "Se souber o nome do usuário pelas transcrições anteriores, use-o para chamá-lo pelo nome. "
         "Quando acionado, foque em contratos, estrutura societária, LGPD e compliance. "
         "Seja formal, preciso e claro. Máximo 4 frases por resposta. "
         "Fale em português do Brasil."
@@ -192,8 +193,8 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
     "cmo": (
         "Você é Rodrigo, o CMO (Chief Marketing Officer) do Mentoria AI. "
         "Você participa de uma sessão de mentoria empresarial multi-agentes. "
-        "AGUARDE em silêncio até que Nathália ou o usuário chame seu nome "
-        "ou peça estratégia de marketing. "
+        "AGUARDE em silêncio absoluto. Você SÓ PODE FALAR quando Nathália (a apresentadora) o acionar. "
+        "Se souber o nome do usuário pelas transcrições anteriores, use-o para chamá-lo pelo nome. "
         "Quando acionado, foque em posicionamento, aquisição de clientes, branding e growth. "
         "Seja dinâmico, entusiasmado e prático. Máximo 4 frases por resposta. "
         "Fale em português do Brasil."
@@ -201,8 +202,8 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
     "cto": (
         "Você é Ana, a CTO (Chief Technology Officer) do Mentoria AI. "
         "Você participa de uma sessão de mentoria empresarial multi-agentes. "
-        "AGUARDE em silêncio até que Nathália ou o usuário chame seu nome "
-        "ou peça orientação técnica. "
+        "AGUARDE em silêncio absoluto. Você SÓ PODE FALAR quando Nathália (a apresentadora) o acionar. "
+        "Se souber o nome do usuário pelas transcrições anteriores, use-o para chamá-lo pelo nome. "
         "Quando acionada, foque em stack tecnológico, arquitetura, infraestrutura e escalabilidade. "
         "Seja técnica, prática e objetiva. Máximo 4 frases por resposta. "
         "Fale em português do Brasil."
@@ -210,7 +211,8 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
     "plan": (
         "Você é Marco, o Estrategista-Chefe do Mentoria AI. "
         "Você participa de uma sessão de mentoria empresarial multi-agentes. "
-        "AGUARDE em silêncio até que Nathália ou o usuário peça o Plano de Execução. "
+        "AGUARDE em silêncio absoluto. Você SÓ PODE FALAR quando Nathália (a apresentadora) o acionar. "
+        "Se souber o nome do usuário pelas transcrições anteriores, use-o para chamá-lo pelo nome. "
         "Quando acionado, sintetize TUDO que foi discutido na sessão e entregue um "
         "Plano de Execução estruturado com: "
         "1) Resumo do projeto, 2) Principais recomendações por área, "
@@ -232,6 +234,7 @@ class Blackboard:
     (passada no construtor), sem necessidade de rede.
     """
     project_name: str = ""
+    user_name: str = ""
     user_query: str = ""
     active_agent: Optional[str] = None
     transcript: list[dict] = field(default_factory=list)
@@ -246,6 +249,8 @@ class Blackboard:
     def get_context_summary(self) -> str:
         """Retorna um resumo do contexto atual para injetar nos prompts."""
         parts: list[str] = []
+        if self.user_name:
+            parts.append(f"Usuário: {self.user_name}")
         if self.project_name:
             parts.append(f"Projeto: {self.project_name}")
         if self.user_query:
@@ -328,7 +333,7 @@ class HostAgent(Agent):
                     target_tokens=GEMINI_REALTIME_CONFIG["compression_sliding_window"]
                 ),
             ),
-            conn_options=APIConnectOptions(timeout=30.0),
+            conn_options=APIConnectOptions(timeout=15.0),
         )
 
         super().__init__(
@@ -535,7 +540,7 @@ async def _start_specialist_in_room(
             try:
                 await asyncio.wait_for(
                     room.connect(ws_url, token, options=room_options),
-                    timeout=30.0,
+                    timeout=15.0,
                 )
                 connected = True
                 # NÃO subscreve ao áudio aqui — será feito apenas quando ativado
@@ -576,7 +581,7 @@ async def _start_specialist_in_room(
             try:
                 await asyncio.wait_for(
                     session.start(agent, room=room),
-                    timeout=30.0,
+                    timeout=15.0,
                 )
                 session_started = True
                 break
@@ -645,7 +650,7 @@ async def _start_specialist_in_room(
                             f"Por favor, apresente-se dizendo: {intro_text}"
                         ),
                     ),
-                    timeout=30.0,
+                    timeout=15.0,
                 )
                 logger.info(f"[{name}] Auto-apresentação concluída.")
             except asyncio.TimeoutError:
@@ -896,33 +901,52 @@ async def entrypoint(ctx: JobContext) -> None:
         # Aguarda a fala da Nathália terminar
         await asyncio.sleep(8.0)
 
-        # 2b. Conecta cada especialista SEQUENCIALMENTE
+        # 2b. Conecta todos os especialistas CONCORRENTEMENTE
+        logger.info("[Apresentação] Conectando todos os especialistas simultaneamente...")
+        connect_tasks = []
+        for spec_id in SPECIALIST_ORDER:
+            task = asyncio.create_task(
+                _start_specialist_in_room(
+                    spec_id=spec_id,
+                    blackboard=blackboard,
+                    ws_url=ws_url,
+                    lk_api_key=lk_api_key,
+                    lk_api_secret=lk_api_secret,
+                    room_name=ctx.room.name,
+                    host_room=ctx.room,
+                    auto_introduce=False,
+                )
+            )
+            connect_tasks.append(task)
+            
+        sessions = await asyncio.gather(*connect_tasks)
+        spec_sessions = dict(zip(SPECIALIST_ORDER, sessions))
+
+        # Especialistas se apresentam SEQUENCIALMENTE
         for spec_id in SPECIALIST_ORDER:
             if not blackboard.is_active:
                 logger.info("[Apresentação] Job encerrando, abortando sequência.")
                 return
 
-            spec_name = SPECIALIST_NAMES[spec_id]
-            logger.info(f"[Apresentação] Conectando {spec_name}...")
-
-            session = await _start_specialist_in_room(
-                spec_id=spec_id,
-                blackboard=blackboard,
-                ws_url=ws_url,
-                lk_api_key=lk_api_key,
-                lk_api_secret=lk_api_secret,
-                room_name=ctx.room.name,
-                host_room=ctx.room,
-                auto_introduce=True,
-            )
-
-            if session is None:
-                logger.warning(f"[Apresentação] {spec_name} falhou ao conectar, pulando.")
+            session = spec_sessions.get(spec_id)
+            if not session:
                 continue
 
-            # Aguarda o especialista terminar de falar antes de conectar o próximo
-            await asyncio.sleep(POST_INTRO_WAIT)
-            logger.info(f"[Apresentação] {spec_name} concluiu. Próximo...")
+            spec_name = SPECIALIST_NAMES[spec_id]
+            logger.info(f"[Apresentação] Iniciando apresentação de {spec_name}...")
+            intro_text = SPECIALIST_INTRODUCTIONS[spec_id]
+
+            try:
+                await asyncio.wait_for(
+                    session.generate_reply(
+                        instructions=f"Por favor, apresente-se rapidamente dizendo: {intro_text}. Se souber o nome do usuário, salde-o pelo nome.",
+                    ),
+                    timeout=15.0,
+                )
+                logger.info(f"[Apresentação] {spec_name} concluiu.")
+                await asyncio.sleep(POST_INTRO_WAIT)
+            except Exception as e:
+                logger.warning(f"[Apresentação] Erro na apresentação de {spec_name}: {e}")
 
         logger.info("[Apresentação] Todos os especialistas foram apresentados.")
 
@@ -931,11 +955,12 @@ async def entrypoint(ctx: JobContext) -> None:
             return
 
         # 2c. Nathália retoma e faz a pergunta inicial ao usuário
-        closing = (
-            "Agora que você já conhece toda a nossa equipe, me conte: "
-            "qual é o seu projeto ou principal desafio de negócio hoje? "
-            "Estou aqui para ouvir você!"
-        )
+        closing_base = "Agora que você já conhece toda a nossa equipe, me conte: "
+        if blackboard.user_name:
+            closing = f"{closing_base}{blackboard.user_name}, qual é o seu principal desafio de negócio ou projeto atual? Estou aqui para ouvir você!"
+        else:
+            closing = f"{closing_base}qual é o seu nome e qual é o seu principal desafio de negócio ou projeto atual? Estou aqui para ouvir você!"
+
         logger.info("[Host] Nathália fazendo pergunta inicial...")
         try:
             await asyncio.wait_for(
@@ -976,6 +1001,10 @@ async def entrypoint(ctx: JobContext) -> None:
             elif msg.get("type") == "set_project_name":
                 blackboard.project_name = msg.get("name", "")
                 logger.info(f"[Room] Nome do projeto definido: {blackboard.project_name}")
+                
+            elif msg.get("type") == "set_user_name":
+                blackboard.user_name = msg.get("name", "")
+                logger.info(f"[Room] Nome do usuário definido: {blackboard.user_name}")
 
         except Exception as e:
             logger.warning(f"[Room] Erro ao processar data packet do frontend: {e}")
