@@ -1,0 +1,390 @@
+INFO:livekit.agents:starting worker
+{"message": "starting worker", "level": "INFO", "name": "livekit.agents", "version": "1.4.6", "rtc-version": "1.1.2", "timestamp": "2026-03-24T17:51:54.288033+00:00"}
+INFO:livekit.agents:preloading plugins
+{"message": "preloading plugins", "level": "INFO", "name": "livekit.agents", "packages": ["livekit.plugins.google", "av"], "timestamp": "2026-03-24T17:51:54.288187+00:00"}
+INFO:livekit.agents:HTTP server listening on :8081
+{"message": "HTTP server listening on :8081", "level": "INFO", "name": "livekit.agents", "timestamp": "2026-03-24T17:51:54.326845+00:00"}
+INFO:livekit.agents:initializing process
+{"message": "initializing process", "level": "INFO", "name": "livekit.agents", "pid": 299, "timestamp": "2026-03-24T17:51:56.633188+00:00"}
+INFO:livekit.agents:initializing process
+{"message": "initializing process", "level": "INFO", "name": "livekit.agents", "pid": 301, "timestamp": "2026-03-24T17:51:56.638473+00:00"}
+INFO:livekit.agents:initializing process
+{"message": "initializing process", "level": "INFO", "name": "livekit.agents", "pid": 303, "timestamp": "2026-03-24T17:51:56.644579+00:00"}
+INFO:livekit.agents:initializing process
+{"message": "initializing process", "level": "INFO", "name": "livekit.agents", "pid": 305, "timestamp": "2026-03-24T17:51:56.651160+00:00"}
+INFO:livekit.agents:process initialized
+{"message": "process initialized", "level": "INFO", "name": "livekit.agents", "pid": 299, "elapsed_time": 0.03, "timestamp": "2026-03-24T17:51:56.666413+00:00"}
+INFO:livekit.agents:process initialized
+{"message": "process initialized", "level": "INFO", "name": "livekit.agents", "pid": 301, "elapsed_time": 0.03, "timestamp": "2026-03-24T17:51:56.671774+00:00"}
+INFO:livekit.agents:process initialized
+{"message": "process initialized", "level": "INFO", "name": "livekit.agents", "pid": 303, "elapsed_time": 0.03, "timestamp": "2026-03-24T17:51:56.675002+00:00"}
+INFO:livekit.agents:process initialized
+{"message": "process initialized", "level": "INFO", "name": "livekit.agents", "pid": 305, "elapsed_time": 0.03, "timestamp": "2026-03-24T17:51:56.685562+00:00"}
+INFO:livekit.agents:registered worker
+{"message": "registered worker", "level": "INFO", "name": "livekit.agents", "agent_name": "mentoria-agent", "id": "AW_XhmiwdNmTq6i", "url": "wss://empresarial-markting-8et4c4xw.livekit.cloud", "region": "US Central", "protocol": 16, "timestamp": "2026-03-24T17:51:56.855328+00:00"}
+INFO:livekit.agents:received job request
+{"message": "received job request", "level": "INFO", "name": "livekit.agents", "job_id": "AJ_4pRcQ8KKHLNW", "dispatch_id": "AD_piEgWJLaSCVv", "room": "mentoria-242f5d9a-374b-4946-a07c-080fbf435b6a", "room_id": "RM_UECwBMeMyvZr", "agent_name": "mentoria-agent", "resuming": false, "enable_recording": false, "timestamp": "2026-03-24T17:53:43.254146+00:00"}
+INFO:livekit.agents:received job request
+{"message": "received job request", "level": "INFO", "name": "livekit.agents", "job_id": "AJ_oSGdAoMiGrwg", "dispatch_id": "AD_P4YJ7EcMgyfp", "room": "mentoria-242f5d9a-374b-4946-a07c-080fbf435b6a", "room_id": "RM_UECwBMeMyvZr", "agent_name": "mentoria-agent", "resuming": false, "enable_recording": false, "timestamp": "2026-03-24T17:53:43.254390+00:00"}
+INFO:mentoria-ai:[Guard] Job ACEITO para sala 'mentoria-242f5d9a-374b-4946-a07c-080fbf435b6a'. Salas ativas: {'mentoria-242f5d9a-374b-4946-a07c-080fbf435b6a'}
+{"message": "[Guard] Job ACEITO para sala 'mentoria-242f5d9a-374b-4946-a07c-080fbf435b6a'. Salas ativas: {'mentoria-242f5d9a-374b-4946-a07c-080fbf435b6a'}", "level": "INFO", "name": "mentoria-ai", "timestamp": "2026-03-24T17:53:43.254532+00:00"}
+WARNING:mentoria-ai:[Guard] Job REJEITADO para sala 'mentoria-242f5d9a-374b-4946-a07c-080fbf435b6a' — já existe um job ativo. Salas ativas: {'mentoria-242f5d9a-374b-4946-a07c-080fbf435b6a'}
+{"message": "[Guard] Job REJEITADO para sala 'mentoria-242f5d9a-374b-4946-a07c-080fbf435b6a' — já existe um job ativo. Salas ativas: {'mentoria-242f5d9a-374b-4946-a07c-080fbf435b6a'}", "level": "WARNING", "name": "mentoria-ai", "timestamp": "2026-03-24T17:53:43.254691+00:00"}
+INFO:livekit.agents:initializing process
+{"message": "initializing process", "level": "INFO", "name": "livekit.agents", "pid": 527, "timestamp": "2026-03-24T17:53:43.368246+00:00"}
+INFO:livekit.agents:process initialized
+{"message": "process initialized", "level": "INFO", "name": "livekit.agents", "pid": 527, "elapsed_time": 0.03, "timestamp": "2026-03-24T17:53:43.399152+00:00"}
+INFO:mentoria-ai:=== ENTRYPOINT MENTORIA AI v5 – sala: mentoria-242f5d9a-374b-4946-a07c-080fbf435b6a ===
+INFO:mentoria-ai:=== ENTRYPOINT MENTORIA AI v5 – sala: mentoria-242f5d9a-374b-4946-a07c-080fbf435b6a ===
+{"message": "=== ENTRYPOINT MENTORIA AI v5 – sala: mentoria-242f5d9a-374b-4946-a07c-080fbf435b6a ===", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:53:43.857834+00:00"}
+INFO:mentoria-ai:Worker conectado ao room: mentoria-242f5d9a-374b-4946-a07c-080fbf435b6a
+INFO:mentoria-ai:Worker conectado ao room: mentoria-242f5d9a-374b-4946-a07c-080fbf435b6a
+{"message": "Worker conectado ao room: mentoria-242f5d9a-374b-4946-a07c-080fbf435b6a", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:53:44.189565+00:00"}
+WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.
+WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.
+{"message": "Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.", "level": "WARNING", "name": "google_genai._api_client", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:53:44.195582+00:00"}
+INFO:mentoria-ai:[Host] Nathália iniciada com RealtimeModel nativo.
+INFO:mentoria-ai:=== Job em execução. Aguardando interação... ===
+INFO:mentoria-ai:[Host] Nathália iniciada com RealtimeModel nativo.
+{"message": "[Host] Nathália iniciada com RealtimeModel nativo.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:53:44.299133+00:00"}
+INFO:mentoria-ai:=== Job em execução. Aguardando interação... ===
+{"message": "=== Job em execução. Aguardando interação... ===", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:53:44.300066+00:00"}
+INFO:mentoria-ai:[Host] Nathália enviando apresentação inicial...
+INFO:mentoria-ai:[Host] Nathália enviando apresentação inicial...
+{"message": "[Host] Nathália enviando apresentação inicial...", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:53:49.301154+00:00"}
+INFO:mentoria-ai:[Apresentação] Conectando todos os especialistas simultaneamente...
+INFO:mentoria-ai:[Apresentação] Conectando todos os especialistas simultaneamente...
+INFO:mentoria-ai:[Carlos (CFO)] Iniciando conexão...
+{"message": "[Apresentação] Conectando todos os especialistas simultaneamente...", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:10.484010+00:00"}
+INFO:mentoria-ai:[Carlos (CFO)] Iniciando conexão...
+INFO:mentoria-ai:[Daniel (Advogado)] Iniciando conexão...
+{"message": "[Carlos (CFO)] Iniciando conexão...", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:10.484357+00:00"}
+INFO:mentoria-ai:[Daniel (Advogado)] Iniciando conexão...
+{"message": "[Daniel (Advogado)] Iniciando conexão...", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:10.485353+00:00"}
+INFO:mentoria-ai:[Rodrigo (CMO)] Iniciando conexão...
+INFO:mentoria-ai:[Rodrigo (CMO)] Iniciando conexão...
+INFO:mentoria-ai:[Ana (CTO)] Iniciando conexão...
+{"message": "[Rodrigo (CMO)] Iniciando conexão...", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:10.486318+00:00"}
+INFO:mentoria-ai:[Marco (Estrategista)] Iniciando conexão...
+INFO:mentoria-ai:[Ana (CTO)] Iniciando conexão...
+{"message": "[Ana (CTO)] Iniciando conexão...", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:10.487034+00:00"}
+INFO:mentoria-ai:[Marco (Estrategista)] Iniciando conexão...
+{"message": "[Marco (Estrategista)] Iniciando conexão...", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:10.487559+00:00"}
+INFO:mentoria-ai:[Carlos (CFO)] Room conectado.
+WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.
+INFO:mentoria-ai:[Carlos (CFO)] Room conectado.
+{"message": "[Carlos (CFO)] Room conectado.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:10.834747+00:00"}
+WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.
+{"message": "Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.", "level": "WARNING", "name": "google_genai._api_client", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:10.838221+00:00"}
+INFO:mentoria-ai:[Ana (CTO)] Room conectado.
+INFO:mentoria-ai:[Ana (CTO)] Room conectado.
+{"message": "[Ana (CTO)] Room conectado.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:10.877339+00:00"}
+WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.
+WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.
+{"message": "Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.", "level": "WARNING", "name": "google_genai._api_client", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:10.889977+00:00"}
+INFO:mentoria-ai:[Daniel (Advogado)] Room conectado.
+INFO:mentoria-ai:[Rodrigo (CMO)] Room conectado.
+INFO:mentoria-ai:[Daniel (Advogado)] Room conectado.
+{"message": "[Daniel (Advogado)] Room conectado.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:10.914818+00:00"}
+INFO:mentoria-ai:[Rodrigo (CMO)] Room conectado.
+{"message": "[Rodrigo (CMO)] Room conectado.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:10.920094+00:00"}
+INFO:mentoria-ai:[Marco (Estrategista)] Room conectado.
+INFO:mentoria-ai:[Marco (Estrategista)] Room conectado.
+{"message": "[Marco (Estrategista)] Room conectado.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:10.926605+00:00"}
+WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.
+WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.
+{"message": "Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.", "level": "WARNING", "name": "google_genai._api_client", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:10.932656+00:00"}
+WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.
+WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.
+{"message": "Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.", "level": "WARNING", "name": "google_genai._api_client", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:10.960227+00:00"}
+WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.
+WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.
+{"message": "Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.", "level": "WARNING", "name": "google_genai._api_client", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:10.997413+00:00"}
+INFO:mentoria-ai:[Carlos (CFO)] AgentSession iniciada com RealtimeModel nativo.
+INFO:mentoria-ai:[Carlos (CFO)] AgentSession iniciada com RealtimeModel nativo.
+{"message": "[Carlos (CFO)] AgentSession iniciada com RealtimeModel nativo.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:11.037206+00:00"}
+INFO:mentoria-ai:[Ana (CTO)] AgentSession iniciada com RealtimeModel nativo.
+INFO:mentoria-ai:[Ana (CTO)] AgentSession iniciada com RealtimeModel nativo.
+{"message": "[Ana (CTO)] AgentSession iniciada com RealtimeModel nativo.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:11.044637+00:00"}
+INFO:mentoria-ai:[Daniel (Advogado)] AgentSession iniciada com RealtimeModel nativo.
+INFO:mentoria-ai:[Daniel (Advogado)] AgentSession iniciada com RealtimeModel nativo.
+INFO:mentoria-ai:[Rodrigo (CMO)] AgentSession iniciada com RealtimeModel nativo.
+{"message": "[Daniel (Advogado)] AgentSession iniciada com RealtimeModel nativo.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:11.059932+00:00"}
+INFO:mentoria-ai:[Marco (Estrategista)] AgentSession iniciada com RealtimeModel nativo.
+INFO:mentoria-ai:[Rodrigo (CMO)] AgentSession iniciada com RealtimeModel nativo.
+{"message": "[Rodrigo (CMO)] AgentSession iniciada com RealtimeModel nativo.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:11.062974+00:00"}
+INFO:mentoria-ai:[Marco (Estrategista)] AgentSession iniciada com RealtimeModel nativo.
+{"message": "[Marco (Estrategista)] AgentSession iniciada com RealtimeModel nativo.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:11.064888+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:11.139354+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:11.142632+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:11.145241+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:11.146439+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:11.148920+00:00"}
+INFO:mentoria-ai:[Carlos (CFO)] RealtimeModel inicializado.
+INFO:mentoria-ai:[Carlos (CFO)] RealtimeModel inicializado.
+{"message": "[Carlos (CFO)] RealtimeModel inicializado.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:13.039112+00:00"}
+INFO:mentoria-ai:[Carlos (CFO)] Health-check agent_ready publicado.
+INFO:mentoria-ai:[Carlos (CFO)] Health-check agent_ready publicado.
+{"message": "[Carlos (CFO)] Health-check agent_ready publicado.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:13.040950+00:00"}
+INFO:mentoria-ai:[Ana (CTO)] RealtimeModel inicializado.
+INFO:mentoria-ai:[Ana (CTO)] RealtimeModel inicializado.
+{"message": "[Ana (CTO)] RealtimeModel inicializado.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:13.045298+00:00"}
+INFO:mentoria-ai:[Ana (CTO)] Health-check agent_ready publicado.
+INFO:mentoria-ai:[Ana (CTO)] Health-check agent_ready publicado.
+{"message": "[Ana (CTO)] Health-check agent_ready publicado.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:13.046290+00:00"}
+INFO:mentoria-ai:[Daniel (Advogado)] RealtimeModel inicializado.
+INFO:mentoria-ai:[Daniel (Advogado)] RealtimeModel inicializado.
+{"message": "[Daniel (Advogado)] RealtimeModel inicializado.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:13.062086+00:00"}
+INFO:mentoria-ai:[Daniel (Advogado)] Health-check agent_ready publicado.
+INFO:mentoria-ai:[Rodrigo (CMO)] RealtimeModel inicializado.
+INFO:mentoria-ai:[Daniel (Advogado)] Health-check agent_ready publicado.
+{"message": "[Daniel (Advogado)] Health-check agent_ready publicado.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:13.063358+00:00"}
+INFO:mentoria-ai:[Rodrigo (CMO)] RealtimeModel inicializado.
+{"message": "[Rodrigo (CMO)] RealtimeModel inicializado.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:13.063821+00:00"}
+INFO:mentoria-ai:[Marco (Estrategista)] RealtimeModel inicializado.
+INFO:mentoria-ai:[Marco (Estrategista)] RealtimeModel inicializado.
+{"message": "[Marco (Estrategista)] RealtimeModel inicializado.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:13.065438+00:00"}
+INFO:mentoria-ai:[Rodrigo (CMO)] Health-check agent_ready publicado.
+INFO:mentoria-ai:[Rodrigo (CMO)] Health-check agent_ready publicado.
+{"message": "[Rodrigo (CMO)] Health-check agent_ready publicado.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:13.066287+00:00"}
+INFO:mentoria-ai:[Marco (Estrategista)] Health-check agent_ready publicado.
+INFO:mentoria-ai:[Apresentação] Iniciando apresentação de Carlos (CFO)...
+INFO:mentoria-ai:[Marco (Estrategista)] Health-check agent_ready publicado.
+{"message": "[Marco (Estrategista)] Health-check agent_ready publicado.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:13.067099+00:00"}
+INFO:mentoria-ai:[Apresentação] Iniciando apresentação de Carlos (CFO)...
+{"message": "[Apresentação] Iniciando apresentação de Carlos (CFO)...", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:13.067285+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:14.604815+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:14.729232+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:14.732535+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:14.733079+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:14.733798+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:14.734104+00:00"}
+INFO:mentoria-ai:[Apresentação] Carlos (CFO) concluiu.
+INFO:mentoria-ai:[Apresentação] Carlos (CFO) concluiu.
+{"message": "[Apresentação] Carlos (CFO) concluiu.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:25.072330+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:25.076342+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:25.088341+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:25.091056+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:26.252319+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:26.252805+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:26.456005+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:26.457530+00:00"}
+INFO:mentoria-ai:[Apresentação] Iniciando apresentação de Daniel (Advogado)...
+INFO:mentoria-ai:[Apresentação] Iniciando apresentação de Daniel (Advogado)...
+{"message": "[Apresentação] Iniciando apresentação de Daniel (Advogado)...", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:35.074084+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:36.678991+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:36.937935+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:36.941068+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:36.941298+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:36.943542+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:36.944089+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:40.083768+00:00"}
+INFO:mentoria-ai:[Apresentação] Daniel (Advogado) concluiu.
+INFO:mentoria-ai:[Apresentação] Daniel (Advogado) concluiu.
+{"message": "[Apresentação] Daniel (Advogado) concluiu.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:47.673899+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:47.677443+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:47.677800+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:47.691718+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:47.694052+00:00"}
+INFO:mentoria-ai:[Apresentação] Iniciando apresentação de Rodrigo (CMO)...
+INFO:mentoria-ai:[Apresentação] Iniciando apresentação de Rodrigo (CMO)...
+{"message": "[Apresentação] Iniciando apresentação de Rodrigo (CMO)...", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:54:57.674544+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:02.389629+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:02.506174+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:02.507311+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:02.509107+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:02.509554+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:02.510160+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:02.684083+00:00"}
+WARNING:mentoria-ai:[Apresentação] Erro na apresentação de Rodrigo (CMO): 
+INFO:mentoria-ai:[Apresentação] Iniciando apresentação de Ana (CTO)...
+WARNING:mentoria-ai:[Apresentação] Erro na apresentação de Rodrigo (CMO): 
+{"message": "[Apresentação] Erro na apresentação de Rodrigo (CMO): ", "level": "WARNING", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:12.675096+00:00"}
+INFO:mentoria-ai:[Apresentação] Iniciando apresentação de Ana (CTO)...
+{"message": "[Apresentação] Iniciando apresentação de Ana (CTO)...", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:12.675297+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:12.893855+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:12.895819+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:12.903338+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:12.906307+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:14.385797+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:14.508881+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:14.509889+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:14.510912+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:14.512923+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:14.513158+00:00"}
+INFO:mentoria-ai:[Apresentação] Ana (CTO) concluiu.
+INFO:mentoria-ai:[Apresentação] Ana (CTO) concluiu.
+{"message": "[Apresentação] Ana (CTO) concluiu.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:23.849960+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:23.855588+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:23.858090+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:23.866416+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:23.869270+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:27.895812+00:00"}
+INFO:mentoria-ai:[Apresentação] Iniciando apresentação de Marco (Estrategista)...
+INFO:mentoria-ai:[Apresentação] Iniciando apresentação de Marco (Estrategista)...
+{"message": "[Apresentação] Iniciando apresentação de Marco (Estrategista)...", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:33.851567+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:37.398114+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:37.656958+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:37.658726+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:37.659140+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:37.660542+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:37.661294+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:38.871057+00:00"}
+INFO:mentoria-ai:[Apresentação] Marco (Estrategista) concluiu.
+INFO:mentoria-ai:[Apresentação] Marco (Estrategista) concluiu.
+{"message": "[Apresentação] Marco (Estrategista) concluiu.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:47.151763+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:47.156689+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:47.157199+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:47.170407+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:47.172947+00:00"}
+INFO:mentoria-ai:[Apresentação] Todos os especialistas foram apresentados.
+INFO:mentoria-ai:[Host] Nathália fazendo pergunta inicial...
+INFO:mentoria-ai:[Apresentação] Todos os especialistas foram apresentados.
+{"message": "[Apresentação] Todos os especialistas foram apresentados.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:57.153081+00:00"}
+INFO:mentoria-ai:[Host] Nathália fazendo pergunta inicial...
+{"message": "[Host] Nathália fazendo pergunta inicial...", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:55:57.153313+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:56:00.468786+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:56:00.470253+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:56:00.470968+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:56:00.473404+00:00"}
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+INFO:root:ignoring text stream with topic 'lk.transcription', no callback attached
+{"message": "ignoring text stream with topic 'lk.transcription', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:56:00.474472+00:00"}
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+INFO:root:ignoring text stream with topic 'lk.agent.events', no callback attached
+{"message": "ignoring text stream with topic 'lk.agent.events', no callback attached", "level": "INFO", "name": "root", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:56:02.160892+00:00"}
+INFO:mentoria-ai:[Host] Fluxo de abertura concluído.
+INFO:mentoria-ai:[Host] Fluxo de abertura concluído.
+{"message": "[Host] Fluxo de abertura concluído.", "level": "INFO", "name": "mentoria-ai", "pid": 299, "job_id": "AJ_4pRcQ8KKHLNW", "room_id": "RM_UECwBMeMyvZr", "timestamp": "2026-03-24T17:56:11.327948+00:00"}
