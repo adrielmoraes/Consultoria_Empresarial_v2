@@ -73,7 +73,7 @@ GEMINI_REALTIME_CONFIG = {
     "speech_config": {
         "voice_config": {
             "prebuilt_voice_config": {
-                "voice_name": "Fenrir",
+                "voice_name": "Zephyr",
             }
         }
     }
@@ -86,7 +86,7 @@ AGENT_VOICES: dict[str, str] = {
     "legal": "Fenrir",   # Daniel   – masculina formal
     "cmo":   "Puck",     # Rodrigo  – masculina dinâmica
     "cto":   "Kore",     # Ana      – feminina técnica
-    "plan":  "Charon",   # Marco    – masculina autoritativa (compartilha voz)
+    "plan":  "Zephyr",   # Marco    – masculina autoritativa
 }
 
 # Nomes de exibição para cada agente
@@ -141,7 +141,7 @@ SPECIALIST_ORDER: list[str] = ["cfo", "legal", "cmo", "cto", "plan"]
 
 # Tempo de espera (em segundos) após cada especialista se apresentar
 # antes de conectar o próximo. Dá tempo para o áudio ser ouvido.
-POST_INTRO_WAIT: float = 0.5
+POST_INTRO_WAIT: float = 1.5
 
 
 # ============================================================
@@ -870,10 +870,13 @@ async def entrypoint(ctx: JobContext) -> None:
 
     # ------------------------------------------------------------------
     # 2. Fluxo de Apresentação Sequencial:
+    #    Nathália entra primeiro, saúda o usuário, e depois conecta
+    #    cada especialista UM POR UM. Cada um se apresenta antes do
+    #    próximo conectar. Isso evita sobrecarga na API Gemini.
     # ------------------------------------------------------------------
     async def welcome_and_introductions() -> None:
-        # 2a. Conecta todos os especialistas CONCORRENTEMENTE em background
-        # para economizar tempo enquanto a Nathália se inicializa.
+        # 2b. Conecta todos os especialistas CONCORRENTEMENTE logo no início
+        # Assim, enquanto Nathália se estabiliza e fala, os outros já estão conectando.
         logger.info("[Apresentação] Conectando todos os especialistas simultaneamente...")
         connect_tasks = []
         for spec_id in SPECIALIST_ORDER:
@@ -892,13 +895,14 @@ async def entrypoint(ctx: JobContext) -> None:
             connect_tasks.append(task)
 
         # Aguarda Nathália estabilizar no room e o RealtimeModel conectar ao Gemini
-        await asyncio.sleep(2.0)
+        await asyncio.sleep(5.0)
 
-        # 2b. Nathália se apresenta e anuncia o time
+        # 2a. Nathália se apresenta e anuncia o time
         host_greeting = (
             "Olá! Seja muito bem-vindo ao Mentoria AI! "
             "Sou a Nathália, sua apresentadora e mentora líder desta sessão. "
-            "Nossa equipe de especialistas já está conectada e vai se apresentar agora."
+            "Vou chamar agora nosso time de especialistas. "
+            "Cada um vai se apresentar para você. Aguarde um momento!"
         )
         logger.info("[Host] Nathália enviando apresentação inicial...")
         try:
@@ -913,11 +917,14 @@ async def entrypoint(ctx: JobContext) -> None:
         except Exception as e:
             logger.warning(f"[Host] Erro ao gerar reply inicial: {type(e).__name__}: {e}", exc_info=True)
 
-        # Aguarda todos os especialistas terminarem de conectar (caso ainda não tenham)
+        # Assegura que todos conectaram antes de seguirmos
         sessions = await asyncio.gather(*connect_tasks)
         spec_sessions = dict(zip(SPECIALIST_ORDER, sessions))
 
-        # 2c. Especialistas se apresentam SEQUENCIALMENTE (instantaneamente após Nathália)
+        # Reduzindo a pausa artificial para dar urgência e naturalidade
+        await asyncio.sleep(1.0)
+
+        # Especialistas se apresentam SEQUENCIALMENTE
         for spec_id in SPECIALIST_ORDER:
             if not blackboard.is_active:
                 logger.info("[Apresentação] Job encerrando, abortando sequência.")
@@ -936,7 +943,7 @@ async def entrypoint(ctx: JobContext) -> None:
                     session.generate_reply(
                         instructions=f"Por favor, apresente-se rapidamente dizendo: {intro_text}. Se souber o nome do usuário, salde-o pelo nome.",
                     ),
-                    timeout=25.0,
+                    timeout=15.0,
                 )
                 logger.info(f"[Apresentação] {spec_name} concluiu.")
                 await asyncio.sleep(POST_INTRO_WAIT)
