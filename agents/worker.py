@@ -1,6 +1,6 @@
 """
-Mentoria AI - Worker Multi-Agentes v4
-=====================================
+Hive Mind - Worker Multi-Agentes v4
+===================================
 Arquitetura com 6 agentes com vozes independentes:
     - Nathália (Host): Orquestra toda a sessão, aciona especialistas via
       function tools que publicam data packets no room.
@@ -50,12 +50,14 @@ from livekit.agents import (
     AgentSession,
     RunContext,
 )
+from livekit.agents.llm import ChatMessage
 from livekit.agents.types import APIConnectOptions
 from livekit.plugins import google as google_plugin
 from google.genai import types as genai_types
 
+
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("mentoria-ai")
+logger = logging.getLogger("hive-mind")
 
 # C4: Guard global contra jobs duplicados na mesma sala.
 # Rastreia salas que já possuem um job ativo para rejeitar dispatches duplicados.
@@ -148,7 +150,7 @@ POST_INTRO_WAIT: float = 1.5
 # PROMPTS
 # ============================================================
 
-HOST_PROMPT = """Você é Nathália, a Apresentadora (Host) do Mentoria AI.
+HOST_PROMPT = """Você é Nathália, a Apresentadora (Host) do Hive Mind.
 Seu papel é orquestrar a sessão de mentoria empresarial multi-agentes.
 
 ESPECIALISTAS DISPONÍVEIS:
@@ -173,7 +175,7 @@ REGRAS:
 
 SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
     "cfo": (
-        "Você é Carlos, o CFO (Chief Financial Officer) do Mentoria AI. "
+        "Você é Carlos, o CFO (Chief Financial Officer) do Hive Mind. "
         "Você participa de uma sessão de mentoria empresarial multi-agentes. "
         "AGUARDE em silêncio absoluto. Você SÓ PODE FALAR quando Nathália (a apresentadora) o acionar. "
         "Se souber o nome do usuário pelas transcrições anteriores, use-o para chamá-lo pelo nome. "
@@ -182,7 +184,7 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "Fale em português do Brasil."
     ),
     "legal": (
-        "Você é Daniel, o Advogado do Mentoria AI. "
+        "Você é Daniel, o Advogado do Hive Mind. "
         "Você participa de uma sessão de mentoria empresarial multi-agentes. "
         "AGUARDE em silêncio absoluto. Você SÓ PODE FALAR quando Nathália (a apresentadora) o acionar. "
         "Se souber o nome do usuário pelas transcrições anteriores, use-o para chamá-lo pelo nome. "
@@ -191,7 +193,7 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "Fale em português do Brasil."
     ),
     "cmo": (
-        "Você é Rodrigo, o CMO (Chief Marketing Officer) do Mentoria AI. "
+        "Você é Rodrigo, o CMO (Chief Marketing Officer) do Hive Mind. "
         "Você participa de uma sessão de mentoria empresarial multi-agentes. "
         "AGUARDE em silêncio absoluto. Você SÓ PODE FALAR quando Nathália (a apresentadora) o acionar. "
         "Se souber o nome do usuário pelas transcrições anteriores, use-o para chamá-lo pelo nome. "
@@ -200,7 +202,7 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "Fale em português do Brasil."
     ),
     "cto": (
-        "Você é Ana, a CTO (Chief Technology Officer) do Mentoria AI. "
+        "Você é Ana, a CTO (Chief Technology Officer) do Hive Mind. "
         "Você participa de uma sessão de mentoria empresarial multi-agentes. "
         "AGUARDE em silêncio absoluto. Você SÓ PODE FALAR quando Nathália (a apresentadora) o acionar. "
         "Se souber o nome do usuário pelas transcrições anteriores, use-o para chamá-lo pelo nome. "
@@ -209,7 +211,7 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "Fale em português do Brasil."
     ),
     "plan": (
-        "Você é Marco, o Estrategista-Chefe do Mentoria AI. "
+        "Você é Marco, o Estrategista-Chefe do Hive Mind. "
         "Você participa de uma sessão de mentoria empresarial multi-agentes. "
         "AGUARDE em silêncio absoluto. Você SÓ PODE FALAR quando Nathália (a apresentadora) o acionar. "
         "Se souber o nome do usuário pelas transcrições anteriores, use-o para chamá-lo pelo nome. "
@@ -285,17 +287,6 @@ class SpecialistAgent(Agent):
                 model=GEMINI_REALTIME_MODEL,
                 api_key=os.environ.get("GOOGLE_API_KEY", ""),
                 voice=AGENT_VOICES[spec_id],
-                realtime_input_config=genai_types.RealtimeInputConfig(
-                    automatic_activity_detection=genai_types.AutomaticActivityDetection(
-                        disabled=False,
-                    ),
-                ),
-                context_window_compression=genai_types.ContextWindowCompressionConfig(
-                    trigger_tokens=GEMINI_REALTIME_CONFIG["compression_trigger"],
-                    sliding_window=genai_types.SlidingWindow(
-                        target_tokens=GEMINI_REALTIME_CONFIG["compression_sliding_window"]
-                    ),
-                ),
                 conn_options=APIConnectOptions(timeout=30.0),
             ),
             allow_interruptions=True,
@@ -322,19 +313,9 @@ class HostAgent(Agent):
             model=GEMINI_REALTIME_MODEL,
             api_key=os.environ.get("GOOGLE_API_KEY", ""),
             voice=AGENT_VOICES["host"],
-            realtime_input_config=genai_types.RealtimeInputConfig(
-                automatic_activity_detection=genai_types.AutomaticActivityDetection(
-                    disabled=False,
-                ),
-            ),
-            context_window_compression=genai_types.ContextWindowCompressionConfig(
-                trigger_tokens=GEMINI_REALTIME_CONFIG["compression_trigger"],
-                sliding_window=genai_types.SlidingWindow(
-                    target_tokens=GEMINI_REALTIME_CONFIG["compression_sliding_window"]
-                ),
-            ),
             conn_options=APIConnectOptions(timeout=15.0),
         )
+
 
         super().__init__(
             instructions=HOST_PROMPT,
@@ -460,7 +441,7 @@ async def _start_specialist_in_room(
     room_name: str,
     host_room: rtc.Room,
     auto_introduce: bool = False,
-) -> Optional[AgentSession]:
+) -> Optional[tuple[AgentSession, SpecialistAgent]]:
     """
     Conecta um SpecialistAgent ao room como participante separado.
     Retorna a AgentSession criada.
@@ -644,12 +625,14 @@ async def _start_specialist_in_room(
             intro_text = SPECIALIST_INTRODUCTIONS[spec_id]
             logger.info(f"[{name}] Iniciando auto-apresentação...")
             try:
+                agent.chat_ctx.messages.append(
+                    ChatMessage(
+                        role="user",
+                        content=f"Por favor, apresente-se dizendo: {intro_text}"
+                    )
+                )
                 await asyncio.wait_for(
-                    session.generate_reply(
-                        instructions=(
-                            f"Por favor, apresente-se dizendo: {intro_text}"
-                        ),
-                    ),
+                    session.generate_reply(),
                     timeout=15.0,
                 )
                 logger.info(f"[{name}] Auto-apresentação concluída.")
@@ -716,21 +699,21 @@ async def _start_specialist_in_room(
                                 SPECIALIST_SYSTEM_PROMPTS[spec_id]
                                 + f"\n\n--- CONTEXTO ATUAL DA SESSÃO ---\n{ctx_summary}"
                             )
-                            asyncio.create_task(
-                                agent.update_instructions(new_instructions)
+                            # Nota: update_instructions em RealtimeModel pode causar erro 1007.
+                            # Para manter a estabilidade no Gemini 3.1 Live Preview, passamos o contexto como prompt
+                            # C5: Subscreve ao áudio do usuário
+                            _subscribe_user_audio()
+
+                            # Gera resposta forçada com o contexto da questão
+                            prompt = (
+                                f"Nathália acabou de te acionar. O contexto atual é:\n{ctx_summary}\n\n"
+                                f"Sua missão agora: {context_text}\n"
+                                f"Responda de forma objetiva e profissional com base nas suas instruções originais."
                             )
-
-                        # C5: Subscreve ao áudio do usuário
-                        _subscribe_user_audio()
-
-                        # Gera resposta forçada com o contexto da questão
-                        prompt = (
-                            f"Nathália acabou de te acionar. O contexto é: {context_text}. "
-                            f"Responda de forma objetiva e profissional."
-                        )
-                        asyncio.create_task(
-                            session.generate_reply(instructions=prompt)
-                        )
+                            agent.chat_ctx.messages.append(ChatMessage(role="user", content=prompt))
+                            asyncio.create_task(
+                                session.generate_reply()
+                            )
 
                         logger.info(f"[{name}] ATIVADO via data packet — áudio ON + reply gerado.")
                     else:
@@ -740,7 +723,7 @@ async def _start_specialist_in_room(
             except Exception as e:
                 logger.warning(f"[{name}] Erro ao processar data packet: {e}")
 
-        return session
+        return session, agent
 
     except Exception as e:
         logger.error(f"[{name}] Erro ao iniciar: {e}", exc_info=True)
@@ -759,7 +742,7 @@ async def entrypoint(ctx: JobContext) -> None:
     _fh.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
     logging.getLogger().addHandler(_fh)
 
-    logger.info(f"=== ENTRYPOINT MENTORIA AI v5 – sala: {ctx.room.name} ===")
+    logger.info(f"=== ENTRYPOINT HIVE MIND v5 – sala: {ctx.room.name} ===")
 
     # Conecta o worker ao room sem auto-subscribe (Host não precisa ouvir especialistas)
     await ctx.connect(auto_subscribe=AutoSubscribe.SUBSCRIBE_NONE)
@@ -875,25 +858,6 @@ async def entrypoint(ctx: JobContext) -> None:
     #    próximo conectar. Isso evita sobrecarga na API Gemini.
     # ------------------------------------------------------------------
     async def welcome_and_introductions() -> None:
-        # 2b. Conecta todos os especialistas CONCORRENTEMENTE logo no início
-        # Assim, enquanto Nathália se estabiliza e fala, os outros já estão conectando.
-        logger.info("[Apresentação] Conectando todos os especialistas simultaneamente...")
-        connect_tasks = []
-        for spec_id in SPECIALIST_ORDER:
-            task = asyncio.create_task(
-                _start_specialist_in_room(
-                    spec_id=spec_id,
-                    blackboard=blackboard,
-                    ws_url=ws_url,
-                    lk_api_key=lk_api_key,
-                    lk_api_secret=lk_api_secret,
-                    room_name=ctx.room.name,
-                    host_room=ctx.room,
-                    auto_introduce=False,
-                )
-            )
-            connect_tasks.append(task)
-
         # Aguarda Nathália estabilizar no room e o RealtimeModel conectar ao Gemini
         await asyncio.sleep(5.0)
 
@@ -906,10 +870,9 @@ async def entrypoint(ctx: JobContext) -> None:
         )
         logger.info("[Host] Nathália enviando apresentação inicial...")
         try:
+            host_agent.chat_ctx.messages.append(ChatMessage(role="user", content=f"Por favor, diga a seguinte apresentação: {host_greeting}"))
             await asyncio.wait_for(
-                host_session.generate_reply(
-                    instructions=f"Por favor, diga a seguinte apresentação: {host_greeting}",
-                ),
+                host_session.generate_reply(),
                 timeout=30.0,
             )
         except asyncio.TimeoutError:
@@ -917,12 +880,28 @@ async def entrypoint(ctx: JobContext) -> None:
         except Exception as e:
             logger.warning(f"[Host] Erro ao gerar reply inicial: {type(e).__name__}: {e}", exc_info=True)
 
-        # Assegura que todos conectaram antes de seguirmos
-        sessions = await asyncio.gather(*connect_tasks)
-        spec_sessions = dict(zip(SPECIALIST_ORDER, sessions))
-
-        # Reduzindo a pausa artificial para dar urgência e naturalidade
-        await asyncio.sleep(1.0)
+        # 2b. Conecta todos os especialistas SEQUENCIALMENTE
+        logger.info("[Apresentação] Conectando especialistas sequencialmente...")
+        spec_sessions = {}
+        spec_agents = {}
+        for spec_id in SPECIALIST_ORDER:
+            result = await _start_specialist_in_room(
+                spec_id=spec_id,
+                blackboard=blackboard,
+                ws_url=ws_url,
+                lk_api_key=lk_api_key,
+                lk_api_secret=lk_api_secret,
+                room_name=ctx.room.name,
+                host_room=ctx.room,
+                auto_introduce=False,
+            )
+            if result:
+                sess, agnt = result
+                spec_sessions[spec_id] = sess
+                spec_agents[spec_id] = agnt
+            
+            # Pausa para aliviar conexões concorrentes no LiveKit
+            await asyncio.sleep(2.0)
 
         # Especialistas se apresentam SEQUENCIALMENTE
         for spec_id in SPECIALIST_ORDER:
@@ -931,7 +910,8 @@ async def entrypoint(ctx: JobContext) -> None:
                 return
 
             session = spec_sessions.get(spec_id)
-            if not session:
+            agnt = spec_agents.get(spec_id)
+            if not session or not agnt:
                 continue
 
             spec_name = SPECIALIST_NAMES[spec_id]
@@ -939,10 +919,9 @@ async def entrypoint(ctx: JobContext) -> None:
             intro_text = SPECIALIST_INTRODUCTIONS[spec_id]
 
             try:
+                agnt.chat_ctx.messages.append(ChatMessage(role="user", content=f"Por favor, apresente-se rapidamente dizendo: {intro_text}. Se souber o nome do usuário, salde-o pelo nome."))
                 await asyncio.wait_for(
-                    session.generate_reply(
-                        instructions=f"Por favor, apresente-se rapidamente dizendo: {intro_text}. Se souber o nome do usuário, salde-o pelo nome.",
-                    ),
+                    session.generate_reply(),
                     timeout=15.0,
                 )
                 logger.info(f"[Apresentação] {spec_name} concluiu.")
@@ -965,10 +944,9 @@ async def entrypoint(ctx: JobContext) -> None:
 
         logger.info("[Host] Nathália fazendo pergunta inicial...")
         try:
+            host_agent.chat_ctx.messages.append(ChatMessage(role="user", content=f"Faça a seguinte pergunta: {closing}"))
             await asyncio.wait_for(
-                host_session.generate_reply(
-                    instructions=f"Faça a seguinte pergunta: {closing}",
-                ),
+                host_session.generate_reply(),
                 timeout=30.0,
             )
         except Exception as e:

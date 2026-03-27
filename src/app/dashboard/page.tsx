@@ -122,8 +122,8 @@ export default function DashboardPage() {
           animate={{ opacity: 1 }}
           className="flex flex-col items-center gap-4"
         >
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
-            <Brain className="w-6 h-6 text-white animate-pulse" />
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b08d24] flex items-center justify-center p-2">
+            <img src="/logo-icon.svg" alt="Hive Mind" className="w-8 h-8 animate-pulse" />
           </div>
           <div className="flex items-center gap-2 text-gray-500">
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -170,10 +170,10 @@ export default function DashboardPage() {
         {/* Logo */}
         <div className="p-6 border-b border-gray-200 dark:border-white/5 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-2 rounded-lg">
-              <Brain className="w-5 h-5 text-white" />
+            <div className="bg-gradient-to-r from-[#d4af37] to-[#b08d24] p-1.5 rounded-lg">
+              <img src="/logo-icon.svg" alt="Hive Mind" className="w-5 h-5" />
             </div>
-            <span className="text-lg font-bold gradient-text">Mentoria AI</span>
+            <span className="text-lg font-bold gradient-text">Hive Mind</span>
           </Link>
           <button
             className="lg:hidden text-gray-400 hover:text-white"
@@ -197,7 +197,7 @@ export default function DashboardPage() {
                 href={item.href}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-colors ${
                   isActive
-                    ? "bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 font-medium"
+                    ? "bg-[#d4af37]/10 text-[#d4af37] dark:text-[#e6c86a] font-medium"
                     : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"
                 }`}
               >
@@ -218,7 +218,7 @@ export default function DashboardPage() {
         {/* User */}
         <div className="p-4 border-t border-gray-200 dark:border-white/5">
           <div className="flex items-center gap-3 px-4 py-3">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-r from-[#d4af37] to-[#b08d24] flex items-center justify-center text-white font-bold text-sm">
               {userInitial}
             </div>
             <div className="flex-1 min-w-0">
@@ -286,7 +286,7 @@ export default function DashboardPage() {
                 icon: Video,
                 label: "Mentorias Realizadas",
                 value: String(stats.totalSessions),
-                color: "text-indigo-400",
+                color: "text-[#d4af37]",
               },
               {
                 icon: FileText,
@@ -298,13 +298,13 @@ export default function DashboardPage() {
                 icon: CreditCard,
                 label: "Créditos Restantes",
                 value: String(stats.credits),
-                color: "text-amber-400",
+                color: "text-[#e6c86a]",
               },
               {
                 icon: Clock,
                 label: "Tempo Total",
                 value: stats.totalTime,
-                color: "text-purple-400",
+                color: "text-orange-400",
               },
             ].map((stat, i) => (
               <motion.div
@@ -334,10 +334,10 @@ export default function DashboardPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="glass-card p-6 bg-gradient-to-r from-indigo-500/5 to-purple-500/5 border-indigo-500/20"
+            className="glass-card p-6 bg-gradient-to-r from-[#d4af37]/5 to-[#b08d24]/5 border-[#d4af37]/20"
           >
             <div className="flex flex-col sm:flex-row items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-r from-[#d4af37] to-[#b08d24] flex items-center justify-center flex-shrink-0">
                 <Sparkles className="w-7 h-7 text-white" />
               </div>
               <div className="flex-1 text-center sm:text-left">
@@ -407,8 +407,8 @@ export default function DashboardPage() {
                       href={`/mentorship/${project.id}`}
                       className="glass-card p-5 flex items-center gap-4 cursor-pointer group block"
                     >
-                      <div className="w-11 h-11 rounded-xl bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
-                        <Brain className="w-5 h-5 text-indigo-400" />
+                      <div className="w-11 h-11 rounded-xl bg-gradient-to-r from-[#d4af37]/10 to-[#b08d24]/10 border border-[#d4af37]/20 flex items-center justify-center flex-shrink-0 p-1.5">
+                        <img src="/logo-icon.svg" alt="Project" className="w-7 h-7" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-sm truncate">
@@ -439,7 +439,7 @@ export default function DashboardPage() {
                           PDF
                         </button>
                       )}
-                      <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-indigo-400 transition-colors flex-shrink-0" />
+                      <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-[#d4af37] transition-colors flex-shrink-0" />
                     </Link>
                   </motion.div>
                 ))}

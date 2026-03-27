@@ -84,7 +84,7 @@ const features = [
   {
     icon: Sparkles,
     title: "IA de Última Geração",
-    description: "Powered by Gemini, com janelas de contexto massivas para sessões longas.",
+    description: "Modelos de linguagem avançados com janelas de contexto massivas para sessões longas.",
   },
 ];
 
@@ -170,19 +170,19 @@ export default function LandingPage() {
       <section className="relative pt-32 pb-20 px-4 overflow-hidden">
         {/* Background effects */}
         <div className="absolute inset-0 bg-grid opacity-30" />
-        <div className="absolute top-20 left-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl" />
+        <div className="absolute top-20 left-1/4 w-96 h-96 bg-[#d4af37]/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#b08d24]/20 rounded-full blur-3xl" />
 
         <div className="relative max-w-6xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-4 py-2 mb-6"
+            className="inline-flex items-center gap-2 bg-[#d4af37]/10 border border-[#d4af37]/20 rounded-full px-4 py-2 mb-6"
           >
-            <Sparkles className="w-4 h-4 text-indigo-400" />
-            <span className="text-sm text-indigo-400 font-medium">
-              Powered by Gemini AI & Multi-Agentes
+            <Sparkles className="w-4 h-4 text-[#d4af37]" />
+            <span className="text-sm text-[#d4af37] font-medium">
+              Conselheiros de Negócios com Inteligência Artificial
             </span>
           </motion.div>
 
@@ -238,11 +238,11 @@ export default function LandingPage() {
                       key={name}
                       className={`relative aspect-[3/4] rounded-xl overflow-hidden border-2 ${
                         i === 0
-                          ? "border-indigo-500/50 active-speaker"
+                          ? "border-[#d4af37]/50 active-speaker"
                           : "border-white/10"
                       } bg-gradient-to-br ${
                         i === 0
-                          ? "from-indigo-900/50 to-purple-900/50"
+                          ? "from-[#3d2e0a]/50 to-[#4a3612]/50"
                           : i === 1
                           ? "from-emerald-900/50 to-teal-900/50"
                           : i === 2
@@ -337,7 +337,7 @@ export default function LandingPage() {
               custom={0}
               className="text-3xl sm:text-4xl font-bold mb-4"
             >
-              Por que escolher a <span className="gradient-text">Mentoria AI</span>?
+              Por que escolher o <span className="gradient-text">Hive Mind</span>?
             </motion.h2>
           </motion.div>
 
@@ -352,8 +352,8 @@ export default function LandingPage() {
                 custom={i}
                 className="glass-card p-6"
               >
-                <div className="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4">
-                  <feature.icon className="w-5 h-5 text-indigo-400" />
+                <div className="w-10 h-10 rounded-lg bg-[#d4af37]/10 border border-[#d4af37]/20 flex items-center justify-center mb-4">
+                  <feature.icon className="w-5 h-5 text-[#d4af37]" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -395,7 +395,7 @@ export default function LandingPage() {
                 className="relative"
               >
                 {i < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-8 left-full w-full h-px bg-gradient-to-r from-indigo-500/50 to-transparent z-10" />
+                  <div className="hidden lg:block absolute top-8 left-full w-full h-px bg-gradient-to-r from-[#d4af37]/50 to-transparent z-10" />
                 )}
                 <div className="glass-card p-6 text-center">
                   <span className="text-4xl font-black gradient-text">
@@ -450,13 +450,13 @@ export default function LandingPage() {
                 custom={i}
                 className={`glass-card p-8 relative ${
                   plan.popular
-                    ? "border-indigo-500/50 ring-1 ring-indigo-500/20"
+                    ? "border-[#d4af37]/50 ring-1 ring-[#d4af37]/20"
                     : ""
                 }`}
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                    <span className="bg-gradient-to-r from-[#d4af37] to-[#b08d24] text-[#0a0a0a] text-xs font-bold px-3 py-1 rounded-full">
                       Mais Popular
                     </span>
                   </div>
@@ -476,7 +476,7 @@ export default function LandingPage() {
                 <ul className="space-y-3 mb-8">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-center gap-2 text-sm">
-                      <Check className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                      <Check className="w-4 h-4 text-[#d4af37] flex-shrink-0" />
                       <span className="text-gray-600 dark:text-gray-300">{f}</span>
                     </li>
                   ))}
@@ -510,8 +510,8 @@ export default function LandingPage() {
               custom={0}
               className="text-3xl sm:text-4xl font-bold mb-4"
             >
-              Pronto para ter sua{" "}
-              <span className="gradient-text">Mentoria com IA</span>?
+              Pronto para evoluir com o{" "}
+              <span className="gradient-text">Hive Mind</span>?
             </motion.h2>
             <motion.p
               variants={fadeUp}
@@ -537,11 +537,11 @@ export default function LandingPage() {
       <footer className="border-t border-white/10 py-12 px-4">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Brain className="w-5 h-5 text-indigo-400" />
-            <span className="font-bold gradient-text">Mentoria AI</span>
+            <img src="/logo-icon.svg" alt="Hive Mind" className="w-6 h-6" />
+            <span className="font-bold gradient-text">Hive Mind</span>
           </div>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            © 2026 Mentoria AI. Todos os direitos reservados.
+            © 2026 Hive Mind. Todos os direitos reservados.
           </p>
         </div>
       </footer>

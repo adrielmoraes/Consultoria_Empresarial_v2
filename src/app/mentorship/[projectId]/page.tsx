@@ -70,7 +70,7 @@ const AGENTS_MAP: Record<string, Omit<AgentInfo, "speaking">> = {
     name: "Nathália",
     role: "Apresentadora",
     icon: Brain,
-    gradient: "from-indigo-500 to-purple-600",
+    gradient: "from-[#d4af37] to-[#b08d24]",
   },
   cfo: {
     id: "cfo",
@@ -112,7 +112,7 @@ const AGENTS_MAP: Record<string, Omit<AgentInfo, "speaking">> = {
 const SPEAKER_COLORS: Record<string, string> = {
   Você: "text-white",
   Sistema: "text-gray-500",
-  Nathália: "text-indigo-400",
+  Nathália: "text-[#d4af37]",
   Carlos: "text-emerald-400",
   Daniel: "text-amber-400",
   Rodrigo: "text-pink-400",
@@ -124,7 +124,7 @@ function getSpeakerColor(speaker: string): string {
   for (const [key, color] of Object.entries(SPEAKER_COLORS)) {
     if (speaker.includes(key)) return color;
   }
-  return "text-indigo-400";
+  return "text-[#d4af37]";
 }
 
 type TranscriptMessage = {
@@ -598,7 +598,7 @@ export default function MentorshipRoomPage() {
   if (authStatus === "loading") {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-950">
-        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-[#d4af37] animate-spin" />
       </div>
     );
   }
@@ -631,8 +631,8 @@ export default function MentorshipRoomPage() {
       {/* Top Bar */}
       <div className="flex items-center justify-between px-4 py-3 bg-gray-900/80 backdrop-blur-sm border-b border-white/5 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-1.5 rounded-lg">
-            <Brain className="w-4 h-4 text-white" />
+          <div className="bg-gradient-to-r from-[#d4af37] to-[#b08d24] p-1 rounded-md">
+            <img src="/logo-icon.svg" alt="Hive Mind" className="w-4 h-4" />
           </div>
           <div>
             <h1 className="text-sm font-semibold text-white">Sala de Mentoria</h1>
@@ -673,7 +673,7 @@ export default function MentorshipRoomPage() {
           <button
             onClick={() => setShowTranscript((v) => !v)}
             className={`p-2 rounded-lg transition-colors ${showTranscript
-              ? "bg-indigo-500/20 text-indigo-400"
+              ? "bg-[#d4af37]/20 text-[#d4af37]"
               : "bg-white/5 text-gray-400 hover:text-white"
               }`}
           >
@@ -888,7 +888,7 @@ export default function MentorshipRoomPage() {
                 <button
                   onClick={handleEndSession}
                   disabled={ending}
-                  className="flex-1 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition-colors text-sm flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-[#b08d24] hover:bg-[#a07e1e] text-white transition-colors text-sm flex items-center justify-center gap-2"
                 >
                   {ending ? (
                     <>
@@ -1296,7 +1296,7 @@ function AgentCard({
       layout
       className={`relative rounded-2xl overflow-hidden border-2 transition-all duration-500 ${compact ? "h-40" : "h-full"
         } ${agent.speaking
-          ? "border-indigo-500/70 shadow-lg shadow-indigo-500/20"
+          ? "border-[#d4af37]/70 shadow-lg shadow-[#d4af37]/20"
           : agent.connected
             ? "border-emerald-500/30 hover:border-emerald-500/50"
             : "border-white/5 hover:border-white/10"
@@ -1354,7 +1354,7 @@ function AgentCard({
       {/* Speaking indicator */}
       {agent.speaking && (
         <div className="absolute top-3 right-3">
-          <div className="flex items-center gap-1.5 bg-indigo-500/20 border border-indigo-500/30 rounded-full px-2 py-1">
+          <div className="flex items-center gap-1.5 bg-[#d4af37]/20 border border-[#d4af37]/30 rounded-full px-2 py-1">
             <div className="flex items-center gap-0.5">
               {[0, 1, 2].map((i) => (
                 <motion.div
@@ -1365,11 +1365,11 @@ function AgentCard({
                     repeat: Infinity,
                     delay: i * 0.12,
                   }}
-                  className="w-[3px] bg-indigo-400 rounded-full"
+                  className="w-[3px] bg-[#d4af37] rounded-full"
                 />
               ))}
             </div>
-            <span className="text-[10px] text-indigo-300 font-medium">
+            <span className="text-[10px] text-[#e6c86a] font-medium">
               Falando
             </span>
           </div>

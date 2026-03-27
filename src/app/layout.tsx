@@ -9,10 +9,10 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Mentoria AI - Consultoria Multi-Agentes com IA",
+  title: "Hive Mind - Consultoria Multi-Agentes com IA",
   description:
     "Sessões de consultoria em tempo real com um painel de 5 especialistas de IA. Receba um Plano de Execução completo para o seu projeto.",
-  keywords: ["mentoria", "IA", "consultoria", "multi-agentes", "startup", "negócios"],
+  keywords: ["mentoria", "IA", "consultoria", "multi-agentes", "startup", "negócios", "hive mind"],
 };
 
 export default function RootLayout({

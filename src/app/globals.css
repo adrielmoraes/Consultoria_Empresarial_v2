@@ -5,9 +5,9 @@
 :root {
   --color-background: #ffffff;
   --color-foreground: #0a0a0a;
-  --color-primary: #6366f1;
-  --color-primary-light: #818cf8;
-  --color-accent: #a855f7;
+  --color-primary: #d4af37;
+  --color-primary-light: #e6c86a;
+  --color-accent: #e6c86a;
   --color-muted: #6b7280;
   --color-border: rgba(0, 0, 0, 0.08);
   --color-card: rgba(255, 255, 255, 0.8);
@@ -16,15 +16,15 @@
 }
 
 .dark {
-  --color-background: #030712;
+  --color-background: #0a0a0a;
   --color-foreground: #f9fafb;
-  --color-primary: #818cf8;
-  --color-primary-light: #a5b4fc;
-  --color-accent: #c084fc;
+  --color-primary: #d4af37;
+  --color-primary-light: #e6c86a;
+  --color-accent: #f0dfa0;
   --color-muted: #9ca3af;
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-card: rgba(255, 255, 255, 0.03);
-  --color-card-hover: rgba(255, 255, 255, 0.06);
+  --color-border: rgba(212, 175, 55, 0.15);
+  --color-card: rgba(255, 255, 255, 0.02);
+  --color-card-hover: rgba(255, 255, 255, 0.05);
 }
 
 @layer base {
@@ -51,7 +51,7 @@
 .glass-card:hover {
   background: var(--color-card-hover);
   border-color: var(--color-primary);
-  box-shadow: 0 0 30px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.15);
   transform: translateY(-2px);
 }
 
@@ -65,7 +65,7 @@
 
 /* Glow Effect */
 .glow {
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.3), 0 0 60px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.3), 0 0 60px rgba(212, 175, 55, 0.1);
 }
 
 /* Animated Background Grid */
@@ -78,18 +78,18 @@
 
 /* Button Styles */
 .btn-primary {
-  background: linear-gradient(135deg, #6366f1, #a855f7);
-  color: white;
+  background: linear-gradient(135deg, #d4af37, #b08d24);
+  color: #0a0a0a;
   font-weight: 600;
   padding: 0.75rem 1.5rem;
   border-radius: 0.75rem;
   transition: all 0.3s ease;
-  border: none;
+  border: 1px solid rgba(212, 175, 55, 0.4);
   cursor: pointer;
 }
 
 .btn-primary:hover {
-  box-shadow: 0 8px 30px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 8px 30px rgba(212, 175, 55, 0.3);
   transform: translateY(-1px);
 }
 
@@ -111,7 +111,7 @@
 
 /* Active Speaker Glow for Video */
 .active-speaker {
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.6), 0 0 60px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.4), 0 0 60px rgba(212, 175, 55, 0.15);
   border-color: var(--color-primary) !important;
 }
 

@@ -51,8 +51,8 @@ const plans = [
     price: "R$ 49",
     period: "/mês",
     icon: Zap,
-    gradient: "from-indigo-500 to-purple-600",
-    borderColor: "border-indigo-500/30",
+    gradient: "from-[#d4af37] to-[#b08d24]",
+    borderColor: "border-[#d4af37]/30",
     popular: true,
     features: [
       "5 mentorias por mês",
@@ -145,7 +145,7 @@ export default function SubscriptionPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b08d24] flex items-center justify-center">
             <CreditCard className="w-6 h-6 text-white animate-pulse" />
           </div>
           <div className="flex items-center gap-2 text-gray-500">
@@ -181,10 +181,10 @@ export default function SubscriptionPage() {
       <aside className={`fixed top-0 left-0 bottom-0 w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-white/5 flex flex-col z-50 transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
         <div className="p-6 border-b border-gray-200 dark:border-white/5 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-2 rounded-lg">
-              <Brain className="w-5 h-5 text-white" />
+            <div className="bg-gradient-to-r from-[#d4af37] to-[#b08d24] p-1.5 rounded-lg">
+              <img src="/logo-icon.svg" alt="Hive Mind" className="w-5 h-5" />
             </div>
-            <span className="text-lg font-bold gradient-text">Mentoria AI</span>
+            <span className="text-lg font-bold gradient-text">Hive Mind</span>
           </Link>
           <button className="lg:hidden text-gray-400 hover:text-white" onClick={() => setSidebarOpen(false)}>
             <X className="w-5 h-5" />
@@ -200,7 +200,7 @@ export default function SubscriptionPage() {
                 href={item.href}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-colors ${
                   isActive
-                    ? "bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 font-medium"
+                    ? "bg-[#d4af37]/10 text-[#d4af37] dark:text-[#e6c86a] font-medium"
                     : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"
                 }`}
               >
@@ -213,7 +213,7 @@ export default function SubscriptionPage() {
 
         <div className="p-4 border-t border-gray-200 dark:border-white/5">
           <div className="flex items-center gap-3 px-4 py-3">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-r from-[#d4af37] to-[#b08d24] flex items-center justify-center text-white font-bold text-sm">
               {userInitial}
             </div>
             <div className="flex-1 min-w-0">
@@ -251,10 +251,10 @@ export default function SubscriptionPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="glass-card p-6 bg-gradient-to-r from-indigo-500/5 to-purple-500/5 border-indigo-500/20"
+            className="glass-card p-6 bg-gradient-to-r from-[#d4af37]/5 to-[#b08d24]/5 border-[#d4af37]/20"
           >
             <div className="flex flex-col sm:flex-row items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-r from-[#d4af37] to-[#b08d24] flex items-center justify-center flex-shrink-0">
                 <Sparkles className="w-7 h-7 text-white" />
               </div>
               <div className="flex-1 text-center sm:text-left">
@@ -285,11 +285,11 @@ export default function SubscriptionPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1 }}
                   className={`glass-card p-6 relative flex flex-col ${plan.borderColor} ${
-                    plan.popular ? "ring-2 ring-indigo-500/30" : ""
+                    plan.popular ? "ring-2 ring-[#d4af37]/30" : ""
                   }`}
                 >
                   {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full text-xs font-bold text-white">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-[#d4af37] to-[#b08d24] rounded-full text-xs font-bold text-white">
                       Mais Popular
                     </div>
                   )}

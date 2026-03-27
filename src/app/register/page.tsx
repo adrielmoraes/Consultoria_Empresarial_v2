@@ -50,8 +50,8 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-grid opacity-20" />
-      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl" />
+      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-[#b08d24]/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-[#d4af37]/10 rounded-full blur-3xl" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -62,10 +62,10 @@ export default function RegisterPage() {
         <div className="glass-card p-8">
           {/* Logo */}
           <Link href="/" className="flex items-center justify-center gap-2 mb-8">
-            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-2.5 rounded-xl">
-              <Brain className="w-6 h-6 text-white" />
+            <div className="bg-gradient-to-r from-[#d4af37] to-[#b08d24] p-1.5 rounded-xl">
+              <img src="/logo-icon.svg" alt="Hive Mind" className="w-7 h-7" />
             </div>
-            <span className="text-2xl font-bold gradient-text">Mentoria AI</span>
+            <span className="text-2xl font-bold gradient-text">Hive Mind</span>
           </Link>
 
           <h1 className="text-2xl font-bold text-center mb-2">Crie sua conta</h1>
@@ -98,7 +98,7 @@ export default function RegisterPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Seu nome"
-                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all text-sm placeholder-gray-500"
+                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-[#d4af37] focus:ring-1 focus:ring-[#d4af37] outline-none transition-all text-sm placeholder-gray-500"
                   required
                 />
               </div>
@@ -116,7 +116,7 @@ export default function RegisterPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seu@email.com"
-                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all text-sm placeholder-gray-500"
+                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-[#d4af37] focus:ring-1 focus:ring-[#d4af37] outline-none transition-all text-sm placeholder-gray-500"
                   required
                 />
               </div>
@@ -134,7 +134,7 @@ export default function RegisterPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Mínimo 8 caracteres"
-                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all text-sm placeholder-gray-500"
+                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-[#d4af37] focus:ring-1 focus:ring-[#d4af37] outline-none transition-all text-sm placeholder-gray-500"
                   required
                   minLength={8}
                 />
@@ -159,7 +159,7 @@ export default function RegisterPage() {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Já tem conta?{" "}
-              <Link href="/login" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+              <Link href="/login" className="text-[#d4af37] hover:text-[#e6c86a] font-medium transition-colors">
                 Entrar
               </Link>
             </p>
