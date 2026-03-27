@@ -63,7 +63,7 @@ _active_rooms: set[str] = set()
 
 
 # Modelo Realtime nativo do Gemini (voz-para-voz)
-GEMINI_REALTIME_MODEL = "gemini-2.5-flash-native-audio-preview-12-2025"
+GEMINI_REALTIME_MODEL = "gemini-3.1-flash-live-preview"
 
 # Configurações avançadas do Gemini Realtime
 GEMINI_REALTIME_CONFIG = {
