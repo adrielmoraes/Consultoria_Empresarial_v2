@@ -108,108 +108,153 @@ SPECIALIST_IDENTITIES: dict[str, str] = {
 # Frases de apresentação individual de cada specialist_id
 SPECIALIST_INTRODUCTIONS: dict[str, str] = {
     "cfo": (
-        "Olá! Sou o Carlos, responsável pela área financeira. "
-        "Posso ajudar com análise de custos, precificação, projeções de receita "
-        "e viabilidade financeira do seu projeto. Prazer em conhecê-lo!"
+        "Olá! Sou o Carlos, CFO da equipe Hive Mind. "
+        "Meu trabalho é transformar números em clareza estratégica: cuidarei das suas "
+        "projeções financeiras, estrutura de custos, precificação e viabilidade do negócio. "
+        "Não se preocupe com planilhas — estou aqui para deixar tudo simples e estratégico."
     ),
     "legal": (
-        "Prazer! Sou o Daniel, advogado da equipe. "
-        "Cuido de questões jurídicas como tipo societário, contratos, "
-        "LGPD e compliance. Conte comigo para proteger seu negócio."
+        "Olá! Sou o Daniel, advogado especializado em negócios digitais. "
+        "Vou garantir que sua empresa esteja protegida juridicamente: "
+        "desde a escolha do tipo societário ideal até contratos, LGPD e propriedade intelectual. "
+        "O direito a serviço do crescimento do seu negócio!"
     ),
     "cmo": (
-        "E aí! Rodrigo aqui, sou o CMO da equipe. "
-        "Minha área é marketing e crescimento: posicionamento de marca, "
-        "aquisição de clientes e estratégia de go-to-market. Vamos juntos!"
+        "Fala! Sou o Rodrigo, CMO e especialista em crescimento. "
+        "Meu foco é fazer o seu negócio ser encontrado, lembrado e escolhido. "
+        "Posicionamento, aquisição de clientes, branding e estratégia de go-to-market — "
+        "isso é o que eu respiro todo dia!"
     ),
     "cto": (
         "Olá! Sou a Ana, CTO do time. "
-        "Trabalho com arquitetura de sistemas, stack tecnológico, "
-        "infraestrutura e escalabilidade. Estou aqui para o que precisar!"
+        "Minha missão é garantir que a tecnologia seja um acelerador — não um obstáculo. "
+        "Ajudo a escolher o stack certo, projetar a arquitetura do produto e planejar "
+        "a escalabilidade desde o MVP. Vamos construir algo sólido!"
     ),
     "plan": (
-        "Prazer! Marco aqui, estrategista-chefe. "
-        "Meu papel é sintetizar tudo que discutirmos e entregar "
-        "um Plano de Execução completo ao final da sessão. Conte comigo!"
+        "Prazer! Sou o Marco, estrategista-chefe do time. "
+        "Ao final da nossa conversa, vou sintetizar tudo — cada insight de cada especialista — "
+        "e transformar em um Plano de Execução concreto, com cronograma, prioridades e próximos passos. "
+        "Meu trabalho começa agora: estou ouvindo cada detalhe da nossa conversa!"
     ),
 }
 
 # C1: Ordem de entrada dos especialistas na apresentação sequencial.
 SPECIALIST_ORDER: list[str] = ["cfo", "legal", "cmo", "cto", "plan"]
 
-# antes de conectar o próximo. Dá tempo para o áudio ser ouvido.
+# Pausa entre apresentações de especialistas
 POST_INTRO_WAIT: float = 0.5
 
-HOST_PROMPT = """Você é Nathália, a Apresentadora (Host) do Mentoria AI.
-Seu papel é orquestrar a sessão de mentoria empresarial multi-agentes.
+HOST_PROMPT = """Você é Nathália, apresentadora e mentora líder do Hive Mind — a plataforma de mentoria empresarial multi-agentes.
+Sua personalidade é calorosa, curiosa, profissional e empática. Você é a âncora da sessão.
 
-ESPECIALISTAS DISPONÍVEIS:
-- Carlos (CFO): finanças, custos, projeções, viabilidade
-- Daniel (Advogado): aspectos jurídicos, contratos, LGPD
-- Rodrigo (CMO): marketing, posicionamento, aquisição de clientes
-- Ana (CTO): tecnologia, infraestrutura, escalabilidade
-- Marco (Estrategista): síntese final e plano de execução
+EQUIPE DE ESPECIALISTAS:
+- Carlos (CFO): finanças, custos, precificação, projeções, viabilidade, investimento
+- Daniel (Advogado): estrutura societária, contratos, LGPD, compliance, propriedade intelectual
+- Rodrigo (CMO): posicionamento de marca, go-to-market, aquisição de clientes, growth, branding
+- Ana (CTO): stack tecnológico, arquitetura de produto, MVP, escalabilidade, infraestrutura
+- Marco (Estrategista): síntese estratégica, plano de execução, cronograma, prioridades
 
-REGRAS:
-- Receba o usuário de forma calorosa e profissional.
-- Identifique o NOME do usuário e os tópicos do projeto/problema.
-- SEMPRE chame o usuário pelo nome.
-- Quando precisar de análise financeira, use a função acionar_carlos_cfo.
-- Quando precisar de orientação jurídica, use acionar_daniel_advogado.
-- Quando precisar de estratégia de marketing, use acionar_rodrigo_cmo.
-- Quando precisar de orientação técnica, use acionar_ana_cto.
-- Quando o usuário quiser encerrar ou pedir o plano, use gerar_plano_execucao.
-- SEMPRE faça pelo menos uma pergunta ao usuário por interação.
-- Mantenha respostas curtas (máximo 3 frases por turno).
-- Fale em português do Brasil."""
+REGRAS DE ORQUESTRAÇÃO:
+1. Comece sempre perguntando o nome do usuário se ainda não souber.
+2. SEMPRE chame o usuário pelo nome após descobri-lo.
+3. Faça perguntas abertas para entender o negócio: setor, estágio (ideia/MVP/crescimento), principal dor.
+4. Seja a "regente" da sessão: após cada especialista falar, faça uma transição natural de volta ao usuário.
+5. Mantenha suas falas curtas e diretas (máximo 3 frases por turno).
+6. NUNCA responda por um especialista — sempre acione-os via função.
+7. Quando o tema for financeiro → use acionar_carlos_cfo.
+8. Quando o tema for jurídico → use acionar_daniel_advogado.
+9. Quando o tema for marketing/vendas/clientes → use acionar_rodrigo_cmo.
+10. Quando o tema for tecnologia/produto → use acionar_ana_cto.
+11. Quando o usuário pedir encerramento, resumo ou plano → use gerar_plano_execucao.
+12. Se precisar cobrir múltiplos temas em sequência, acione cada especialista separadamente.
+13. RETOMADA: Se você perceber que há histórico de conversa anterior, comece dizendo que está retomando.
+
+TOM E ESTILO:
+- Português do Brasil, informal mas profissional.
+- Seja encorajadora: valide as ideias do usuário antes de fazer perguntas.
+- Use o nome do usuário com frequência para criar conexão.
+- Ao encaminhar para um especialista, apresente-o brevemente antes de acionar.
+
+Fale sempre em português do Brasil."""
 
 SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
     "cfo": (
-        "Você é Carlos, o CFO (Chief Financial Officer) do Mentoria AI. "
-        "Você participa de uma sessão de mentoria empresarial multi-agentes. "
-        "AGUARDE em silêncio absoluto. Você SÓ PODE FALAR quando Nathália (a apresentadora) o acionar. "
-        "Se souber o nome do usuário pelas transcrições anteriores, use-o para chamá-lo pelo nome. "
-        "Quando acionado, analise custos, receitas, precificação e viabilidade financeira. "
-        "Seja preciso, profissional e objetivo. Máximo 4 frases por resposta. "
-        "Fale em português do Brasil."
+        "Você é Carlos, CFO e especialista em finanças empresariais do Hive Mind. "
+        "Sua personalidade: analítico, direto, confiante. Você transforma números em clareza estratégica. "
+        "\n\nREGRAS ABSOLUTAS:\n"
+        "- AGUARDE em silêncio total. Só fale quando Nathália te acionar explicitamente.\n"
+        "- Ao ser acionado, NÃO cumprimente longamente — vá direto ao ponto.\n"
+        "- Use SEMPRE o nome do usuário se souber (veja o contexto da sessão).\n"
+        "- Máximo 4 frases objetivas por resposta.\n"
+        "- Sempre termine com uma pergunta ou insight que aprofunde a análise.\n"
+        "\nÁREAS DE DOMÍNIO: estrutura de custos, precificação (cost-plus, value-based, freemium), "
+        "projeções de receita (MRR, ARR, LTV, CAC), ponto de equilíbrio, fontes de capital "
+        "(bootstrapping, angel, venture, crédito), unit economics, fluxo de caixa e burn rate.\n"
+        "\nFale em português do Brasil."
     ),
     "legal": (
-        "Você é Daniel, o Advogado do Mentoria AI. "
-        "Você participa de uma sessão de mentoria empresarial multi-agentes. "
-        "AGUARDE em silêncio absoluto. Você SÓ PODE FALAR quando Nathália (a apresentadora) o acionar. "
-        "Se souber o nome do usuário pelas transcrições anteriores, use-o para chamá-lo pelo nome. "
-        "Quando acionado, foque em contratos, estrutura societária, LGPD e compliance. "
-        "Seja formal, preciso e claro. Máximo 4 frases por resposta. "
-        "Fale em português do Brasil."
+        "Você é Daniel, advogado especializado em direito empresarial e startups do Hive Mind. "
+        "Sua personalidade: formal mas acessível, preciso, protetor. Você é o guardião jurídico do negócio. "
+        "\n\nREGRAS ABSOLUTAS:\n"
+        "- AGUARDE em silêncio total. Só fale quando Nathália te acionar explicitamente.\n"
+        "- Ao ser acionado, seja direto — explique o tema jurídico de forma simples e prática.\n"
+        "- Use SEMPRE o nome do usuário se souber (veja o contexto da sessão).\n"
+        "- Máximo 4 frases por resposta. Nunca use juridiquês desnecessário.\n"
+        "- Sempre sinalize os riscos e como mitigá-los.\n"
+        "\nÁREAS DE DOMÍNIO: tipos societários (MEI, EIRELI, LTDA, SA), vesting e acordos de sócios, "
+        "contratos de prestação de serviço, LGPD e tratamento de dados, propriedade intelectual e registro de marca, "
+        "compliance fiscal e trabalhista, termos de uso e políticas de privacidade.\n"
+        "\nFale em português do Brasil."
     ),
     "cmo": (
-        "Você é Rodrigo, o CMO (Chief Marketing Officer) do Mentoria AI. "
-        "Você participa de uma sessão de mentoria empresarial multi-agentes. "
-        "AGUARDE em silêncio absoluto. Você SÓ PODE FALAR quando Nathália (a apresentadora) o acionar. "
-        "Se souber o nome do usuário pelas transcrições anteriores, use-o para chamá-lo pelo nome. "
-        "Quando acionado, foque em posicionamento, aquisição de clientes, branding e growth. "
-        "Seja dinâmico, entusiasmado e prático. Máximo 4 frases por resposta. "
-        "Fale em português do Brasil."
+        "Você é Rodrigo, CMO e especialista em marketing de crescimento do Hive Mind. "
+        "Sua personalidade: energético, criativo, orientado a resultados. Você pensa em funil, conversão e escala. "
+        "\n\nREGRAS ABSOLUTAS:\n"
+        "- AGUARDE em silêncio total. Só fale quando Nathália te acionar explicitamente.\n"
+        "- Ao ser acionado, seja prático e inspirador — fale em estratégias concretas.\n"
+        "- Use SEMPRE o nome do usuário se souber (veja o contexto da sessão).\n"
+        "- Máximo 4 frases por resposta. Use exemplos reais quando possível.\n"
+        "- Termine com um insight acionável que o usuário possa aplicar imediatamente.\n"
+        "\nÁREAS DE DOMÍNIO: posicionamento e proposta de valor, ICP (Ideal Customer Profile), "
+        "funil de aquisição (topo/meio/fundo), estratégia de conteúdo, SEO e performance, "
+        "growth hacking, branding e identidade visual, pricing psicológico, "
+        "go-to-market para B2B e B2C, parcerias e canais de distribuição.\n"
+        "\nFale em português do Brasil."
     ),
     "cto": (
-        "Você é Ana, a CTO (Chief Technology Officer) do Mentoria AI. "
-        "Você participa de uma sessão de mentoria empresarial multi-agentes. "
-        "AGUARDE em silêncio absoluto. Você SÓ PODE FALAR quando Nathália (a apresentadora) o acionar. "
-        "Se souber o nome do usuário pelas transcrições anteriores, use-o para chamá-lo pelo nome. "
-        "Quando acionada, foque em stack tecnológico, arquitetura, infraestrutura e escalabilidade. "
-        "Seja técnica, prática e objetiva. Máximo 4 frases por resposta. "
-        "Fale em português do Brasil."
+        "Você é Ana, CTO e especialista em tecnologia e produto do Hive Mind. "
+        "Sua personalidade: técnica mas acessível, pragmática, focada em velocidade e qualidade. "
+        "\n\nREGRAS ABSOLUTAS:\n"
+        "- AGUARDE em silêncio total. Só fale quando Nathália te acionar explicitamente.\n"
+        "- Ao ser acionada, seja objetiva — traduza técnico em estratégico.\n"
+        "- Use SEMPRE o nome do usuário se souber (veja o contexto da sessão).\n"
+        "- Máximo 4 frases por resposta. Evite siglas sem explicar.\n"
+        "- Sempre avalie custo-benefício de cada decisão tecnológica.\n"
+        "\nÁREAS DE DOMÍNIO: escolha de stack tecnológico (web, mobile, backend), "
+        "arquitetura de produto (monolito vs microsserviços, serverless), "
+        "planejamento de MVP (mínimo viável e iterável), infraestrutura cloud (AWS, GCP, Azure), "
+        "segurança e performance, estimativas de desenvolvimento, "
+        "ferramentas no-code/low-code vs desenvolvimento customizado.\n"
+        "\nFale em português do Brasil."
     ),
     "plan": (
-        "Você é Marco, o Estrategista-Chefe do Mentoria AI. "
-        "Você participa de uma sessão de mentoria empresarial multi-agentes. "
-        "AGUARDE em silêncio absoluto. Você SÓ PODE FALAR quando Nathália (a apresentadora) o acionar. "
-        "Se souber o nome do usuário pelas transcrições anteriores, use-o para chamá-lo pelo nome. "
-        "Quando acionado, sintetize TUDO que foi discutido na sessão e entregue um "
-        "Plano de Execução estruturado com: "
-        "1) Resumo do projeto, 2) Principais recomendações por área, "
-        "3) Cronograma sugerido, 4) Riscos e mitigações, 5) Próximos passos concretos. "
-        "Seja claro, organizado e inspirador. Fale em português do Brasil."
+        "Você é Marco, Estrategista-Chefe e sintetizador do Hive Mind. "
+        "Sua personalidade: visionário, organizado, inspirador. Você enxerga o futuro do negócio com clareza. "
+        "\n\nREGRAS ABSOLUTAS:\n"
+        "- AGUARDE em silêncio total durante toda a sessão. Só fale quando Nathália te acionar.\n"
+        "- Ao ser acionado para o plano final, você tem uma missão: sintetizar TUDO em um plano concreto.\n"
+        "- Use SEMPRE o nome do usuário se souber (veja o contexto da sessão).\n"
+        "- Sua resposta deve ser completa, estruturada e inspiradora.\n"
+        "\nAO GERAR O PLANO DE EXECUÇÃO, cubra estes pontos em sua fala:\n"
+        "1. RESUMO: O que o usuário quer construir e o potencial do negócio.\n"
+        "2. DIAGNÓSTICO: Principais pontos levantados por cada especialista (finanças, jurídico, marketing, tecnologia).\n"
+        "3. PRIORIDADES: Os 3-5 itens mais importantes para executar primeiro.\n"
+        "4. CRONOGRAMA: Linha do tempo realista com marcos (30 dias, 90 dias, 6 meses, 1 ano).\n"
+        "5. RISCOS: 3 principais riscos do projeto e como endereçá-los.\n"
+        "6. PRÓXIMOS PASSOS: Ações concretas para começar AGORA (esta semana).\n"
+        "7. ENCERRAMENTO: Uma frase motivacional personalizada para o usuário.\n"
+        "\nFale em português do Brasil. Seja profundo e inspirador."
     ),
 }
 
@@ -405,26 +450,150 @@ class HostAgent(Agent):
         context: RunContext,
     ) -> str:
         """
-        Aciona Marco (Estrategista) para gerar o Plano de Execução consolidado.
-
-Use quando o usuário quiser encerrar a sessão ou pedir um resumo
-        estruturado com próximos passos.
+        Aciona Marco (Estrategista) para gerar o Plano de Execução final consolidado.
+        Use quando o usuário quiser encerrar a sessão ou solicitar um plano estruturado.
         """
-        ctx_summary = self._blackboard.get_context_summary()
-        await self._activate_specialist("plan", ctx_summary)
+        full_transcript = self._blackboard.get_full_transcript()
+        user_name = self._blackboard.user_name or "empreendedor"
+        project_name = self._blackboard.project_name or "seu projeto"
+
+        # Prompt rico para o Marco gerar o plano falado
+        plan_prompt = (
+            f"Você foi acionado para gerar o Plano de Execução Final para {user_name}."
+            f" O projeto/contexto é: {project_name}."
+            f"\n\nTranscrição completa da sessão:\n{full_transcript}"
+            f"\n\nGere agora o Plano de Execução completo seguindo a estrutura do seu prompt: "
+            f"Resumo, Diagnóstico por Área, Prioridades, Cronograma, Riscos, "
+            f"Próximos Passos Imediatos e Mensagem Final para {user_name}. "
+            f"Seja completo, específico e inspirador."
+        )
+
+        await self._activate_specialist("plan", plan_prompt)
+
+        # Gera o documento Markdown estruturado para o frontend
+        markdown_plan = self._generate_markdown_plan(user_name, project_name)
 
         try:
             plan_payload = json.dumps({
                 "type": "execution_plan",
-                "plan": ctx_summary,
-                "text": ctx_summary,
+                "plan": markdown_plan,
+                "text": markdown_plan,
             }).encode()
             await self._room.local_participant.publish_data(plan_payload, reliable=True)
-            logger.info("[Host] Plano de execução publicado como data packet.")
+            logger.info("[Host] Plano de execução Markdown publicado como data packet.")
         except Exception as e:
             logger.warning(f"[Host] Erro ao publicar plano de execução: {e}")
 
-        return "Marco (Estrategista) está preparando o Plano de Execução consolidado."
+        return "Marco (Estrategista) está apresentando o Plano de Execução completo."
+
+    def _generate_markdown_plan(self, user_name: str, project_name: str) -> str:
+        """Gera documento Markdown estruturado com base no contexto acumulado no Blackboard."""
+        from datetime import datetime
+        now = datetime.now().strftime("%d/%m/%Y às %H:%M")
+
+        transcript_lines = self._blackboard.transcript
+        cfo_insights = [m["content"] for m in transcript_lines if "Carlos" in m.get("role", "")]
+        legal_insights = [m["content"] for m in transcript_lines if "Daniel" in m.get("role", "")]
+        cmo_insights = [m["content"] for m in transcript_lines if "Rodrigo" in m.get("role", "")]
+        cto_insights = [m["content"] for m in transcript_lines if "Ana" in m.get("role", "")]
+        user_messages = [m["content"] for m in transcript_lines if m.get("role") == "Usuário"]
+
+        def fmt_insights(items: list) -> str:
+            if not items:
+                return "_Nenhuma análise registrada para esta área._"
+            return "\n".join(f"- {item[:300]}" for item in items[:5])
+
+        user_context = (
+            "\n".join(f"- {u[:200]}" for u in user_messages[:10])
+            if user_messages else "_Sem mensagens registradas._"
+        )
+
+        return f"""# 📋 Plano de Execução — Hive Mind
+
+**Usuário:** {user_name}
+**Sessão:** {project_name}
+**Gerado em:** {now}
+
+---
+
+## 1. 🎯 Resumo Executivo
+
+Esta sessão de mentoria reuniu um time completo de especialistas para analisar o projeto de **{user_name}** sob diferentes perspectivas: financeira, jurídica, marketing e tecnologia.
+
+**Principais pontos levantados pelo usuário:**
+{user_context}
+
+---
+
+## 2. 📊 Diagnóstico por Área
+
+### 💰 Finanças — Carlos (CFO)
+{fmt_insights(cfo_insights)}
+
+### ⚖️ Jurídico — Daniel (Advogado)
+{fmt_insights(legal_insights)}
+
+### 📣 Marketing & Crescimento — Rodrigo (CMO)
+{fmt_insights(cmo_insights)}
+
+### 💻 Tecnologia & Produto — Ana (CTO)
+{fmt_insights(cto_insights)}
+
+---
+
+## 3. 🚨 Prioridades Críticas
+
+> As prioridades abaixo foram definidas com base nos temas discutidos durante a sessão.
+
+1. **Validação do modelo de negócio** — Confirmar demanda real antes de qualquer investimento.
+2. **Estrutura jurídica adequada** — Formalizar a empresa e proteger propriedade intelectual.
+3. **Go-to-market enxuto** — Iniciar com um canal de aquisição principal, medir e escalar.
+4. **MVP tecnológico** — Construir o mínimo viável para testar hipóteses com usuários reais.
+5. **Fluxo de caixa positivo** — Garantir faturamento antes de escalar custos.
+
+---
+
+## 4. 📅 Cronograma Sugerido
+
+- **30 dias:** Formalizar empresa, definir ICP e proposta de valor (Jurídico + Estratégia)
+- **60 dias:** Lançar MVP ou versão beta, iniciar primeiras vendas (Produto + Vendas)
+- **90 dias:** Validar unit economics - CAC, LTV - e ajustar pricing (Financeiro + Marketing)
+- **6 meses:** Escalar canal principal de marketing (Growth + Operações)
+- **12 meses:** Expandir produto/equipe, avaliar captação externa (Estratégia + Financeiro)
+
+---
+
+## 5. ⚠️ Riscos e Mitigações
+
+- **Falta de tração com clientes:**
+  - *Mitigação:* Validar antes de construir, fazer vendas manuais primeiro.
+- **Burn rate elevado:**
+  - *Mitigação:* Manter operação enxuta, priorizar receita sobre crescimento.
+- **Problemas jurídicos futuros:**
+  - *Mitigação:* Regularizar desde o início com suporte jurídico especializado.
+
+---
+
+## 6. ✅ Próximos Passos Imediatos (Esta Semana)
+
+- [ ] Escrever a proposta de valor em 1 frase clara
+- [ ] Identificar os 10 primeiros potenciais clientes para contato direto
+- [ ] Escolher o modelo societário adequado (MEI, LTDA, etc.)
+- [ ] Mapear os custos fixos e variáveis do negócio
+- [ ] Definir o escopo mínimo do MVP e tecnologia necessária
+
+---
+
+## 7. 💬 Mensagem Final
+
+*"{user_name}, você já deu o passo mais importante: buscou perspectivas diferentes e fez as perguntas certas. Agora é hora de executar com foco e disciplina. Lembre-se: os melhores negócios não nasceram perfeitos — foram construídos iteração por iteração. O time Hive Mind está aqui quando precisar!"*
+
+— **Marco, Estrategista-Chefe · Hive Mind**
+
+---
+
+*Documento gerado automaticamente pela plataforma **Hive Mind** com base na sessão de mentoria realizada em {now}.*
+"""
 
 async def _start_specialist_in_room(
     spec_id: str,
@@ -835,11 +1004,17 @@ async def entrypoint(ctx: JobContext) -> None:
         )
 
     # ------------------------------------------------------------------
-    # 2. Fluxo de Apresentação Sequencial:
+    # 2. Fluxo de Apresentação ou Retomada de Sessão
     # ------------------------------------------------------------------
     async def welcome_and_introductions() -> None:
-        # 2a. Conecta todos os especialistas CONCORRENTEMENTE em background
-        # para economizar tempo enquanto a Nathália se inicializa.
+        """
+        Se o Blackboard já tem histórico (retomada de sessão interrompida),
+        Nathália retoma sem repetir apresentações.
+        Caso contrário, executa o fluxo completo de boas-vindas.
+        """
+        is_resuming = len(blackboard.transcript) > 0
+
+        # Conecta todos os especialistas CONCORRENTEMENTE
         logger.info("[Apresentação] Conectando todos os especialistas simultaneamente...")
         connect_tasks = []
         for spec_id in SPECIALIST_ORDER:
@@ -857,83 +1032,126 @@ async def entrypoint(ctx: JobContext) -> None:
             )
             connect_tasks.append(task)
 
-        # Aguarda Nathália estabilizar no room e o RealtimeModel conectar ao Gemini
+        # Aguarda Nathália estabilizar e o RealtimeModel conectar ao Gemini
         await asyncio.sleep(2.0)
 
-        # 2b. Nathália se apresenta e anuncia o time
-        host_greeting = (
-            "Olá! Seja muito bem-vindo ao Mentoria AI! "
-            "Sou a Nathália, sua apresentadora e mentora líder desta sessão. "
-            "Nossa equipe de especialistas já está conectada e vai se apresentar agora."
-        )
-        logger.info("[Host] Nathália enviando apresentação inicial...")
-        try:
-            await asyncio.wait_for(
-                host_session.generate_reply(
-                    instructions=f"Por favor, diga a seguinte apresentação: {host_greeting}",
-                ),
-                timeout=30.0,
+        if is_resuming:
+            # ── MODO RETOMADA ──────────────────────────────────────────
+            user_name_part = f", {blackboard.user_name}" if blackboard.user_name else ""
+            resumption_context = blackboard.get_context_summary()
+            logger.info("[Host] Nathália retomando sessão existente...")
+            resumption_msg = (
+                f"Estou retomando nossa sessão! "
+                f"Olá{user_name_part}, que bom ter você de volta. "
+                f"Nossa conversa foi interrompida, mas tenho todo o contexto do que discutimos. "
+                f"Podemos continuar exatamente de onde paramos. "
+                f"Estávamos falando sobre: {blackboard.user_query or 'seu projeto'}. "
+                f"Como você gostaria de continuar?"
             )
-        except asyncio.TimeoutError:
-            logger.warning("[Host] Timeout (30s) ao gerar reply inicial - RealtimeModel pode não ter conectado ao Gemini.")
-        except Exception as e:
-            logger.warning(f"[Host] Erro ao gerar reply inicial: {type(e).__name__}: {e}", exc_info=True)
-
-        # Aguarda todos os especialistas terminarem de conectar (caso ainda não tenham)
-        sessions = await asyncio.gather(*connect_tasks)
-        spec_sessions = dict(zip(SPECIALIST_ORDER, sessions))
-
-        # 2c. Especialistas se apresentam SEQUENCIALMENTE (instantaneamente após Nathália)
-        for spec_id in SPECIALIST_ORDER:
-            if not blackboard.is_active:
-                logger.info("[Apresentação] Job encerrando, abortando sequência.")
-                return
-
-            session = spec_sessions.get(spec_id)
-            if not session:
-                continue
-
-            spec_name = SPECIALIST_NAMES[spec_id]
-            logger.info(f"[Apresentação] Iniciando apresentação de {spec_name}...")
-            intro_text = SPECIALIST_INTRODUCTIONS[spec_id]
-
             try:
                 await asyncio.wait_for(
-                    session.generate_reply(
-                        instructions=f"Por favor, apresente-se rapidamente dizendo: {intro_text}. Se souber o nome do usuário, salde-o pelo nome.",
+                    host_session.generate_reply(
+                        instructions=(
+                            f"Retome a sessão de forma calorosa dizendo: {resumption_msg} "
+                            f"Contexto da sessão anterior para você: {resumption_context}"
+                        ),
                     ),
-                    timeout=25.0,
+                    timeout=30.0,
                 )
-                logger.info(f"[Apresentação] {spec_name} concluiu.")
-                await asyncio.sleep(POST_INTRO_WAIT)
             except Exception as e:
-                logger.warning(f"[Apresentação] Erro na apresentação de {spec_name}: {e}")
+                logger.warning(f"[Host] Erro ao retomar sessão: {e}")
 
-        logger.info("[Apresentação] Todos os especialistas foram apresentados.")
+            # Aguarda especialistas reconectarem (sem apresentações)
+            await asyncio.gather(*connect_tasks)
+            logger.info("[Host] Retomada concluída. Todos os especialistas reconectados.")
 
-        # Guard — não continua se o job já estiver encerrando
-        if not blackboard.is_active:
-            return
-
-        # 2c. Nathália retoma e faz a pergunta inicial ao usuário
-        closing_base = "Agora que você já conhece toda a nossa equipe, me conte: "
-        if blackboard.user_name:
-            closing = f"{closing_base}{blackboard.user_name}, qual é o seu principal desafio de negócio ou projeto atual? Estou aqui para ouvir você!"
         else:
-            closing = f"{closing_base}qual é o seu nome e qual é o seu principal desafio de negócio ou projeto atual? Estou aqui para ouvir você!"
-
-        logger.info("[Host] Nathália fazendo pergunta inicial...")
-        try:
-            await asyncio.wait_for(
-                host_session.generate_reply(
-                    instructions=f"Faça a seguinte pergunta: {closing}",
-                ),
-                timeout=30.0,
+            # ── MODO INICIAL ───────────────────────────────────────────
+            host_greeting = (
+                "Olá! Seja muito bem-vindo ao Hive Mind! "
+                "Sou a Nathália, sua apresentadora e mentora líder desta sessão. "
+                "Montei uma equipe completa de especialistas para te ajudar hoje: "
+                "Carlos no financeiro, Daniel no jurídico, Rodrigo em marketing, "
+                "Ana em tecnologia e Marco como estrategista-chefe. "
+                "Eles vão se apresentar um a um agora. Fique à vontade!"
             )
-        except Exception as e:
-            logger.warning(f"[Host] Erro na pergunta inicial: {e}")
+            logger.info("[Host] Nathália enviando apresentação inicial...")
+            try:
+                await asyncio.wait_for(
+                    host_session.generate_reply(
+                        instructions=f"Por favor, diga a seguinte apresentação de forma calorosa e natural: {host_greeting}",
+                    ),
+                    timeout=30.0,
+                )
+            except asyncio.TimeoutError:
+                logger.warning("[Host] Timeout (30s) ao gerar reply inicial.")
+            except Exception as e:
+                logger.warning(f"[Host] Erro ao gerar reply inicial: {type(e).__name__}: {e}", exc_info=True)
 
-        logger.info("[Host] Fluxo de abertura concluído.")
+            # Aguarda todos os especialistas conectarem
+            sessions = await asyncio.gather(*connect_tasks)
+            spec_sessions = dict(zip(SPECIALIST_ORDER, sessions))
+
+            # Especialistas se apresentam SEQUENCIALMENTE
+            for spec_id in SPECIALIST_ORDER:
+                if not blackboard.is_active:
+                    logger.info("[Apresentação] Job encerrando, abortando sequência.")
+                    return
+
+                session = spec_sessions.get(spec_id)
+                if not session:
+                    continue
+
+                spec_name = SPECIALIST_NAMES[spec_id]
+                logger.info(f"[Apresentação] Iniciando apresentação de {spec_name}...")
+                intro_text = SPECIALIST_INTRODUCTIONS[spec_id]
+
+                try:
+                    await asyncio.wait_for(
+                        session.generate_reply(
+                            instructions=(
+                                f"Apresente-se de forma calorosa e natural dizendo: {intro_text} "
+                                f"Máximo 3 frases. Não cumprimente difusamente — seja direto e memorável."
+                            ),
+                        ),
+                        timeout=25.0,
+                    )
+                    logger.info(f"[Apresentação] {spec_name} concluiu.")
+                    await asyncio.sleep(POST_INTRO_WAIT)
+                except Exception as e:
+                    logger.warning(f"[Apresentação] Erro na apresentação de {spec_name}: {e}")
+
+            logger.info("[Apresentação] Todos os especialistas foram apresentados.")
+
+            if not blackboard.is_active:
+                return
+
+            # Nathália fecha as apresentações e convida o usuário a falar
+            if blackboard.user_name:
+                closing = (
+                    f"Pronto, {blackboard.user_name}! Toda a nossa equipe já se apresentou. "
+                    f"Agora sou toda ouvidos — qual é o seu maior desafio ou a principal questão "
+                    f"que você quer resolver hoje?"
+                )
+            else:
+                closing = (
+                    "Pronto! Toda a nossa equipe já se apresentou. "
+                    "Antes de tudo, adoraria saber o seu nome — e depois me conte: "
+                    "qual é o seu projeto ou negócio e o que você quer resolver hoje?"
+                )
+
+            logger.info("[Host] Nathália fazendo pergunta inicial...")
+            try:
+                await asyncio.wait_for(
+                    host_session.generate_reply(
+                        instructions=f"Faça a seguinte pergunta de forma calorosa e natural: {closing}",
+                    ),
+                    timeout=30.0,
+                )
+            except Exception as e:
+                logger.warning(f"[Host] Erro na pergunta inicial: {e}")
+
+            logger.info("[Host] Fluxo de abertura concluído.")
 
     asyncio.create_task(welcome_and_introductions())
 
