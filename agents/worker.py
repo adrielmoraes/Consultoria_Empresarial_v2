@@ -66,9 +66,8 @@ _active_rooms: set[str] = set()
 
 # Modelo Realtime nativo do Gemini (voz-para-voz)
 # Modelos suportados para bidiGenerateContent (Live API):
-#   - gemini-2.0-flash-live-001  (estável, Gemini Developer API)
-#   - gemini-live-2.5-flash-native-audio (Vertex AI)
-GEMINI_REALTIME_MODEL = "gemini-2.0-flash-live-001"
+#   - gemini-2.5-flash (O mais recente com suporte Bidirecional Live via Google GenAI SDK)
+GEMINI_REALTIME_MODEL = "gemini-2.5-flash"
 
 # Configurações avançadas do Gemini Realtime
 GEMINI_REALTIME_CONFIG = {
@@ -628,9 +627,7 @@ async def _start_specialist_in_room(
             intro_text = SPECIALIST_INTRODUCTIONS[spec_id]
             logger.info(f"[{name}] Iniciando auto-apresentação...")
             try:
-                ctx = session.chat_ctx.copy()
-                ctx.add_message(role="user", content=f"Por favor, apresente-se dizendo: {intro_text}")
-                await session.update_chat_ctx(ctx)
+                _add_user_message(agent, f"Por favor, apresente-se dizendo: {intro_text}")
                 await asyncio.wait_for(
                     session.generate_reply(),
                     timeout=15.0,
@@ -710,9 +707,7 @@ async def _start_specialist_in_room(
                                 f"Sua missão agora: {context_text}\n"
                                 f"Responda de forma objetiva e profissional com base nas suas instruções originais."
                             )
-                            ctx = session.chat_ctx.copy()
-                            ctx.add_message(role="user", content=prompt)
-                            asyncio.create_task(session.update_chat_ctx(ctx))
+                            _add_user_message(agent, prompt)
                             asyncio.create_task(
                                 session.generate_reply()
                             )
@@ -735,6 +730,26 @@ async def _start_specialist_in_room(
 # ============================================================
 # ENTRYPOINT
 # ============================================================
+
+def _add_user_message(agent, content: str) -> None:
+    \"\"\"Adiciona uma mensagem de texto ao contexto de um agente (robusto para diferentes versões).\"\"\"
+    msg = ChatMessage(role="user", content=content)
+    try:
+        # Tenta usar a lista nativa do ChatContext
+        if hasattr(agent.chat_ctx, "messages") and isinstance(agent.chat_ctx.messages, list):
+            agent.chat_ctx.messages.append(msg)
+            return
+        elif hasattr(agent.chat_ctx, "append"):
+            agent.chat_ctx.append(msg)
+            return
+        elif hasattr(agent.chat_ctx, "add_message"):
+            agent.chat_ctx.add_message(msg)
+            return
+        # Fallback final se as mensagens estiverem escondidas em '_messages' ou similar
+        elif hasattr(agent.chat_ctx, "_messages") and isinstance(agent.chat_ctx._messages, list):
+            agent.chat_ctx._messages.append(msg)
+    except Exception as e:
+        logger.warning(f"Não foi possível injetar contexto no ChatContext do agente: {e}")
 
 async def entrypoint(ctx: JobContext) -> None:
     # Log em arquivo para diagnóstico (compatível com Windows e Linux)
@@ -872,9 +887,7 @@ async def entrypoint(ctx: JobContext) -> None:
         )
         logger.info("[Host] Nathália enviando apresentação inicial...")
         try:
-            ctx = host_session.chat_ctx.copy()
-            ctx.add_message(role="user", content=f"Por favor, diga a seguinte apresentação: {host_greeting}")
-            await host_session.update_chat_ctx(ctx)
+            _add_user_message(host_agent, f"Por favor, diga a seguinte apresentação: {host_greeting}")
             await asyncio.wait_for(
                 host_session.generate_reply(),
                 timeout=30.0,
@@ -923,9 +936,7 @@ async def entrypoint(ctx: JobContext) -> None:
             intro_text = SPECIALIST_INTRODUCTIONS[spec_id]
 
             try:
-                spec_ctx = session.chat_ctx.copy()
-                spec_ctx.add_message(role="user", content=f"Por favor, apresente-se rapidamente dizendo: {intro_text}. Se souber o nome do usuário, salde-o pelo nome.")
-                await session.update_chat_ctx(spec_ctx)
+                _add_user_message(agnt, f"Por favor, apresente-se rapidamente dizendo: {intro_text}. Se souber o nome do usuário, salde-o pelo nome.")
                 await asyncio.wait_for(
                     session.generate_reply(),
                     timeout=15.0,
