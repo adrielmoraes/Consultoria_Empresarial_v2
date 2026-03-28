@@ -71,7 +71,7 @@ GEMINI_REALTIME_CONFIG = {
     "speech_config": {
         "voice_config": {
             "prebuilt_voice_config": {
-                "voice_name": "Zephyr",
+                "voice_name": "Fenrir",
             }
         }
     }
@@ -84,7 +84,7 @@ AGENT_VOICES: dict[str, str] = {
     "legal": "Fenrir",   # Daniel   – masculina formal
     "cmo":   "Puck",     # Rodrigo  – masculina dinâmica
     "cto":   "Kore",     # Ana      – feminina técnica
-    "plan":  "Zephyr",   # Marco    – masculina autoritativa
+    "plan":  "Fenrir",   # Marco    – masculina autoritativa (reusa Fenrir pois o Gemini tem 5 vozes)
 }
 
 # Nomes de exibição para cada agente
