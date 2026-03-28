@@ -65,7 +65,10 @@ _active_rooms: set[str] = set()
 
 
 # Modelo Realtime nativo do Gemini (voz-para-voz)
-GEMINI_REALTIME_MODEL = "gemini-2.0-flash-exp"
+# Modelos suportados para bidiGenerateContent (Live API):
+#   - gemini-2.0-flash-live-001  (estável, Gemini Developer API)
+#   - gemini-live-2.5-flash-native-audio (Vertex AI)
+GEMINI_REALTIME_MODEL = "gemini-2.0-flash-live-001"
 
 # Configurações avançadas do Gemini Realtime
 GEMINI_REALTIME_CONFIG = {
@@ -625,12 +628,9 @@ async def _start_specialist_in_room(
             intro_text = SPECIALIST_INTRODUCTIONS[spec_id]
             logger.info(f"[{name}] Iniciando auto-apresentação...")
             try:
-                agent.chat_ctx.messages.append(
-                    ChatMessage(
-                        role="user",
-                        content=f"Por favor, apresente-se dizendo: {intro_text}"
-                    )
-                )
+                ctx = session.chat_ctx.copy()
+                ctx.add_message(role="user", content=f"Por favor, apresente-se dizendo: {intro_text}")
+                await session.update_chat_ctx(ctx)
                 await asyncio.wait_for(
                     session.generate_reply(),
                     timeout=15.0,
@@ -710,7 +710,9 @@ async def _start_specialist_in_room(
                                 f"Sua missão agora: {context_text}\n"
                                 f"Responda de forma objetiva e profissional com base nas suas instruções originais."
                             )
-                            agent.chat_ctx.messages.append(ChatMessage(role="user", content=prompt))
+                            ctx = session.chat_ctx.copy()
+                            ctx.add_message(role="user", content=prompt)
+                            asyncio.create_task(session.update_chat_ctx(ctx))
                             asyncio.create_task(
                                 session.generate_reply()
                             )
@@ -870,7 +872,9 @@ async def entrypoint(ctx: JobContext) -> None:
         )
         logger.info("[Host] Nathália enviando apresentação inicial...")
         try:
-            host_agent.chat_ctx.messages.append(ChatMessage(role="user", content=f"Por favor, diga a seguinte apresentação: {host_greeting}"))
+            ctx = host_session.chat_ctx.copy()
+            ctx.add_message(role="user", content=f"Por favor, diga a seguinte apresentação: {host_greeting}")
+            await host_session.update_chat_ctx(ctx)
             await asyncio.wait_for(
                 host_session.generate_reply(),
                 timeout=30.0,
@@ -919,7 +923,9 @@ async def entrypoint(ctx: JobContext) -> None:
             intro_text = SPECIALIST_INTRODUCTIONS[spec_id]
 
             try:
-                agnt.chat_ctx.messages.append(ChatMessage(role="user", content=f"Por favor, apresente-se rapidamente dizendo: {intro_text}. Se souber o nome do usuário, salde-o pelo nome."))
+                spec_ctx = session.chat_ctx.copy()
+                spec_ctx.add_message(role="user", content=f"Por favor, apresente-se rapidamente dizendo: {intro_text}. Se souber o nome do usuário, salde-o pelo nome.")
+                await session.update_chat_ctx(spec_ctx)
                 await asyncio.wait_for(
                     session.generate_reply(),
                     timeout=15.0,
