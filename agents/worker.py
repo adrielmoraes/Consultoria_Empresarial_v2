@@ -732,7 +732,7 @@ async def _start_specialist_in_room(
 # ============================================================
 
 def _add_user_message(agent, content: str) -> None:
-    \"\"\"Adiciona uma mensagem de texto ao contexto de um agente (robusto para diferentes versões).\"\"\"
+    """Adiciona uma mensagem de texto ao contexto de um agente (robusto para diferentes versões)."""
     msg = ChatMessage(role="user", content=content)
     try:
         # Tenta usar a lista nativa do ChatContext
