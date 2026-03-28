@@ -733,18 +733,12 @@ async def entrypoint(ctx: JobContext) -> None:
 
     logger.info(f"=== ENTRYPOINT MENTORIA AI v5 – sala: {ctx.room.name} ===")
 
-    # Conecta o worker ao room sem auto-subscribe (Host não precisa ouvir especialistas)
-    await ctx.connect(auto_subscribe=AutoSubscribe.SUBSCRIBE_NONE)
+    # Conecta o worker ao room com auto-subscribe de áudio.
+    # IMPORTANTE: O RealtimeModel do Gemini exige que o AgentSession
+    # gerencie a subscrição de áudio automaticamente. Usar SUBSCRIBE_NONE
+    # impede que o pipeline interno receba o áudio do microfone do usuário.
+    await ctx.connect(auto_subscribe=AutoSubscribe.SUBSCRIBE_ALL)
     logger.info(f"Worker conectado ao room: {ctx.room.name}")
-
-    def _subscribe_host_to_user_audio(publication, participant):
-        if participant.identity.startswith("user-") and publication.kind == rtc.TrackKind.KIND_AUDIO:
-            publication.set_subscribed(True)
-
-    ctx.room.on("track_published", _subscribe_host_to_user_audio)
-    for participant in ctx.room.remote_participants.values():
-        for publication in participant.track_publications.values():
-            _subscribe_host_to_user_audio(publication, participant)
 
     # Blackboard compartilhado
     blackboard = Blackboard(project_name=ctx.room.name)
