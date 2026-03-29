@@ -314,6 +314,11 @@ class SpecialistAgent(Agent):
                 model=GEMINI_REALTIME_MODEL,
                 api_key=os.environ.get("GOOGLE_API_KEY", ""),
                 voice=AGENT_VOICES[spec_id],
+                instructions=(
+                    "IDIOMA OBRIGATÓRIO: Você DEVE falar e entender APENAS em português brasileiro (pt-BR). "
+                    "Toda entrada de áudio do usuário é em português do Brasil. "
+                    "NUNCA interprete como outro idioma. Responda SEMPRE em português do Brasil."
+                ),
                 realtime_input_config=genai_types.RealtimeInputConfig(
                     automatic_activity_detection=genai_types.AutomaticActivityDetection(
                         disabled=False,
@@ -346,6 +351,11 @@ class HostAgent(Agent):
             model=GEMINI_REALTIME_MODEL,
             api_key=os.environ.get("GOOGLE_API_KEY", ""),
             voice=AGENT_VOICES["host"],
+            instructions=(
+                "IDIOMA OBRIGATÓRIO: Você DEVE falar e entender APENAS em português brasileiro (pt-BR). "
+                "Toda entrada de áudio do usuário é em português do Brasil. "
+                "NUNCA interprete como outro idioma. Responda SEMPRE em português do Brasil."
+            ),
             realtime_input_config=genai_types.RealtimeInputConfig(
                 automatic_activity_detection=genai_types.AutomaticActivityDetection(
                     disabled=False,
@@ -843,42 +853,51 @@ async def _start_specialist_in_room(
                 )
             )
 
+        # C5: Handler assíncrono para ativação de especialista.
+        # Extraído do callback síncrono para garantir await correto
+        # em session.generate_reply() e agent.update_instructions().
+        async def _handle_activation(msg: dict) -> None:
+            """Processa ativação deste especialista de forma assíncrona."""
+            try:
+                ctx_summary = msg.get("transcript_summary", "")
+                context_text = msg.get("context", "")
+
+                # Atualiza instruções com contexto da sessão
+                if ctx_summary:
+                    new_instructions = (
+                        SPECIALIST_SYSTEM_PROMPTS[spec_id]
+                        + f"\n\n--- CONTEXTO ATUAL DA SESSÃO ---\n{ctx_summary}"
+                    )
+                    try:
+                        result = agent.update_instructions(new_instructions)
+                        if asyncio.iscoroutine(result):
+                            await result
+                    except Exception as ui_err:
+                        logger.warning(f"[{name}] Erro ao atualizar instruções: {ui_err}")
+
+                # C5: Subscreve ao áudio do usuário
+                _subscribe_user_audio()
+
+                # Gera resposta com await correto
+                prompt = (
+                    f"Nathália acabou de te acionar. O contexto é: {context_text}. "
+                    f"Responda de forma objetiva e profissional."
+                )
+                await session.generate_reply(instructions=prompt)
+                logger.info(f"[{name}] ATIVADO via data packet — áudio ON + reply gerado.")
+            except Exception as e:
+                logger.warning(f"[{name}] Erro na ativação assíncrona: {e}")
+
         # C5: Escuta data packets para ativação/desativação coordenada.
-        # Quando ativado: subscreve ao áudio do usuário + gera resposta.
-        # Quando outro é ativado: dessubscreve do áudio (silencia).
+        # Callback síncrono delega lógica async para _handle_activation.
         @room.on("data_received")
         def _on_data(dp: rtc.DataPacket) -> None:
             try:
                 msg = json.loads(dp.data.decode())
                 if msg.get("type") == "activate_agent":
                     if msg.get("agent_id") == spec_id:
-                        # === ATIVAÇÃO: este especialista foi chamado ===
-                        ctx_summary = msg.get("transcript_summary", "")
-                        context_text = msg.get("context", "")
-
-                        # Atualiza instruções com contexto da sessão
-                        if ctx_summary:
-                            new_instructions = (
-                                SPECIALIST_SYSTEM_PROMPTS[spec_id]
-                                + f"\n\n--- CONTEXTO ATUAL DA SESSÃO ---\n{ctx_summary}"
-                            )
-                            asyncio.create_task(
-                                agent.update_instructions(new_instructions)
-                            )
-
-                        # C5: Subscreve ao áudio do usuário
-                        _subscribe_user_audio()
-
-                        # Gera resposta forçada com o contexto da questão
-                        prompt = (
-                            f"Nathália acabou de te acionar. O contexto é: {context_text}. "
-                            f"Responda de forma objetiva e profissional."
-                        )
-                        asyncio.create_task(
-                            session.generate_reply(instructions=prompt)
-                        )
-
-                        logger.info(f"[{name}] ATIVADO via data packet — áudio ON + reply gerado.")
+                        # Delega para handler assíncrono
+                        asyncio.create_task(_handle_activation(msg))
                     else:
                         # === DESATIVAÇÃO: outro especialista foi chamado ===
                         _unsubscribe_user_audio()
@@ -1011,26 +1030,13 @@ async def entrypoint(ctx: JobContext) -> None:
         Se o Blackboard já tem histórico (retomada de sessão interrompida),
         Nathália retoma sem repetir apresentações.
         Caso contrário, executa o fluxo completo de boas-vindas.
+
+        Estratégia de inicialização sequencial:
+        - Cada especialista é conectado UM POR VEZ com delay entre conexões.
+        - Evita rate limiting 429 nos handshakes simultâneos ao Gemini.
+        - Em produção com N usuários, reduz a carga de 6N para picos menores.
         """
         is_resuming = len(blackboard.transcript) > 0
-
-        # Conecta todos os especialistas CONCORRENTEMENTE
-        logger.info("[Apresentação] Conectando todos os especialistas simultaneamente...")
-        connect_tasks = []
-        for spec_id in SPECIALIST_ORDER:
-            task = asyncio.create_task(
-                _start_specialist_in_room(
-                    spec_id=spec_id,
-                    blackboard=blackboard,
-                    ws_url=ws_url,
-                    lk_api_key=lk_api_key,
-                    lk_api_secret=lk_api_secret,
-                    room_name=ctx.room.name,
-                    host_room=ctx.room,
-                    auto_introduce=False,
-                )
-            )
-            connect_tasks.append(task)
 
         # Aguarda Nathália estabilizar e o RealtimeModel conectar ao Gemini
         await asyncio.sleep(2.0)
@@ -1061,8 +1067,23 @@ async def entrypoint(ctx: JobContext) -> None:
             except Exception as e:
                 logger.warning(f"[Host] Erro ao retomar sessão: {e}")
 
-            # Aguarda especialistas reconectarem (sem apresentações)
-            await asyncio.gather(*connect_tasks)
+            # Conecta especialistas SEQUENCIALMENTE com delay (evita 429)
+            logger.info("[Retomada] Conectando especialistas sequencialmente...")
+            for i, sid in enumerate(SPECIALIST_ORDER):
+                if not blackboard.is_active:
+                    break
+                if i > 0:
+                    await asyncio.sleep(3.0)
+                await _start_specialist_in_room(
+                    spec_id=sid,
+                    blackboard=blackboard,
+                    ws_url=ws_url,
+                    lk_api_key=lk_api_key,
+                    lk_api_secret=lk_api_secret,
+                    room_name=ctx.room.name,
+                    host_room=ctx.room,
+                    auto_introduce=False,
+                )
             logger.info("[Host] Retomada concluída. Todos os especialistas reconectados.")
 
         else:
@@ -1088,27 +1109,42 @@ async def entrypoint(ctx: JobContext) -> None:
             except Exception as e:
                 logger.warning(f"[Host] Erro ao gerar reply inicial: {type(e).__name__}: {e}", exc_info=True)
 
-            # Aguarda todos os especialistas conectarem
-            sessions = await asyncio.gather(*connect_tasks)
-            spec_sessions = dict(zip(SPECIALIST_ORDER, sessions))
-
-            # Especialistas se apresentam SEQUENCIALMENTE
-            for spec_id in SPECIALIST_ORDER:
+            # Conecta e apresenta especialistas SEQUENCIALMENTE
+            # Cada um conecta, se apresenta, e só depois o próximo inicia.
+            # Isso evita rate limiting 429 e dá uma experiência natural de mesa redonda.
+            for i, sid in enumerate(SPECIALIST_ORDER):
                 if not blackboard.is_active:
                     logger.info("[Apresentação] Job encerrando, abortando sequência.")
                     return
 
-                session = spec_sessions.get(spec_id)
-                if not session:
+                # Delay entre especialistas (exceto o primeiro)
+                if i > 0:
+                    await asyncio.sleep(3.0)
+
+                spec_name = SPECIALIST_NAMES[sid]
+                logger.info(f"[Apresentação] Conectando {spec_name}...")
+
+                spec_session = await _start_specialist_in_room(
+                    spec_id=sid,
+                    blackboard=blackboard,
+                    ws_url=ws_url,
+                    lk_api_key=lk_api_key,
+                    lk_api_secret=lk_api_secret,
+                    room_name=ctx.room.name,
+                    host_room=ctx.room,
+                    auto_introduce=False,
+                )
+
+                if not spec_session:
+                    logger.warning(f"[Apresentação] {spec_name} falhou ao conectar. Pulando.")
                     continue
 
-                spec_name = SPECIALIST_NAMES[spec_id]
-                logger.info(f"[Apresentação] Iniciando apresentação de {spec_name}...")
-                intro_text = SPECIALIST_INTRODUCTIONS[spec_id]
-
+                # Apresentação imediata após conexão
+                intro_text = SPECIALIST_INTRODUCTIONS[sid]
+                logger.info(f"[Apresentação] {spec_name} se apresentando...")
                 try:
                     await asyncio.wait_for(
-                        session.generate_reply(
+                        spec_session.generate_reply(
                             instructions=(
                                 f"Apresente-se de forma calorosa e natural dizendo: {intro_text} "
                                 f"Máximo 3 frases. Não cumprimente difusamente — seja direto e memorável."
