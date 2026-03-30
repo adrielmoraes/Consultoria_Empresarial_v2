@@ -26,6 +26,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import tempfile
 from dataclasses import dataclass, field
 from typing import Optional
@@ -1002,8 +1003,31 @@ async def entrypoint(ctx: JobContext) -> None:
         else:
             text = str(event)
 
+        text = text.strip()
         if not text:
             return
+
+        # ==========================================================
+        # Filtro de Ruído / Alucinações (DTX fallback)
+        # ==========================================================
+        lower_text = text.lower()
+        if lower_text in ["<noise>", "[noise]", "silence", "noise", "ruído"]:
+            logger.info(f"[Filtro] Ruído explícito capturado e descartado: {text}")
+            return
+            
+        # Bloqueia caracteres não-latinos observados nas alucinações
+        # \u0600-\u06FF (Árabe), \u0E00-\u0E7F (Tailandês), \u0400-\u04FF (Círilico)
+        if re.search(r'[\u0600-\u06FF\u0E00-\u0E7F\u0400-\u04FF]', text):
+            logger.warning(f"[Filtro] Idioma estrangeiro (alucinação) bloqueado: {text}")
+            return
+            
+        # Bloqueia transcrições minúsculas formadas só por consoantes (ex: 'shh', 'ts')
+        if len(text) <= 3 and not re.search(r'[aeiouáéíóúâêôãõ]', lower_text):
+            logger.info(f"[Filtro] Transcrição curta sem vogais bloqueada: {text}")
+            return
+        # ==========================================================
+
+        logger.info(f"[Usuário fala] {text}")
         blackboard.add_message("Usuário", text)
         if not blackboard.user_query:
             blackboard.user_query = text

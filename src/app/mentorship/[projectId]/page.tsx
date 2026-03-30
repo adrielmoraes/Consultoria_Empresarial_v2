@@ -336,6 +336,11 @@ export default function MentorshipRoomPage() {
             noiseSuppression: true,
             autoGainControl: true,
           },
+          publishDefaults: {
+            audio: {
+              dtx: true, // Corte imediato da transmissão de áudio em momentos de silêncio
+            },
+          },
         });
 
         // ── Eventos da sala ──────────────────────────────────────────────────
