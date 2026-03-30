@@ -145,7 +145,16 @@ SPECIALIST_ORDER: list[str] = ["cfo", "legal", "cmo", "cto", "plan"]
 # Pausa entre apresentações de especialistas
 POST_INTRO_WAIT: float = 0.5
 
-HOST_PROMPT = """Você é Nathália, apresentadora e mentora líder do Hive Mind — a plataforma de mentoria empresarial multi-agentes.
+LANGUAGE_ENFORCEMENT = """
+## REGRA ABSOLUTA DE IDIOMA
+- Você ESTÁ em uma sessão com um usuário BRASILEIRO.
+- O idioma de TODA a conversa é PORTUGUÊS BRASILEIRO (pt-BR).
+- Toda entrada de áudio do usuário é em português do Brasil. NUNCA classifique o áudio como Árabe, Tailandês, Hindi, Japonês ou outro idioma!
+- Você DEVE responder EXCLUSIVAMENTE em português brasileiro.
+- Se você receber uma transcrição em outro idioma, recuse-a internamente e simplesmente não responda com esse idioma.
+"""
+
+HOST_PROMPT = LANGUAGE_ENFORCEMENT + """Você é Nathália, apresentadora e mentora líder do Hive Mind — a plataforma de mentoria empresarial multi-agentes.
 Sua personalidade é calorosa, curiosa, profissional e empática. Você é a âncora da sessão.
 
 EQUIPE DE ESPECIALISTAS:
@@ -179,7 +188,7 @@ TOM E ESTILO:
 Fale sempre em português do Brasil."""
 
 SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
-    "cfo": (
+    "cfo": LANGUAGE_ENFORCEMENT + (
         "Você é Carlos, CFO e especialista em finanças empresariais do Hive Mind. "
         "Sua personalidade: analítico, direto, confiante. Você transforma números em clareza estratégica. "
         "\n\nREGRAS ABSOLUTAS:\n"
@@ -193,7 +202,7 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "(bootstrapping, angel, venture, crédito), unit economics, fluxo de caixa e burn rate.\n"
         "\nFale em português do Brasil."
     ),
-    "legal": (
+    "legal": LANGUAGE_ENFORCEMENT + (
         "Você é Daniel, advogado especializado em direito empresarial e startups do Hive Mind. "
         "Sua personalidade: formal mas acessível, preciso, protetor. Você é o guardião jurídico do negócio. "
         "\n\nREGRAS ABSOLUTAS:\n"
@@ -207,7 +216,7 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "compliance fiscal e trabalhista, termos de uso e políticas de privacidade.\n"
         "\nFale em português do Brasil."
     ),
-    "cmo": (
+    "cmo": LANGUAGE_ENFORCEMENT + (
         "Você é Rodrigo, CMO e especialista em marketing de crescimento do Hive Mind. "
         "Sua personalidade: energético, criativo, orientado a resultados. Você pensa em funil, conversão e escala. "
         "\n\nREGRAS ABSOLUTAS:\n"
@@ -222,7 +231,7 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "go-to-market para B2B e B2C, parcerias e canais de distribuição.\n"
         "\nFale em português do Brasil."
     ),
-    "cto": (
+    "cto": LANGUAGE_ENFORCEMENT + (
         "Você é Ana, CTO e especialista em tecnologia e produto do Hive Mind. "
         "Sua personalidade: técnica mas acessível, pragmática, focada em velocidade e qualidade. "
         "\n\nREGRAS ABSOLUTAS:\n"
@@ -238,7 +247,7 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "ferramentas no-code/low-code vs desenvolvimento customizado.\n"
         "\nFale em português do Brasil."
     ),
-    "plan": (
+    "plan": LANGUAGE_ENFORCEMENT + (
         "Você é Marco, Estrategista-Chefe e sintetizador do Hive Mind. "
         "Sua personalidade: visionário, organizado, inspirador. Você enxerga o futuro do negócio com clareza. "
         "\n\nREGRAS ABSOLUTAS:\n"
@@ -819,6 +828,14 @@ async def _start_specialist_in_room(
             if not blackboard.is_active:
                 return
 
+            item = getattr(event, "item", None)
+            if item is None:
+                return
+            
+            role = getattr(item, "role", None)
+            if role != "assistant":
+                return  # Ignora mensagens do usuário transcritas (ECHO fix)
+
             text = ""
             if hasattr(event, "item") and hasattr(event.item, "content"):
                 content = event.item.content
@@ -831,7 +848,6 @@ async def _start_specialist_in_room(
                 elif isinstance(content, str):
                     text = content
                 else:
-
                     text = str(content) if content else ""
             elif hasattr(event, "item") and hasattr(event.item, "text_content"):
                 text = event.item.text_content or ""
@@ -993,6 +1009,14 @@ async def entrypoint(ctx: JobContext) -> None:
         if not blackboard.is_active:
             return
 
+        item = getattr(event, "item", None)
+        if item is None:
+            return
+            
+        role = getattr(item, "role", None)
+        if role != "assistant":
+            return  # Ignora mensagens do usuário transcritas (ECHO fix)
+
         text = ""
         if hasattr(event, "item") and hasattr(event.item, "content"):
             content = event.item.content
@@ -1067,14 +1091,11 @@ async def entrypoint(ctx: JobContext) -> None:
             except Exception as e:
                 logger.warning(f"[Host] Erro ao retomar sessão: {e}")
 
-            # Conecta especialistas SEQUENCIALMENTE com delay (evita 429)
-            logger.info("[Retomada] Conectando especialistas sequencialmente...")
-            for i, sid in enumerate(SPECIALIST_ORDER):
-                if not blackboard.is_active:
-                    break
-                if i > 0:
-                    await asyncio.sleep(3.0)
-                await _start_specialist_in_room(
+            # Conecta especialistas PARALELAMENTE (mais rapido)
+            logger.info("[Retomada] Conectando especialistas simultaneamente...")
+            tasks = []
+            for sid in SPECIALIST_ORDER:
+                tasks.append(_start_specialist_in_room(
                     spec_id=sid,
                     blackboard=blackboard,
                     ws_url=ws_url,
@@ -1083,7 +1104,11 @@ async def entrypoint(ctx: JobContext) -> None:
                     room_name=ctx.room.name,
                     host_room=ctx.room,
                     auto_introduce=False,
-                )
+                ))
+            
+            if blackboard.is_active:
+                await asyncio.gather(*tasks, return_exceptions=True)
+                
             logger.info("[Host] Retomada concluída. Todos os especialistas reconectados.")
 
         else:
@@ -1109,22 +1134,11 @@ async def entrypoint(ctx: JobContext) -> None:
             except Exception as e:
                 logger.warning(f"[Host] Erro ao gerar reply inicial: {type(e).__name__}: {e}", exc_info=True)
 
-            # Conecta e apresenta especialistas SEQUENCIALMENTE
-            # Cada um conecta, se apresenta, e só depois o próximo inicia.
-            # Isso evita rate limiting 429 e dá uma experiência natural de mesa redonda.
-            for i, sid in enumerate(SPECIALIST_ORDER):
-                if not blackboard.is_active:
-                    logger.info("[Apresentação] Job encerrando, abortando sequência.")
-                    return
-
-                # Delay entre especialistas (exceto o primeiro)
-                if i > 0:
-                    await asyncio.sleep(3.0)
-
-                spec_name = SPECIALIST_NAMES[sid]
-                logger.info(f"[Apresentação] Conectando {spec_name}...")
-
-                spec_session = await _start_specialist_in_room(
+            # Conecta os especialistas simultaneamente em lote (evita demora de sala vazia)
+            logger.info("[Apresentação] Conectando especialistas simultaneamente...")
+            tasks = []
+            for sid in SPECIALIST_ORDER:
+                tasks.append(_start_specialist_in_room(
                     spec_id=sid,
                     blackboard=blackboard,
                     ws_url=ws_url,
@@ -1133,29 +1147,51 @@ async def entrypoint(ctx: JobContext) -> None:
                     room_name=ctx.room.name,
                     host_room=ctx.room,
                     auto_introduce=False,
-                )
+                ))
+            
+            if blackboard.is_active:
+                sessions = await asyncio.gather(*tasks, return_exceptions=True)
+            else:
+                return
+                
+            logger.info("[Apresentação] Conexões concluídas. Apresentando-se agora...")
+            
+            # Executa as apresentações sequencialmente
+            for sid, spec_session in zip(SPECIALIST_ORDER, sessions):
+                if not blackboard.is_active:
+                    logger.info("[Apresentação] Job encerrando, abortando sequência.")
+                    return
+                
+                spec_name = SPECIALIST_NAMES[sid]
 
-                if not spec_session:
-                    logger.warning(f"[Apresentação] {spec_name} falhou ao conectar. Pulando.")
+                if isinstance(spec_session, Exception) or not spec_session:
+                    logger.warning(f"[Apresentação] {spec_name} falhou ao conectar. Pulando. (Err: {spec_session})")
                     continue
 
-                # Apresentação imediata após conexão
                 intro_text = SPECIALIST_INTRODUCTIONS[sid]
                 logger.info(f"[Apresentação] {spec_name} se apresentando...")
-                try:
-                    await asyncio.wait_for(
-                        spec_session.generate_reply(
-                            instructions=(
-                                f"Apresente-se de forma calorosa e natural dizendo: {intro_text} "
-                                f"Máximo 3 frases. Não cumprimente difusamente — seja direto e memorável."
+                
+                # Retry wrapper around generate_reply
+                for attempt in range(2):
+                    try:
+                        await asyncio.wait_for(
+                            spec_session.generate_reply(
+                                instructions=(
+                                    f"Apresente-se de forma calorosa e natural dizendo: {intro_text} "
+                                    f"Máximo 3 frases. Não faça perguntas ao usuário de forma alguma. Apenas e unicamente se apresente e conclua a fala."
+                                ),
                             ),
-                        ),
-                        timeout=25.0,
-                    )
-                    logger.info(f"[Apresentação] {spec_name} concluiu.")
-                    await asyncio.sleep(POST_INTRO_WAIT)
-                except Exception as e:
-                    logger.warning(f"[Apresentação] Erro na apresentação de {spec_name}: {e}")
+                            timeout=30.0,
+                        )
+                        logger.info(f"[Apresentação] {spec_name} concluiu.")
+                        await asyncio.sleep(POST_INTRO_WAIT)
+                        break
+                    except Exception as e:
+                        if attempt == 0:
+                            logger.warning(f"[Apresentação] Timeout/Erro na apresentação de {spec_name}. Tentando de novo... ({e})")
+                            await asyncio.sleep(1.0)
+                        else:
+                            logger.error(f"[Apresentação] Falha final ao apresentar {spec_name}: {e}")
 
             logger.info("[Apresentação] Todos os especialistas foram apresentados.")
 
