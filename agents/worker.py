@@ -1015,15 +1015,19 @@ async def entrypoint(ctx: JobContext) -> None:
             logger.info(f"[Filtro] Ruído explícito capturado e descartado: {text}")
             return
             
-        # Bloqueia caracteres não-latinos observados nas alucinações
-        # \u0600-\u06FF (Árabe), \u0E00-\u0E7F (Tailandês), \u0400-\u04FF (Círilico)
-        if re.search(r'[\u0600-\u06FF\u0E00-\u0E7F\u0400-\u04FF]', text):
+        # Bloqueia caracteres não-latinos observados nas alucinações (Árabe, Tailandês, Cirílico, Hindi, Chinês, Japonês, etc)
+        if re.search(r'[\u0600-\u06FF\u0E00-\u0E7F\u0400-\u04FF\u0900-\u097F\u4E00-\u9FFF\u3040-\u309F\u30A0-\u30FF]', text):
             logger.warning(f"[Filtro] Idioma estrangeiro (alucinação) bloqueado: {text}")
             return
             
-        # Bloqueia transcrições minúsculas formadas só por consoantes (ex: 'shh', 'ts')
+        # Bloqueia transcrições minúsculas formadas só por consoantes (ex: 'shh', 'ts') ou com números soltos curtos (ex "6 tane")
         if len(text) <= 3 and not re.search(r'[aeiouáéíóúâêôãõ]', lower_text):
             logger.info(f"[Filtro] Transcrição curta sem vogais bloqueada: {text}")
+            return
+            
+        # Filtro para rejeitar frases bizarras muito curtas com números e letras soltas ("6 tane", "زي ال") não pegas acima
+        if len(text) <= 8 and not re.search(r'[a-zA-Záéíóúâêôãõç]', lower_text):
+            logger.info(f"[Filtro] Transcrição curta sem caracteres latinos válidos bloqueada: {text}")
             return
         # ==========================================================
 
@@ -1311,15 +1315,19 @@ async def entrypoint(ctx: JobContext) -> None:
         blackboard.is_active = False
         logger.info("[Job] Iniciando limpeza de recursos...")
 
+        # C4: Libera a sala do guard global IMEDIATAMENTE.
+        # Isso garante que se o usuário se reconectar instantaneamente após uma queda, a sala estará livre.
+        _active_rooms.discard(ctx.room.name)
+        logger.info(f"[Job] Sala '{ctx.room.name}' liberada do guard. Aguardando encerramento dos especialistas...")
+
+        # Desconecta especialistas com timeout máximo para evitar travamentos
         for spec_room in blackboard.specialist_rooms:
             try:
-                await spec_room.disconnect()
+                await asyncio.wait_for(spec_room.disconnect(), timeout=2.0)
             except Exception as e:
-                logger.warning(f"[Job] Erro ao desconectar room de especialista: {e}")
+                logger.warning(f"[Job] Erro/Timeout ao desconectar room de especialista: {e}")
 
-        # C4: Libera a sala do guard global para permitir novos jobs futuros
-        _active_rooms.discard(ctx.room.name)
-        logger.info(f"[Job] Sala '{ctx.room.name}' liberada do guard. Encerrado.")
+        logger.info(f"[Job] Encerrado com sucesso para a sala '{ctx.room.name}'.")
 
 # ============================================================
 async def on_job_request(req) -> None:
