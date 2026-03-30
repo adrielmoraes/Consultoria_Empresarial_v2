@@ -937,12 +937,25 @@ async def entrypoint(ctx: JobContext) -> None:
 
     logger.info(f"=== ENTRYPOINT MENTORIA AI v5 – sala: {ctx.room.name} ===")
 
-    # Conecta o worker ao room com auto-subscribe de áudio.
-    # IMPORTANTE: O RealtimeModel do Gemini exige que o AgentSession
-    # gerencie a subscrição de áudio automaticamente. Usar SUBSCRIBE_NONE
-    # impede que o pipeline interno receba o áudio do microfone do usuário.
-    await ctx.connect(auto_subscribe=AutoSubscribe.SUBSCRIBE_ALL)
-    logger.info(f"Worker conectado ao room: {ctx.room.name}")
+    # Conecta o worker ao room (HostAgent/Nathália) sem auto-subscribe para evitar
+    # escutar a voz dos outros agentes e gerar confusão e interferência (mandarim/árabe).
+    await ctx.connect(auto_subscribe=AutoSubscribe.SUBSCRIBE_NONE)
+    logger.info(f"Worker conectado ao room: {ctx.room.name} [Host SUBSCRIBE_NONE]")
+
+    # Garante a subscrição manual APENAS no áudio do usuário principal
+    for p in ctx.room.remote_participants.values():
+        if p.identity.startswith("user-"):
+            for pub in p.track_publications.values():
+                if pub.kind == rtc.TrackKind.KIND_AUDIO:
+                    pub.set_subscribed(True)
+                    logger.info(f"[Host] Áudio de {p.identity} subscrito (init).")
+
+    # Monitora novas tracks publicadas para caso o usuário entre depois do agente
+    @ctx.room.on("track_published")
+    def on_track_published(pub: rtc.RemoteTrackPublication, participant: rtc.RemoteParticipant):
+        if participant.identity.startswith("user-") and pub.kind == rtc.TrackKind.KIND_AUDIO:
+            pub.set_subscribed(True)
+            logger.info(f"[Host] Áudio de {participant.identity} subscrito dinamicamente.")
 
     # Blackboard compartilhado
     blackboard = Blackboard(project_name=ctx.room.name)
