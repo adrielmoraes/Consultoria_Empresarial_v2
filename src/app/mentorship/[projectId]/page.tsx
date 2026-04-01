@@ -331,14 +331,18 @@ export default function MentorshipRoomPage() {
           reconnectPolicy: new DefaultReconnectPolicy(
             [500, 1000, 2000, 5000, 10000, 30000]
           ),
+          // Web Audio API para melhor cancelamento de eco e processamento de áudio
+          webAudioMix: true,
           audioCaptureDefaults: {
             echoCancellation: true,
             noiseSuppression: true,
             autoGainControl: true,
+            channelCount: 1, // Mono — melhor qualidade para captura de voz
           },
           publishDefaults: {
             audio: {
-              dtx: true, // Corte imediato da transmissão de áudio em momentos de silêncio
+              dtx: true, // Corte de transmissão em silêncio
+              red: true, // Codificação redundante contra perda de pacotes
             },
           },
         });
@@ -631,7 +635,7 @@ export default function MentorshipRoomPage() {
         CORREÇÃO P1 / P6: container oculto para elementos de áudio.
         Fica dentro da árvore React → cleanup garantido no unmount.
       */}
-      <div ref={audioContainerRef} className="hidden" aria-hidden="true" />
+      <div ref={audioContainerRef} style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }} aria-hidden="true" />
 
       {/* Top Bar */}
       <div className="flex items-center justify-between px-4 py-3 bg-gray-900/80 backdrop-blur-sm border-b border-white/5 shrink-0">

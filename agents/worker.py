@@ -144,7 +144,7 @@ SPECIALIST_INTRODUCTIONS: dict[str, str] = {
 SPECIALIST_ORDER: list[str] = ["cfo", "legal", "cmo", "cto", "plan"]
 
 # Pausa entre apresentações de especialistas
-POST_INTRO_WAIT: float = 0.5
+POST_INTRO_WAIT: float = 1.0
 
 LANGUAGE_ENFORCEMENT = """
 ## REGRA ABSOLUTA DE IDIOMA
@@ -179,6 +179,9 @@ REGRAS DE ORQUESTRAÇÃO:
 11. Quando o usuário pedir encerramento, resumo ou plano → use gerar_plano_execucao.
 12. Se precisar cobrir múltiplos temas em sequência, acione cada especialista separadamente.
 13. RETOMADA: Se você perceber que há histórico de conversa anterior, comece dizendo que está retomando.
+14. TURNO DE FALA: Quando você acionar um especialista via função, PARE DE FALAR imediatamente. NÃO adicione comentários após a chamada.
+15. NUNCA fale ao mesmo tempo que um especialista. Dê espaço total para ele responder.
+16. Após o especialista terminar, retome com 1-2 frases de transição antes de continuar.
 
 TOM E ESTILO:
 - Português do Brasil, informal mas profissional.
@@ -902,21 +905,36 @@ async def _start_specialist_in_room(
                 )
                 await session.generate_reply(instructions=prompt)
                 logger.info(f"[{name}] ATIVADO via data packet — áudio ON + reply gerado.")
+            except asyncio.CancelledError:
+                logger.info(f"[{name}] Geração INTERROMPIDA (turno de outro agente).")
+                _unsubscribe_user_audio()
             except Exception as e:
                 logger.warning(f"[{name}] Erro na ativação assíncrona: {e}")
 
         # C5: Escuta data packets para ativação/desativação coordenada.
         # Callback síncrono delega lógica async para _handle_activation.
+        # Rastreia a task de geração para cancelar ao desativar (turn-taking).
+        _generation_task: Optional[asyncio.Task] = None
+
         @room.on("data_received")
         def _on_data(dp: rtc.DataPacket) -> None:
+            nonlocal _generation_task
             try:
                 msg = json.loads(dp.data.decode())
                 if msg.get("type") == "activate_agent":
                     if msg.get("agent_id") == spec_id:
-                        # Delega para handler assíncrono
-                        asyncio.create_task(_handle_activation(msg))
+                        # Cancela geração anterior deste agente, se houver
+                        if _generation_task and not _generation_task.done():
+                            _generation_task.cancel()
+                        # Delega para handler assíncrono e rastreia a task
+                        _generation_task = asyncio.create_task(_handle_activation(msg))
                     else:
                         # === DESATIVAÇÃO: outro especialista foi chamado ===
+                        # Cancela geração em andamento para parar de falar
+                        if _generation_task and not _generation_task.done():
+                            _generation_task.cancel()
+                            logger.info(f"[{name}] Geração CANCELADA (turno de {msg.get('agent_id')}).")
+                        _generation_task = None
                         _unsubscribe_user_audio()
                         logger.debug(f"[{name}] DESATIVADO (ativo agora: {msg.get('agent_id')}).")
             except Exception as e:
@@ -1154,6 +1172,8 @@ async def entrypoint(ctx: JobContext) -> None:
 
         else:
             # ── MODO INICIAL ───────────────────────────────────────────
+            # Fluxo: Nathália apresenta (sem perguntas) → 5s depois especialistas
+            # começam a conectar → apresentações sequenciais → pergunta inicial.
             host_greeting = (
                 "Olá! Seja muito bem-vindo ao Hive Mind! "
                 "Sou a Nathália, sua apresentadora e mentora líder desta sessão. "
@@ -1162,11 +1182,39 @@ async def entrypoint(ctx: JobContext) -> None:
                 "Ana em tecnologia e Marco como estrategista-chefe. "
                 "Eles vão se apresentar um a um agora. Fique à vontade!"
             )
-            logger.info("[Host] Nathália enviando apresentação inicial...")
+
+            # Conecta especialistas 5s após Nathália INICIAR a fala (em paralelo)
+            async def _connect_specialists_delayed():
+                await asyncio.sleep(5.0)
+                if not blackboard.is_active:
+                    return []
+                logger.info("[Apresentação] Conectando especialistas (5s após início da fala)...")
+                tasks = []
+                for sid in SPECIALIST_ORDER:
+                    tasks.append(_start_specialist_in_room(
+                        spec_id=sid,
+                        blackboard=blackboard,
+                        ws_url=ws_url,
+                        lk_api_key=lk_api_key,
+                        lk_api_secret=lk_api_secret,
+                        room_name=ctx.room.name,
+                        host_room=ctx.room,
+                        auto_introduce=False,
+                    ))
+                return await asyncio.gather(*tasks, return_exceptions=True)
+
+            # Dispara Nathália falando E conexão dos especialistas concorrentemente
+            logger.info("[Host] Nathália enviando apresentação inicial (sem perguntas)...")
+            connect_task = asyncio.create_task(_connect_specialists_delayed())
+
             try:
                 await asyncio.wait_for(
                     host_session.generate_reply(
-                        instructions=f"Por favor, diga a seguinte apresentação de forma calorosa e natural: {host_greeting}",
+                        instructions=(
+                            f"Apresente-se de forma calorosa e natural dizendo: {host_greeting} "
+                            f"NÃO faça NENHUMA pergunta. Apenas apresente-se e anuncie o time. "
+                            f"Encerre sua fala após a apresentação."
+                        ),
                     ),
                     timeout=30.0,
                 )
@@ -1175,34 +1223,22 @@ async def entrypoint(ctx: JobContext) -> None:
             except Exception as e:
                 logger.warning(f"[Host] Erro ao gerar reply inicial: {type(e).__name__}: {e}", exc_info=True)
 
-            # Conecta os especialistas simultaneamente em lote (evita demora de sala vazia)
-            logger.info("[Apresentação] Conectando especialistas simultaneamente...")
-            tasks = []
-            for sid in SPECIALIST_ORDER:
-                tasks.append(_start_specialist_in_room(
-                    spec_id=sid,
-                    blackboard=blackboard,
-                    ws_url=ws_url,
-                    lk_api_key=lk_api_key,
-                    lk_api_secret=lk_api_secret,
-                    room_name=ctx.room.name,
-                    host_room=ctx.room,
-                    auto_introduce=False,
-                ))
-            
-            if blackboard.is_active:
-                sessions = await asyncio.gather(*tasks, return_exceptions=True)
-            else:
+            # Aguarda especialistas terminarem de conectar
+            if not blackboard.is_active:
+                connect_task.cancel()
                 return
-                
+            sessions = await connect_task
+            if not blackboard.is_active:
+                return
+
             logger.info("[Apresentação] Conexões concluídas. Apresentando-se agora...")
-            
-            # Executa as apresentações sequencialmente
+
+            # Executa as apresentações sequencialmente — um por vez
             for sid, spec_session in zip(SPECIALIST_ORDER, sessions):
                 if not blackboard.is_active:
                     logger.info("[Apresentação] Job encerrando, abortando sequência.")
                     return
-                
+
                 spec_name = SPECIALIST_NAMES[sid]
 
                 if isinstance(spec_session, Exception) or not spec_session:
@@ -1211,7 +1247,7 @@ async def entrypoint(ctx: JobContext) -> None:
 
                 intro_text = SPECIALIST_INTRODUCTIONS[sid]
                 logger.info(f"[Apresentação] {spec_name} se apresentando...")
-                
+
                 # Retry wrapper around generate_reply
                 for attempt in range(2):
                     try:
@@ -1219,7 +1255,8 @@ async def entrypoint(ctx: JobContext) -> None:
                             spec_session.generate_reply(
                                 instructions=(
                                     f"Apresente-se de forma calorosa e natural dizendo: {intro_text} "
-                                    f"Máximo 3 frases. Não faça perguntas ao usuário de forma alguma. Apenas e unicamente se apresente e conclua a fala."
+                                    f"Máximo 3 frases. Não faça perguntas ao usuário de forma alguma. "
+                                    f"Apenas e unicamente se apresente e conclua a fala."
                                 ),
                             ),
                             timeout=30.0,
@@ -1239,7 +1276,7 @@ async def entrypoint(ctx: JobContext) -> None:
             if not blackboard.is_active:
                 return
 
-            # Nathália fecha as apresentações e convida o usuário a falar
+            # SOMENTE AGORA Nathália faz a primeira pergunta ao usuário
             if blackboard.user_name:
                 closing = (
                     f"Pronto, {blackboard.user_name}! Toda a nossa equipe já se apresentou. "
@@ -1253,7 +1290,7 @@ async def entrypoint(ctx: JobContext) -> None:
                     "qual é o seu projeto ou negócio e o que você quer resolver hoje?"
                 )
 
-            logger.info("[Host] Nathália fazendo pergunta inicial...")
+            logger.info("[Host] Nathália fazendo pergunta inicial (pós-apresentações)...")
             try:
                 await asyncio.wait_for(
                     host_session.generate_reply(
