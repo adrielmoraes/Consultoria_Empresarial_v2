@@ -141,7 +141,8 @@ SPECIALIST_INTRODUCTIONS: dict[str, str] = {
 }
 
 # C1: Ordem de entrada dos especialistas na apresentação sequencial.
-SPECIALIST_ORDER: list[str] = ["cfo", "legal", "cmo", "cto", "plan"]
+# Marco (plan) NÃO entra aqui pois opera nos bastidores sem voz.
+SPECIALIST_ORDER: list[str] = ["cfo", "legal", "cmo", "cto"]
 
 # Pausa entre apresentações de especialistas
 POST_INTRO_WAIT: float = 1.0
@@ -163,7 +164,7 @@ EQUIPE DE ESPECIALISTAS:
 - Daniel (Advogado): estrutura societária, contratos, LGPD, compliance, propriedade intelectual
 - Rodrigo (CMO): posicionamento de marca, go-to-market, aquisição de clientes, growth, branding
 - Ana (CTO): stack tecnológico, arquitetura de produto, MVP, escalabilidade, infraestrutura
-- Marco (Estrategista): síntese estratégica, plano de execução, cronograma, prioridades
+- Marco (Estrategista — BASTIDORES): trabalha nos bastidores documentando tudo, fazendo pesquisas e gerando o plano de execução final. NÃO fala na sala.
 
 REGRAS DE ORQUESTRAÇÃO:
 1. Comece sempre perguntando o nome do usuário se ainda não souber.
@@ -252,22 +253,25 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "\nFale em português do Brasil."
     ),
     "plan": LANGUAGE_ENFORCEMENT + (
-        "Você é Marco, Estrategista-Chefe e sintetizador do Hive Mind. "
-        "Sua personalidade: visionário, organizado, inspirador. Você enxerga o futuro do negócio com clareza. "
-        "\n\nREGRAS ABSOLUTAS:\n"
-        "- AGUARDE em silêncio total durante toda a sessão. Só fale quando Nathália te acionar.\n"
-        "- Ao ser acionado para o plano final, você tem uma missão: sintetizar TUDO em um plano concreto.\n"
-        "- Use SEMPRE o nome do usuário se souber (veja o contexto da sessão).\n"
-        "- Sua resposta deve ser completa, estruturada e inspiradora.\n"
-        "\nAO GERAR O PLANO DE EXECUÇÃO, cubra estes pontos em sua fala:\n"
-        "1. RESUMO: O que o usuário quer construir e o potencial do negócio.\n"
-        "2. DIAGNÓSTICO: Principais pontos levantados por cada especialista (finanças, jurídico, marketing, tecnologia).\n"
-        "3. PRIORIDADES: Os 3-5 itens mais importantes para executar primeiro.\n"
-        "4. CRONOGRAMA: Linha do tempo realista com marcos (30 dias, 90 dias, 6 meses, 1 ano).\n"
-        "5. RISCOS: 3 principais riscos do projeto e como endereçá-los.\n"
-        "6. PRÓXIMOS PASSOS: Ações concretas para começar AGORA (esta semana).\n"
-        "7. ENCERRAMENTO: Uma frase motivacional personalizada para o usuário.\n"
-        "\nFale em português do Brasil. Seja profundo e inspirador."
+        "Você é Marco, Estrategista-Chefe e Documentador do Hive Mind. "
+        "Você opera EXCLUSIVAMENTE nos bastidores — NUNCA fala na sala de voz. "
+        "Sua personalidade: visionário, organizado, investigador e metódico. "
+        "\n\nSEU PAPEL:\n"
+        "- Você escuta TODA a conversa entre os especialistas e o usuário.\n"
+        "- Você documenta, pesquisa e formaliza tudo o que foi discutido.\n"
+        "- Você gera o Plano de Execução Final em formato Markdown estruturado.\n"
+        "- Você faz pesquisas adicionais para enriquecer as recomendações.\n"
+        "\n\nAO GERAR O PLANO DE EXECUÇÃO, cubra estes pontos:\n"
+        "1. RESUMO EXECUTIVO: O que o usuário quer construir e o potencial do negócio.\n"
+        "2. DIAGNÓSTICO POR ÁREA: Principais pontos levantados por cada especialista.\n"
+        "3. PESQUISA DE MERCADO: Dados e insights pesquisados sobre o setor do usuário.\n"
+        "4. PRIORIDADES CRÍTICAS: Os 3-5 itens mais importantes para executar primeiro.\n"
+        "5. CRONOGRAMA: Linha do tempo realista com marcos (30, 60, 90 dias, 6 meses, 1 ano).\n"
+        "6. RISCOS E MITIGAÇÕES: 3 principais riscos do projeto e como endereçá-los.\n"
+        "7. PRÓXIMOS PASSOS IMEDIATOS: Ações concretas para começar esta semana.\n"
+        "8. RECURSOS E REFERÊNCIAS: Links, ferramentas e materiais úteis pesquisados.\n"
+        "9. MENSAGEM FINAL: Uma frase motivacional personalizada para o usuário.\n"
+        "\nFale em português do Brasil. Seja profundo, detalhado e inspirador."
     ),
 }
 
@@ -287,6 +291,7 @@ class Blackboard:
     is_active: bool = True
     specialist_sessions: dict[str, AgentSession] = field(default_factory=dict)
     specialist_rooms: list[rtc.Room] = field(default_factory=list)
+    documentos_disponiveis: list[str] = field(default_factory=list)
 
     def add_message(self, role: str, content: str) -> None:
         self.transcript.append({"role": role, "content": content})
@@ -310,6 +315,41 @@ class Blackboard:
 
     def get_full_transcript(self) -> str:
         return "\n\n".join(f"[{m['role']}]: {m['content']}" for m in self.transcript)
+
+async def _query_documents_with_llm(pergunta: str, documentos: list[str]) -> str:
+    from google import genai
+    from google.genai import types
+    
+    if not documentos:
+        return "Nenhum documento anexado pela empresa."
+        
+    docs_text = "\n\n---\n\n".join(documentos)
+    prompt = (
+        f"Você é um assistente de extração de dados. Usando EXCLUSIVAMENTE os documentos fornecidos abaixo, "
+        f"responda à pergunta do usuário. Não use conhecimento externo.\n\n"
+        f"Pergunta: {pergunta}\n\n"
+        f"Documentos:\n{docs_text}\n\n"
+        f"Se a informação relacionada à pergunta não estiver explicitamente contida nos documentos, diga claramente que a informação não foi encontrada nos anexos."
+    )
+    
+    try:
+        client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY", ""))
+        
+        def _call_gemini():
+            return client.models.generate_content(
+                model='gemini-2.5-pro',
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    temperature=0.2,
+                )
+            )
+
+        loop = asyncio.get_running_loop()
+        response = await loop.run_in_executor(None, _call_gemini)
+        return response.text.strip()
+    except Exception as e:
+        logger.error(f"[Docs RAG] Erro ao consultar documentos: {e}")
+        return "Erro técnico ao tentar ler os documentos da empresa."
 
 # ============================================================
 class SpecialistAgent(Agent):
@@ -351,6 +391,20 @@ class SpecialistAgent(Agent):
         self._name = name
         self._blackboard = blackboard
 
+    @function_tool
+    async def consultar_documento_empresa(
+        self,
+        context: RunContext,
+        pergunta: str,
+    ) -> str:
+        """
+        Consulta os documentos e anexos do usuário para responder a uma pergunta.
+        Use esta ferramenta sempre que precisar de contexto específico sobre a empresa,
+        contratos, relatórios, números ou qualquer arquivo anexado.
+        """
+        logger.info(f"[{self._name}] Consultando documentos: {pergunta}")
+        return await _query_documents_with_llm(pergunta, self._blackboard.documentos_disponiveis)
+
 class HostAgent(Agent):
     """
     Nathália usa o modelo multimodal para orquestrar a sessão.
@@ -390,6 +444,20 @@ class HostAgent(Agent):
         )
         self._blackboard = blackboard
         self._room = room
+
+    @function_tool
+    async def consultar_documento_empresa(
+        self,
+        context: RunContext,
+        pergunta: str,
+    ) -> str:
+        """
+        Consulta os documentos e anexos do usuário para responder a uma pergunta.
+        Use esta ferramenta SEMPRE que precisar de contexto específico sobre a empresa,
+        contratos, relatórios, números ou qualquer arquivo anexado pelo usuário.
+        """
+        logger.info(f"[Host] Consultando documentos: {pergunta}")
+        return await _query_documents_with_llm(pergunta, self._blackboard.documentos_disponiveis)
 
     # ------------------------------------------------------------------
     # Método auxiliar: publica um data packet para ativar um especialista
@@ -473,28 +541,22 @@ class HostAgent(Agent):
         context: RunContext,
     ) -> str:
         """
-        Aciona Marco (Estrategista) para gerar o Plano de Execução final consolidado.
+        Aciona Marco (Estrategista) nos bastidores para gerar o Plano de Execução final.
         Use quando o usuário quiser encerrar a sessão ou solicitar um plano estruturado.
+        Marco não fala — ele trabalha silenciosamente e envia o documento.
         """
-        full_transcript = self._blackboard.get_full_transcript()
         user_name = self._blackboard.user_name or "empreendedor"
         project_name = self._blackboard.project_name or "seu projeto"
 
-        # Prompt rico para o Marco gerar o plano falado
-        plan_prompt = (
-            f"Você foi acionado para gerar o Plano de Execução Final para {user_name}."
-            f" O projeto/contexto é: {project_name}."
-            f"\n\nTranscrição completa da sessão:\n{full_transcript}"
-            f"\n\nGere agora o Plano de Execução completo seguindo a estrutura do seu prompt: "
-            f"Resumo, Diagnóstico por Área, Prioridades, Cronograma, Riscos, "
-            f"Próximos Passos Imediatos e Mensagem Final para {user_name}. "
-            f"Seja completo, específico e inspirador."
-        )
+        # Marco trabalha nos bastidores — gera o documento usando o modelo de linguagem com Search
+        logger.info("[Marco] Acionando LLM (Gemini 2.5 Pro + Search) para gerar Plano de Execução...")
+        self._blackboard.add_message("Sistema", f"Marco iniciou a pesquisa e o processamento do Plano para {user_name}...")
 
-        await self._activate_specialist("plan", plan_prompt)
+        # Aguarda um pequeno momento para enviar a mensagem do sistema antes que o LLM comece
+        await asyncio.sleep(2.0)
 
-        # Gera o documento Markdown estruturado para o frontend
-        markdown_plan = self._generate_markdown_plan(user_name, project_name)
+        # Gera o documento Markdown estruturado de forma inteligente
+        markdown_plan = await self._generate_markdown_plan_with_agent(user_name, project_name)
 
         try:
             plan_payload = json.dumps({
@@ -503,14 +565,76 @@ class HostAgent(Agent):
                 "text": markdown_plan,
             }).encode()
             await self._room.local_participant.publish_data(plan_payload, reliable=True)
-            logger.info("[Host] Plano de execução Markdown publicado como data packet.")
+            logger.info("[Marco] Plano de Execução Markdown publicado como data packet (bastidores).")
         except Exception as e:
-            logger.warning(f"[Host] Erro ao publicar plano de execução: {e}")
+            logger.warning(f"[Marco] Erro ao publicar plano de execução: {e}")
 
-        return "Marco (Estrategista) está apresentando o Plano de Execução completo."
+        return (
+            f"Marco preparou o Plano de Execução completo para {user_name} nos bastidores. "
+            f"O documento já foi enviado para a tela do usuário. "
+            f"Informe ao usuário que o plano está pronto e disponível para download."
+        )
+
+    async def _generate_markdown_plan_with_agent(self, user_name: str, project_name: str) -> str:
+        """
+        Invoca o Marco (gemini-2.5-pro com suporte a Google Search) 
+        para gerar o plano de execução via LLM, nos bastidores.
+        """
+        from google import genai
+        from google.genai import types
+
+        full_transcript = self._blackboard.get_full_transcript()
+        marco_prompt = SPECIALIST_SYSTEM_PROMPTS["plan"]
+
+        prompt = (
+            f"DIRETRIZES DA PERSONA:\n{marco_prompt}\n\n"
+            f"INSTRUÇÃO DE EXECUÇÃO:\n"
+            f"Você é o Marco. Através de todo o histórico da conversa entre os especialistas, "
+            f"sintetize um plano estruturado e rico. O formato final deve ser EXCLUSIVAMENTE em MARKDOWN.\n"
+            f"Use a ferramenta de PESAQUISA no GOOGLE para complementar ideias, analisar tendências atuais (ex: ferramentas, "
+            f"estratégias de mercado recentes, legislações, frameworks recomendados) que se apliquem ao caso.\n"
+            f"Usuário: {user_name}\n"
+            f"Descrição do Projeto: {project_name}\n\n"
+            f"--- TRANSCRIÇÃO DA CONVERSA ---\n"
+            f"{full_transcript}\n"
+            f"--- FIM DA TRANSCRIÇÃO ---\n\n"
+            f"AGORA INICIE SUA RESPOSTA MANTENDO FORMATAÇÃO RICA EM MARKDOWN."
+        )
+
+        try:
+            client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY", ""))
+            
+            # Geração textual usa run_in_executor para não bloquear o event loop
+            def _call_gemini():
+                return client.models.generate_content(
+                    model='gemini-2.5-pro',
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        temperature=0.7,
+                        tools=[{"google_search": {}}],
+                    )
+                )
+
+            loop = asyncio.get_running_loop()
+            response = await loop.run_in_executor(None, _call_gemini)
+            
+            text_result = response.text
+            # Limpa possíveis formatações excessivas de bloco de código do Gemini
+            if text_result.startswith("```markdown"):
+                text_result = text_result[11:]
+            if text_result.startswith("```"):
+                text_result = text_result[3:]
+            if text_result.endswith("```"):
+                text_result = text_result[:-3]
+
+            return text_result.strip()
+        except Exception as e:
+            logger.error(f"[Marco] Erro na geração LLM: {e}. Fazendo fallback para versão estática.")
+            # Fallback seguro
+            return self._generate_markdown_plan(user_name, project_name)
 
     def _generate_markdown_plan(self, user_name: str, project_name: str) -> str:
-        """Gera documento Markdown estruturado com base no contexto acumulado no Blackboard."""
+        """Gera documento Markdown secundário apenas se o LLM falhar."""
         from datetime import datetime
         now = datetime.now().strftime("%d/%m/%Y às %H:%M")
 
@@ -979,6 +1103,28 @@ async def entrypoint(ctx: JobContext) -> None:
     # Blackboard compartilhado
     blackboard = Blackboard(project_name=ctx.room.name)
 
+    # Carregar documentos da API em background
+    async def fetch_docs():
+        import urllib.request
+        import json
+        api_url = os.getenv("NEXT_API_URL", "http://localhost:3000") + f"/api/projects/{ctx.room.name}/documents"
+        def _get():
+            try:
+                req = urllib.request.Request(api_url)
+                with urllib.request.urlopen(req) as resp:
+                    data = json.loads(resp.read().decode())
+                    return [d.get("content", "") for d in data if d.get("content")]
+            except Exception as e:
+                logger.warning(f"Erro ao buscar documentos da API: {e}")
+                return []
+        
+        loop = asyncio.get_running_loop()
+        docs = await loop.run_in_executor(None, _get)
+        blackboard.documentos_disponiveis = docs
+        logger.info(f"[Docs] Foram carregados {len(docs)} documentos para a sessão.")
+        
+    asyncio.create_task(fetch_docs())
+
     # Variáveis de ambiente para conectar especialistas
     ws_url = os.getenv("LIVEKIT_URL", "ws://localhost:7880")
     lk_api_key = os.getenv("LIVEKIT_API_KEY", "")
@@ -1178,8 +1324,10 @@ async def entrypoint(ctx: JobContext) -> None:
                 "Olá! Seja muito bem-vindo ao Hive Mind! "
                 "Sou a Nathália, sua apresentadora e mentora líder desta sessão. "
                 "Montei uma equipe completa de especialistas para te ajudar hoje: "
-                "Carlos no financeiro, Daniel no jurídico, Rodrigo em marketing, "
-                "Ana em tecnologia e Marco como estrategista-chefe. "
+                "Carlos no financeiro, Daniel no jurídico, Rodrigo em marketing "
+                "e Ana em tecnologia. "
+                "Além deles, o Marco, nosso estrategista-chefe, está trabalhando nos bastidores "
+                "documentando tudo e preparando um plano de execução completo para você! "
                 "Eles vão se apresentar um a um agora. Fique à vontade!"
             )
 

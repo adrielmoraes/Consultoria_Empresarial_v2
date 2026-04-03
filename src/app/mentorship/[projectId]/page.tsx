@@ -16,6 +16,10 @@ import {
   WifiOff,
   FileText,
   Star,
+  Paperclip,
+  UploadCloud,
+  CheckCircle2,
+  AlertCircle
 } from "lucide-react";
 import {
   useState,
@@ -100,13 +104,7 @@ const AGENTS_MAP: Record<string, Omit<AgentInfo, "speaking">> = {
     icon: Code,
     gradient: "from-blue-500 to-cyan-600",
   },
-  plan: {
-    id: "plan",
-    name: "Marco",
-    role: "Estrategista",
-    icon: Star,
-    gradient: "from-violet-500 to-fuchsia-600",
-  },
+  // Marco (Estrategista) opera nos bastidores — não aparece na tela principal
 };
 
 const SPEAKER_COLORS: Record<string, string> = {
@@ -178,6 +176,12 @@ export default function MentorshipRoomPage() {
   const [connectingTooLong, setConnectingTooLong] = useState(false);
   const [connectingTimedOut, setConnectingTimedOut] = useState(false);
 
+  // F5: Document / Knowledge Upload
+  const [showUpload, setShowUpload] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [docs, setDocs] = useState<{id: string, fileName: string, createdAt: string}[]>([]);
+
   // F5: Status individual dos agentes conectados
   const [connectedAgents, setConnectedAgents] = useState<Set<string>>(new Set());
 
@@ -206,6 +210,18 @@ export default function MentorshipRoomPage() {
       router.replace("/login");
     }
   }, [authStatus]);
+
+  // Carregar lista inicial de documentos
+  useEffect(() => {
+    if (projectId) {
+      fetch(`/api/projects/${projectId}/documents`)
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) setDocs(data);
+        })
+        .catch(err => console.error("Erro ao carregar documentos:", err));
+    }
+  }, [projectId]);
 
   // Timer (executa apenas uma vez na montagem)
   useEffect(() => {
@@ -243,6 +259,40 @@ export default function MentorshipRoomPage() {
       transcriptEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [transcript.length]);
+
+  const handleUploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await safeFetch(`/api/projects/${projectId}/documents`, {
+        method: "POST",
+        body: formData,
+      });
+      const result = await res.json();
+      if (result.success && result.doc) {
+         setDocs(prev => [result.doc, ...prev]);
+         // Mensagem visual no chat
+         addTranscriptMessage("Sistema", `O documento "${file.name}" foi disponibilizado para o Marco.`);
+         // Notificar via datachannel se estivermos conectados para o Python Worker atualizar contexto sob demanda (opcional se não quiser enviar o pacote via python)
+         if (roomRef.current && connectionState === "connected") {
+            const enc = new TextEncoder();
+            const packet = JSON.stringify({ type: "DOCUMENT_UPLOADED", fileName: file.name });
+            roomRef.current.localParticipant.publishData(enc.encode(packet), { reliable: true });
+         }
+      }
+    } catch (error) {
+       console.error("Upload error", error);
+       alert("Erro ao enviar arquivo.");
+    } finally {
+       setIsUploading(false);
+       if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const addTranscriptMessage = useCallback((speaker: string, text: string) => {
     setTranscript((prev) => {
@@ -664,6 +714,15 @@ export default function MentorshipRoomPage() {
             </span>
           </div>
 
+          <button
+            onClick={() => setShowUpload(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors bg-white/5 text-gray-400 hover:text-white"
+            title="Anexos do Negócio"
+          >
+            <Paperclip className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Anexos</span>
+          </button>
+
           {executionPlan && (
             <button
               onClick={() => setShowPlan((v) => !v)}
@@ -911,6 +970,64 @@ export default function MentorshipRoomPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Modal de Upload de Anexos */}
+      {showUpload && (
+        <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-gray-950 border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl"
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Paperclip className="w-5 h-5 text-emerald-400" />
+                Anexos do Negócio
+              </h3>
+              <button onClick={() => setShowUpload(false)} className="text-gray-400 hover:text-white transition-colors">
+                ✕
+              </button>
+            </div>
+            
+            <p className="text-sm text-gray-400 mb-6 font-mono leading-relaxed">
+              O <span className="text-violet-400 font-semibold">Marco</span> pode analisar PDFs e documentos extraídos com a IA para ajudar os especialistas.
+            </p>
+
+            {docs.length > 0 && (
+              <div className="mb-6 space-y-2">
+                <p className="text-xs font-semibold text-gray-500 uppercase">Arquivos na Base ({docs.length})</p>
+                {docs.map(doc => (
+                  <div key={doc.id} className="flex items-center gap-2 bg-white/5 py-2 px-3 rounded text-sm text-gray-300">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <span className="truncate">{doc.fileName}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="w-full relative py-6 border-2 border-dashed border-white/20 rounded-xl flex flex-col items-center justify-center gap-3 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all text-gray-400 hover:text-emerald-400 disabled:opacity-50"
+            >
+              {isUploading ? (
+                <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+              ) : (
+                <UploadCloud className="w-8 h-8" />
+              )}
+              <span className="text-sm font-medium">{isUploading ? "Processando e validando segurança..." : "Clique para selecionar arquivos"}</span>
+              <span className="text-[10px] text-gray-500">Apenas formatos puros (TXT, CSV, PDF simples, MD) (Máx. 50MB)</span>
+            </button>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              onChange={handleUploadFile}
+              accept=".pdf,.txt,.csv,.md"
+            />
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

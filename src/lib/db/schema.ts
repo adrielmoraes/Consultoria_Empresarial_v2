@@ -57,6 +57,15 @@ export const projects = pgTable("projects", {
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
 
+// ========== PROJECT DOCUMENTS ==========
+export const projectDocuments = pgTable("project_documents", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+  fileName: text("file_name").notNull(),
+  content: text("content").notNull(), // extracted text
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+});
+
 // ========== MENTORING SESSIONS ==========
 export const mentoringSessions = pgTable("mentoring_sessions", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -90,6 +99,7 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
     references: [users.id],
   }),
   mentoringSessions: many(mentoringSessions),
+  documents: many(projectDocuments),
 }));
 
 export const mentoringSessionsRelations = relations(mentoringSessions, ({ one, many }) => ({
@@ -104,5 +114,12 @@ export const executionPlansRelations = relations(executionPlans, ({ one }) => ({
   session: one(mentoringSessions, {
     fields: [executionPlans.sessionId],
     references: [mentoringSessions.id],
+  }),
+}));
+
+export const projectDocumentsRelations = relations(projectDocuments, ({ one }) => ({
+  project: one(projects, {
+    fields: [projectDocuments.projectId],
+    references: [projects.id],
   }),
 }));
