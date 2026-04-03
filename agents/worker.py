@@ -1071,6 +1071,15 @@ async def _start_specialist_in_room(
         return None
 
 async def entrypoint(ctx: JobContext) -> None:
+    try:
+        await _run_entrypoint(ctx)
+    except Exception as e:
+        logger.error(f"[Job] Erro crítico no entrypoint: {e}", exc_info=True)
+    finally:
+        _active_rooms.discard(ctx.room.name)
+        logger.info(f"[Guard] Sala '{ctx.room.name}' liberada do guard após encerramento global da task.")
+
+async def _run_entrypoint(ctx: JobContext) -> None:
     # Log em arquivo para diagnóstico (compatível com Windows e Linux)
     log_path = os.path.join(tempfile.gettempdir(), "mentoria_agent.log")
     _fh = logging.FileHandler(log_path, mode="a")
@@ -1487,7 +1496,6 @@ async def entrypoint(ctx: JobContext) -> None:
             logger.warning(f"[Room] Erro ao processar data packet do frontend: {e}")
 
     # ------------------------------------------------------------------
-    # Loop principal — mantém o worker vivo enquanto o room estiver ativo
     # ------------------------------------------------------------------
     logger.info("=== Job em execução. Aguardando interação... ===")
     try:
@@ -1499,11 +1507,6 @@ async def entrypoint(ctx: JobContext) -> None:
     finally:
         blackboard.is_active = False
         logger.info("[Job] Iniciando limpeza de recursos...")
-
-        # C4: Libera a sala do guard global IMEDIATAMENTE.
-        # Isso garante que se o usuário se reconectar instantaneamente após uma queda, a sala estará livre.
-        _active_rooms.discard(ctx.room.name)
-        logger.info(f"[Job] Sala '{ctx.room.name}' liberada do guard. Aguardando encerramento dos especialistas...")
 
         # Desconecta especialistas com timeout máximo para evitar travamentos
         for spec_room in blackboard.specialist_rooms:

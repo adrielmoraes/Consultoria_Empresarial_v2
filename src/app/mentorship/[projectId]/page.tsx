@@ -693,7 +693,7 @@ export default function MentorshipRoomPage() {
           </div>
           <div>
             <h1 className="text-sm font-semibold text-white">Sala de Mentoria</h1>
-            <p className="text-xs text-gray-400">6 especialistas • Sessão ao vivo</p>
+            <p className="text-xs text-gray-400">4 especialistas e a apresentadora • Sessão ao vivo</p>
           </div>
         </div>
 
