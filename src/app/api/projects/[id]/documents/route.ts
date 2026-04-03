@@ -6,8 +6,10 @@ import { eq } from "drizzle-orm";
 // Como não há pdf-parse ativo ainda garantidamente, extrairemos usando a API basica de buffer ou Gemini nativamente
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
+
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File;
@@ -38,7 +40,7 @@ export async function POST(
 
     // Salvar no BD
     const [doc] = await db.insert(projectDocuments).values({
-      projectId: params.id,
+      projectId: id,
       fileName: file.name,
       content: textContent,
     }).returning();
@@ -53,11 +55,13 @@ export async function POST(
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
+
   try {
     const docs = await db.query.projectDocuments.findMany({
-      where: eq(projectDocuments.projectId, params.id),
+      where: eq(projectDocuments.projectId, id),
       orderBy: (docs, { desc }) => [desc(docs.createdAt)],
     });
     
