@@ -35,6 +35,7 @@ import {
   Track,
   Participant,
   RemoteParticipant,
+  LocalTrackPublication,
   ConnectionState,
   DisconnectReason,
   DefaultReconnectPolicy,
@@ -184,6 +185,13 @@ export default function MentorshipRoomPage() {
 
   // F5: Status individual dos agentes conectados
   const [connectedAgents, setConnectedAgents] = useState<Set<string>>(new Set());
+
+  // F6: Estado real do microfone e feedback visual
+  const [micActive, setMicActive] = useState(false);
+  const [micLevel, setMicLevel] = useState(0); // 0..1 nível de volume
+  const [micError, setMicError] = useState<string | null>(null);
+  const micAnalyserRef = useRef<{ analyser: AnalyserNode; ctx: AudioContext; source: MediaStreamAudioSourceNode } | null>(null);
+  const micAnimFrameRef = useRef<number>(0);
 
   const roomRef = useRef<Room | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
@@ -372,6 +380,7 @@ export default function MentorshipRoomPage() {
         sessionDataRef.current = { ...sessionDataRef.current, token, url };
 
         // Configura a sala
+        // CORREÇÃO VOZ: removido webAudioMix (causa AudioContext suspenso em mobile/iOS)
         room = new Room({
           adaptiveStream: true,
           dynacast: true,
@@ -381,8 +390,6 @@ export default function MentorshipRoomPage() {
           reconnectPolicy: new DefaultReconnectPolicy(
             [500, 1000, 2000, 5000, 10000, 30000]
           ),
-          // Web Audio API para melhor cancelamento de eco e processamento de áudio
-          webAudioMix: true,
           audioCaptureDefaults: {
             echoCancellation: true,
             noiseSuppression: true,
@@ -407,6 +414,15 @@ export default function MentorshipRoomPage() {
           setConnectedAgents((prev) => new Set(prev).add("host"));
           addTranscriptMessage("Sistema", "Conectado! Aguardando os especialistas...");
 
+          // CORREÇÃO VOZ: Desbloqueia AudioContext do browser automaticamente
+          // Sem isso, browsers modernos podem suspender o áudio silenciosamente
+          try {
+            await room!.startAudio();
+            console.log("[LiveKit] AudioContext desbloqueado com sucesso.");
+          } catch (audioErr) {
+            console.warn("[LiveKit] Falha ao desbloquear AudioContext:", audioErr);
+          }
+
           // Detecta agentes que já estavam na sala antes do frontend conectar
           for (const [, p] of room!.remoteParticipants) {
             const pid = p.identity;
@@ -418,10 +434,53 @@ export default function MentorshipRoomPage() {
             }
           }
 
-          try {
-            await room!.localParticipant.setMicrophoneEnabled(true);
-          } catch (micErr) {
-            console.warn("[LiveKit] Erro ao ativar microfone:", micErr);
+          // CORREÇÃO VOZ: Ativa microfone com retry e feedback visual
+          let micEnabled = false;
+          for (let attempt = 0; attempt < 3 && !micEnabled; attempt++) {
+            try {
+              await room!.localParticipant.setMicrophoneEnabled(true);
+              micEnabled = true;
+              setMicActive(true);
+              setMicError(null);
+              console.log(`[LiveKit] Microfone ativado com sucesso (tentativa ${attempt + 1}).`);
+
+              // CORREÇÃO VOZ: Conecta analisador de nível de áudio para feedback visual
+              const micPub = room!.localParticipant.getTrackPublication(
+                Track.Source.Microphone
+              );
+              if (micPub?.track?.mediaStream) {
+                try {
+                  const audioCtx = new AudioContext();
+                  const source = audioCtx.createMediaStreamSource(micPub.track.mediaStream);
+                  const analyser = audioCtx.createAnalyser();
+                  analyser.fftSize = 256;
+                  analyser.smoothingTimeConstant = 0.5;
+                  source.connect(analyser);
+                  micAnalyserRef.current = { analyser, ctx: audioCtx, source };
+
+                  // Loop de atualização do nível de áudio
+                  const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                  const updateLevel = () => {
+                    if (!micAnalyserRef.current) return;
+                    analyser.getByteFrequencyData(dataArray);
+                    const avg = dataArray.reduce((sum, v) => sum + v, 0) / dataArray.length;
+                    setMicLevel(Math.min(avg / 128, 1)); // normaliza 0..1
+                    micAnimFrameRef.current = requestAnimationFrame(updateLevel);
+                  };
+                  micAnimFrameRef.current = requestAnimationFrame(updateLevel);
+                  console.log("[LiveKit] Analisador de áudio conectado.");
+                } catch (analyserErr) {
+                  console.warn("[LiveKit] Falha ao criar analisador de áudio:", analyserErr);
+                }
+              }
+            } catch (micErr) {
+              console.warn(`[LiveKit] Erro ao ativar microfone (tentativa ${attempt + 1}/3):`, micErr);
+              if (attempt < 2) await new Promise(r => setTimeout(r, 1000));
+              else {
+                setMicError("Microfone não disponível. Verifique as permissões do navegador.");
+                setMicActive(false);
+              }
+            }
           }
         });
 
@@ -556,6 +615,20 @@ export default function MentorshipRoomPage() {
       isMounted = false;
       sessionCreatingRef.current = false;
       connectionStartedRef.current = false; // Permite re-mount reconectar
+
+      // CORREÇÃO VOZ: Limpa analisador de áudio
+      if (micAnimFrameRef.current) {
+        cancelAnimationFrame(micAnimFrameRef.current);
+        micAnimFrameRef.current = 0;
+      }
+      if (micAnalyserRef.current) {
+        try {
+          micAnalyserRef.current.source.disconnect();
+          micAnalyserRef.current.ctx.close();
+        } catch { /* ignore */ }
+        micAnalyserRef.current = null;
+      }
+
       if (room && room.state !== ConnectionState.Disconnected) {
         room.disconnect();
       }
@@ -570,8 +643,17 @@ export default function MentorshipRoomPage() {
   const toggleMute = async () => {
     const lp = roomRef.current?.localParticipant;
     if (!lp) return;
-    await lp.setMicrophoneEnabled(isMuted);
-    setIsMuted((m) => !m);
+    const newMutedState = !isMuted;
+    try {
+      await lp.setMicrophoneEnabled(!newMutedState);
+      setIsMuted(newMutedState);
+      setMicActive(!newMutedState);
+      if (newMutedState) {
+        setMicLevel(0);
+      }
+    } catch (err) {
+      console.warn("[LiveKit] Erro ao alternar microfone:", err);
+    }
   };
 
   // CORREÇÃO P4: usa safeFetch — erros de HTTP são logados e não engolidos.
@@ -916,16 +998,43 @@ export default function MentorshipRoomPage() {
 
       {/* Controls Bar */}
       <div className="flex items-center justify-center gap-4 px-4 py-4 bg-gray-900/80 backdrop-blur-sm border-t border-white/5 shrink-0">
+        {/* CORREÇÃO VOZ: Indicador de erro no mic */}
+        {micError && (
+          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300 text-xs font-medium flex items-center gap-2 backdrop-blur-sm z-30">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+            {micError}
+          </div>
+        )}
+
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={toggleMute}
-          className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${isMuted
+          className={`relative w-12 h-12 rounded-full flex items-center justify-center transition-all ${isMuted || !micActive
             ? "bg-red-500/20 border border-red-500/50 text-red-400"
             : "bg-white/10 border border-white/10 text-white hover:bg-white/20"
             }`}
           title={isMuted ? "Ativar microfone" : "Silenciar microfone"}
         >
-          {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+          {isMuted || !micActive ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+
+          {/* CORREÇÃO VOZ: Indicador visual de nível de áudio */}
+          {micActive && !isMuted && micLevel > 0.02 && (
+            <motion.div
+              className="absolute inset-0 rounded-full border-2 border-emerald-400/60 pointer-events-none"
+              animate={{
+                scale: 1 + micLevel * 0.5,
+                opacity: Math.min(micLevel * 2, 0.8),
+              }}
+              transition={{ duration: 0.1 }}
+            />
+          )}
+
+          {/* Anel pulsante quando o mic está ativo */}
+          {micActive && !isMuted && (
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]" />
+            </div>
+          )}
         </motion.button>
 
         <motion.button
