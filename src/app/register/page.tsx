@@ -64,8 +64,8 @@ export default function RegisterPage() {
           <div className="flex flex-col items-center mb-10">
             <Link href="/" className="group relative">
               <div className="absolute -inset-4 bg-[#d4af37]/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative bg-gradient-to-br from-[#d4af37] to-[#b08d24] p-3 rounded-2xl gold-glow shadow-2xl">
-                <img src="/logo-icon.svg" alt="Hive Mind" className="w-10 h-10 object-contain brightness-0 invert" />
+              <div className="relative w-16 h-16 rounded-2xl bg-[#0a0a0f] border border-[#d4af37]/30 shadow-[0_0_25px_rgba(212,175,55,0.15)] flex items-center justify-center group-hover:border-[#d4af37]/60 transition-all duration-300">
+                <img src="/logo-icon.svg" alt="Hive Mind" className="w-10 h-10 object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
               </div>
             </Link>
             <h2 className="mt-6 text-3xl font-bold tracking-tight text-white text-center">

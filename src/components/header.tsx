@@ -19,8 +19,8 @@ export function Header() {
           <Link href="/" className="flex items-center gap-3 group">
             <div className="relative">
               <div className="absolute inset-[-4px] bg-[#d4af37]/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative p-2 rounded-xl bg-gradient-to-br from-[#d4af37] to-[#b08d24] shadow-2xl gold-glow transform group-hover:scale-105 transition-transform duration-300 glass-card-premium">
-                <img src="/logo-icon.svg" alt="Hive Mind" className="w-8 h-8 object-contain brightness-0 invert" />
+              <div className="relative w-11 h-11 rounded-xl bg-[#0a0a0f] border border-[#d4af37]/30 shadow-[0_0_15px_rgba(212,175,55,0.15)] flex items-center justify-center transform group-hover:scale-105 transition-transform duration-300 group-hover:border-[#d4af37]/60">
+                <img src="/logo-icon.svg" alt="Hive Mind" className="w-7 h-7 object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
               </div>
             </div>
             <div className="flex flex-col">
