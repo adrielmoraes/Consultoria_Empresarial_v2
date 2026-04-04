@@ -370,7 +370,8 @@ class SpecialistAgent(Agent):
                 instructions=(
                     "IDIOMA OBRIGATÓRIO: Você DEVE falar e entender APENAS em português brasileiro (pt-BR). "
                     "Toda entrada de áudio do usuário é em português do Brasil. "
-                    "NUNCA interprete como outro idioma. Responda SEMPRE em português do Brasil."
+                    "NUNCA interprete como outro idioma. Responda SEMPRE em português do Brasil.\n"
+                    "IMPORTANTE: Ignore ruídos (como '<noise>'), suspiros ou falas desconexas que resultam do microfone sempre aberto. Responda apenas se o usuário interagir com propósito."
                 ),
                 realtime_input_config=genai_types.RealtimeInputConfig(
                     automatic_activity_detection=genai_types.AutomaticActivityDetection(
@@ -421,7 +422,9 @@ class HostAgent(Agent):
             instructions=(
                 "IDIOMA OBRIGATÓRIO: Você DEVE falar e entender APENAS em português brasileiro (pt-BR). "
                 "Toda entrada de áudio do usuário é em português do Brasil. "
-                "NUNCA interprete como outro idioma. Responda SEMPRE em português do Brasil."
+                "NUNCA interprete como outro idioma. Responda SEMPRE em português do Brasil.\n"
+                "IMPORTANTE: Você pode ocasionalmente escutar ruídos ou receber detecções como '<noise>' ou sílabas soltas devido ao microfone estar sempre aberto. "
+                "Ignore sons de fundo ou falas desconexas que não façam sentido. Concentre-se nas frases completas ditas pelo usuário."
             ),
             realtime_input_config=genai_types.RealtimeInputConfig(
                 automatic_activity_detection=genai_types.AutomaticActivityDetection(
@@ -1187,21 +1190,6 @@ async def _run_entrypoint(ctx: JobContext) -> None:
         if lower_text in ["<noise>", "[noise]", "silence", "noise", "ruído"]:
             logger.info(f"[Filtro] Ruído explícito capturado e descartado: {text}")
             return
-            
-        # Bloqueia caracteres não-latinos observados nas alucinações (Árabe, Tailandês, Cirílico, Hindi, Chinês, Japonês, etc)
-        if re.search(r'[\u0600-\u06FF\u0E00-\u0E7F\u0400-\u04FF\u0900-\u097F\u4E00-\u9FFF\u3040-\u309F\u30A0-\u30FF]', text):
-            logger.warning(f"[Filtro] Idioma estrangeiro (alucinação) bloqueado: {text}")
-            return
-            
-        # Bloqueia transcrições minúsculas formadas só por consoantes (ex: 'shh', 'ts') ou com números soltos curtos (ex "6 tane")
-        if len(text) <= 3 and not re.search(r'[aeiouáéíóúâêôãõ]', lower_text):
-            logger.info(f"[Filtro] Transcrição curta sem vogais bloqueada: {text}")
-            return
-            
-        # Filtro para rejeitar frases bizarras muito curtas com números e letras soltas ("6 tane", "زي ال") não pegas acima
-        if len(text) <= 8 and not re.search(r'[a-zA-Záéíóúâêôãõç]', lower_text):
-            logger.info(f"[Filtro] Transcrição curta sem caracteres latinos válidos bloqueada: {text}")
-            return
         # ==========================================================
 
         logger.info(f"[Usuário fala] {text}")
@@ -1515,7 +1503,10 @@ async def _run_entrypoint(ctx: JobContext) -> None:
             except Exception as e:
                 logger.warning(f"[Job] Erro/Timeout ao desconectar room de especialista: {e}")
 
-        logger.info(f"[Job] Encerrado com sucesso para a sala '{ctx.room.name}'.")
+        # Limpa o lock _active_rooms para permitir a mesma sala rodar outro job no futuro
+        _active_rooms.discard(ctx.room.name)
+        
+        logger.info(f"[Job] Encerrado com sucesso para a sala '{ctx.room.name}'. Salas ativas: {_active_rooms}")
 
 # ============================================================
 async def on_job_request(req) -> None:

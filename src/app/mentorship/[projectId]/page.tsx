@@ -397,8 +397,8 @@ export default function MentorshipRoomPage() {
             channelCount: 1, // Mono — melhor qualidade para captura de voz
           },
           publishDefaults: {
-            dtx: true, // Corte de transmissão em silêncio
-            red: true, // Codificação redundante contra perda de pacotes
+            dtx: false, // Áudio mantido permanentemente aberto
+            red: true,  // Codificação redundante contra perda de pacotes
           },
         });
 
