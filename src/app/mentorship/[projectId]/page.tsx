@@ -662,7 +662,16 @@ export default function MentorshipRoomPage() {
 
   if (authStatus === "unauthenticated") return null;
 
-  const agents = Object.values(AGENTS_MAP).map((a) => ({
+  const agentsList = Object.values(AGENTS_MAP);
+  const host = agentsList.find(a => a.id === "host");
+  const others = agentsList.filter(a => a.id !== "host");
+  
+  // Reordena para colocar o host no centro: 2 agentes, host, 2 agentes
+  const reorderedAgents = host && others.length >= 4
+    ? [others[0], others[1], host, others[2], others[3]]
+    : agentsList;
+
+  const agents = reorderedAgents.map((a) => ({
     ...a,
     speaking: activeSpeakers.has(a.id),
     connected: connectedAgents.has(a.id),
@@ -774,12 +783,20 @@ export default function MentorshipRoomPage() {
       <div className="flex-1 flex overflow-hidden">
         {/* Agents Grid */}
         <div className="flex-1 p-3 sm:p-4 overflow-hidden">
-          <div className="hidden md:grid grid-cols-3 grid-rows-2 gap-3 h-full">
+          {/* Desktop/Tablet Layout: 5 colunas formato retrato com apresentadora no centro */}
+          <div className="hidden lg:grid grid-cols-5 gap-3 h-full">
             {agents.map((agent) => (
               <AgentCard key={agent.id} agent={agent} />
             ))}
           </div>
-          <div className="md:hidden grid grid-cols-2 gap-3">
+          {/* Tablet Landscape */}
+          <div className="hidden md:grid lg:hidden grid-cols-3 grid-rows-2 gap-3 h-full">
+            {agents.map((agent) => (
+              <AgentCard key={agent.id} agent={agent} />
+            ))}
+          </div>
+          {/* Mobile Layout */}
+          <div className="md:hidden grid grid-cols-2 gap-3 overflow-y-auto pb-4 h-full">
             {agents.map((agent) => (
               <AgentCard key={agent.id} agent={agent} compact />
             ))}
