@@ -242,16 +242,16 @@ export default function LandingPage() {
             <div className="relative glass-card-premium p-4 sm:p-2 border-white/5 bg-black/60">
               <div className="grid grid-cols-5 gap-2 sm:gap-4 overflow-hidden rounded-[30px]">
                 {[
-                  { name: "Apresentadora", color: "from-[#d4af37] to-[#b08d24]", icon: Brain },
                   { name: "Carlos (CFO)", color: "from-emerald-600 to-teal-700", icon: TrendingUp },
                   { name: "Daniel (LEGAL)", color: "from-amber-600 to-orange-700", icon: Gavel },
+                  { name: "Apresentadora", color: "from-[#d4af37] to-[#b08d24]", icon: Brain },
                   { name: "Rodrigo (CMO)", color: "from-pink-600 to-rose-700", icon: Users },
                   { name: "Ana (CTO)", color: "from-blue-600 to-cyan-700", icon: Code }
                 ].map((spec, i) => (
                   <div
                     key={spec.name}
                     className={`relative aspect-[3/5] overflow-hidden group/agent transition-all duration-500 ${
-                      i === 0 ? "scale-105 z-10" : "scale-100"
+                      i === 2 ? "scale-105 z-10" : "scale-100"
                     }`}
                   >
                     <div className={`absolute inset-0 bg-gradient-to-br ${spec.color} opacity-20`} />
@@ -262,7 +262,7 @@ export default function LandingPage() {
                       </div>
                       <p className="text-[10px] font-black uppercase text-white tracking-widest">{spec.name}</p>
                     </div>
-                    {i === 0 && (
+                    {i === 2 && (
                       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-[#d4af37] px-2 py-0.5 rounded-full scale-[0.8]">
                         <div className="w-1 h-1 bg-black rounded-full animate-pulse" />
                         <span className="text-[8px] font-black text-black">LIVE</span>
@@ -272,7 +272,7 @@ export default function LandingPage() {
                 ))}
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -544,8 +544,8 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-12">
             <div className="flex flex-col items-center md:items-start gap-4">
               <div className="flex items-center gap-3">
-                <div className="bg-gradient-to-br from-[#d4af37] to-[#b08d24] p-2 rounded-xl gold-glow shadow-2xl">
-                  <img src="/logo.png" alt="Hive Mind" className="w-6 h-6 object-contain" />
+                <div className="bg-gradient-to-br from-[#d4af37] to-[#b08d24] p-2 rounded-xl gold-glow shadow-2xl glass-card-premium">
+                  <img src="/logo-icon.svg" alt="Hive Mind" className="w-6 h-6 object-contain brightness-0 invert" />
                 </div>
                 <span className="text-2xl font-black bg-gradient-to-r from-[#d4af37] via-[#f0dfa0] to-[#b08d24] bg-clip-text text-transparent uppercase tracking-tight">Hive Mind</span>
               </div>
