@@ -163,111 +163,116 @@ const steps = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#030712] text-white selection:bg-[#d4af37]/30">
       <Header />
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-4 overflow-hidden">
-        {/* Background effects */}
-        <div className="absolute inset-0 bg-grid opacity-30" />
-        <div className="absolute top-20 left-1/4 w-96 h-96 bg-[#d4af37]/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#b08d24]/20 rounded-full blur-3xl" />
-
-        <div className="relative max-w-6xl mx-auto text-center">
+      <section className="relative pt-40 pb-24 px-4 overflow-hidden">
+        {/* Elite Background Effects */}
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 pointer-events-none" />
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#b08d24]/10 rounded-full blur-[120px] animate-orb" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#d4af37]/10 rounded-full blur-[120px] animate-orb" style={{ animationDelay: '-10s' }} />
+        
+        <div className="relative max-w-7xl mx-auto text-center z-10">
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 bg-[#d4af37]/10 border border-[#d4af37]/20 rounded-full px-4 py-2 mb-6"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-[#d4af37]/10 to-[#b08d24]/10 border border-[#d4af37]/20 rounded-full px-6 py-2.5 mb-10 backdrop-blur-md shadow-[0_0_20px_rgba(212,175,55,0.1)]"
           >
             <Sparkles className="w-4 h-4 text-[#d4af37]" />
-            <span className="text-sm text-[#d4af37] font-medium">
-              Conselheiros de Negócios com Inteligência Artificial
+            <span className="text-xs font-black uppercase tracking-[0.2em] text-[#d4af37]">
+              O Futuro da Consultoria Estratégica
             </span>
           </motion.div>
 
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight mb-6"
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="text-6xl sm:text-7xl lg:text-8xl font-black tracking-tighter mb-8 leading-[0.9] uppercase"
           >
-            Seu Conselho de{" "}
-            <span className="gradient-text">Especialistas</span>
-            <br />
-            em Inteligência Artificial
+            Seu Conselho de<br />
+            <span className="bg-gradient-to-r from-[#d4af37] via-[#f0dfa0] to-[#b08d24] bg-clip-text text-transparent italic">Elite</span> Executiva
           </motion.h1>
 
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-lg sm:text-xl text-gray-500 dark:text-gray-400 max-w-3xl mx-auto mb-10"
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="text-lg sm:text-xl text-gray-400 max-w-3xl mx-auto mb-12 leading-relaxed font-medium"
           >
-            Entre em uma sala de vídeo com 5 agentes de IA especializados. Eles debatem,
-            analisam e criam um Plano de Execução completo para o seu projeto — tudo em
-            tempo real.
+            Entre em uma sala de comando com 5 agentes de IA de nível sênior. 
+            Eles debatem, desafiam suas ideias e consolidam um 
+            <span className="text-white border-b border-[#d4af37]/30 px-1 inline-block">Plano de Execução Implacável</span> em tempo real.
           </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+            transition={{ duration: 0.8, delay: 0.6 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-6"
           >
-            <Link href="/register" className="btn-primary text-lg px-8 py-4 flex items-center gap-2">
-              Iniciar Mentoria Grátis <ArrowRight className="w-5 h-5" />
+            <Link 
+              href="/register" 
+              className="group relative px-10 py-5 bg-gradient-to-r from-[#b08d24] to-[#d4af37] rounded-2xl shadow-[0_0_40px_rgba(212,175,55,0.2)] hover:shadow-[0_0_60px_rgba(212,175,55,0.4)] transition-all duration-500 transform hover:-translate-y-1"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-lg font-black text-[#030712] uppercase tracking-tighter">Convocação do Comitê</span>
+                <ArrowRight className="w-5 h-5 text-[#030712]" />
+              </div>
             </Link>
-            <Link href="#how-it-works" className="btn-secondary text-lg px-8 py-4">
-              Como Funciona
+            
+            <Link 
+              href="#how-it-works" 
+              className="px-10 py-5 rounded-2xl bg-white/5 border border-white/10 text-lg font-bold text-white hover:bg-white/10 transition-all backdrop-blur-md"
+            >
+              Ver Metodologia
             </Link>
           </motion.div>
 
-          {/* Pentaptych Preview */}
+          {/* Pentaptych Elite Preview */}
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 60 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-            className="mt-16 max-w-5xl mx-auto"
+            transition={{ duration: 1, delay: 0.8 }}
+            className="mt-20 max-w-5xl mx-auto relative group"
           >
-            <div className="glass-card p-4 sm:p-6">
-              <div className="grid grid-cols-5 gap-2 sm:gap-3">
-                {["Apresentadora", "CFO", "Advogado", "CMO", "CTO"].map(
-                  (name, i) => (
-                    <div
-                      key={name}
-                      className={`relative aspect-[3/4] rounded-xl overflow-hidden border-2 ${
-                        i === 0
-                          ? "border-[#d4af37]/50 active-speaker"
-                          : "border-white/10"
-                      } bg-gradient-to-br ${
-                        i === 0
-                          ? "from-[#3d2e0a]/50 to-[#4a3612]/50"
-                          : i === 1
-                          ? "from-emerald-900/50 to-teal-900/50"
-                          : i === 2
-                          ? "from-amber-900/50 to-orange-900/50"
-                          : i === 3
-                          ? "from-pink-900/50 to-rose-900/50"
-                          : "from-blue-900/50 to-cyan-900/50"
-                      }`}
-                    >
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white/10 flex items-center justify-center">
-                          <Brain className="w-6 h-6 sm:w-8 sm:h-8 text-white/40" />
-                        </div>
+            <div className="absolute -inset-1 bg-gradient-to-r from-[#d4af37]/20 via-transparent to-[#b08d24]/20 rounded-[40px] blur-2xl opacity-50 group-hover:opacity-100 transition-opacity duration-1000" />
+            <div className="relative glass-card-premium p-4 sm:p-2 border-white/5 bg-black/60">
+              <div className="grid grid-cols-5 gap-2 sm:gap-4 overflow-hidden rounded-[30px]">
+                {[
+                  { name: "Apresentadora", color: "from-[#d4af37] to-[#b08d24]", icon: Brain },
+                  { name: "Carlos (CFO)", color: "from-emerald-600 to-teal-700", icon: TrendingUp },
+                  { name: "Daniel (LEGAL)", color: "from-amber-600 to-orange-700", icon: Gavel },
+                  { name: "Rodrigo (CMO)", color: "from-pink-600 to-rose-700", icon: Users },
+                  { name: "Ana (CTO)", color: "from-blue-600 to-cyan-700", icon: Code }
+                ].map((spec, i) => (
+                  <div
+                    key={spec.name}
+                    className={`relative aspect-[3/5] overflow-hidden group/agent transition-all duration-500 ${
+                      i === 0 ? "scale-105 z-10" : "scale-100"
+                    }`}
+                  >
+                    <div className={`absolute inset-0 bg-gradient-to-br ${spec.color} opacity-20`} />
+                    <div className="absolute inset-0 bg-[#030712]/60 backdrop-blur-[2px]" />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-2 text-center">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-br ${spec.color} shadow-2xl mb-3`}>
+                        <spec.icon className="w-6 h-6 text-white" />
                       </div>
-                      <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/50 backdrop-blur-sm">
-                        <p className="text-xs sm:text-sm text-white font-medium text-center truncate">
-                          {name}
-                        </p>
-                      </div>
+                      <p className="text-[10px] font-black uppercase text-white tracking-widest">{spec.name}</p>
                     </div>
-                  )
-                )}
+                    {i === 0 && (
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-[#d4af37] px-2 py-0.5 rounded-full scale-[0.8]">
+                        <div className="w-1 h-1 bg-black rounded-full animate-pulse" />
+                        <span className="text-[8px] font-black text-black">LIVE</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -534,15 +539,44 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 py-12 px-4">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <img src="/logo.PNG" alt="Hive Mind" className="w-6 h-6 object-contain" />
-            <span className="font-bold gradient-text">Hive Mind</span>
+      <footer className="border-t border-white/5 py-20 px-4 bg-[#010307]">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-12">
+            <div className="flex flex-col items-center md:items-start gap-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-[#d4af37] to-[#b08d24] p-2 rounded-xl gold-glow shadow-2xl">
+                  <img src="/logo.png" alt="Hive Mind" className="w-6 h-6 object-contain" />
+                </div>
+                <span className="text-2xl font-black bg-gradient-to-r from-[#d4af37] via-[#f0dfa0] to-[#b08d24] bg-clip-text text-transparent uppercase tracking-tight">Hive Mind</span>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-500 font-medium max-w-xs text-center md:text-left">
+                Redefinindo os limites da consultoria executiva com inteligência artificial de elite.
+              </p>
+            </div>
+            
+            <div className="flex gap-12">
+               <div className="flex flex-col gap-4">
+                  <span className="text-xs font-black uppercase tracking-widest text-[#d4af37]">Plataforma</span>
+                  <Link href="#features" className="text-sm text-gray-500 hover:text-white transition-colors">Recursos</Link>
+                  <Link href="#pricing" className="text-sm text-gray-500 hover:text-white transition-colors">Planos</Link>
+               </div>
+               <div className="flex flex-col gap-4">
+                  <span className="text-xs font-black uppercase tracking-widest text-[#d4af37]">Empresa</span>
+                  <Link href="#" className="text-sm text-gray-500 hover:text-white transition-colors">Segurança</Link>
+                  <Link href="#" className="text-sm text-gray-500 hover:text-white transition-colors">Contato</Link>
+               </div>
+            </div>
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            © 2026 Hive Mind. Todos os direitos reservados.
-          </p>
+          
+          <div className="mt-20 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+            <p className="text-xs text-gray-600 uppercase font-black tracking-widest">
+              © 2026 Hive Mind Enterprise. Todos os direitos reservados.
+            </p>
+            <div className="flex gap-8">
+               <Link href="#" className="text-[10px] uppercase font-black text-gray-700 hover:text-gray-400 tracking-widest">Privacy Policy</Link>
+               <Link href="#" className="text-[10px] uppercase font-black text-gray-700 hover:text-gray-400 tracking-widest">Terms of Service</Link>
+            </div>
+          </div>
         </div>
       </footer>
     </div>

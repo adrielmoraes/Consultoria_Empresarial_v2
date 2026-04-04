@@ -16,119 +16,75 @@
 }
 
 .dark {
-  --color-background: #0a0a0a;
+  --color-background: #030712; /* Deep Space Black-Blue */
   --color-foreground: #f9fafb;
-  --color-primary: #d4af37;
-  --color-primary-light: #e6c86a;
-  --color-accent: #f0dfa0;
-  --color-muted: #9ca3af;
-  --color-border: rgba(212, 175, 55, 0.15);
-  --color-card: rgba(255, 255, 255, 0.02);
-  --color-card-hover: rgba(255, 255, 255, 0.05);
+  --color-primary: #d4af37; /* Hive Gold */
+  --color-primary-light: #f0dfa0;
+  --color-accent: #b08d24; /* Darker Gold */
+  --color-muted: #6b7280;
+  --color-border: rgba(212, 175, 55, 0.12);
+  --color-card: rgba(3, 7, 18, 0.4);
+  --color-card-hover: rgba(3, 7, 18, 0.6);
 }
 
 @layer base {
   html {
     scroll-behavior: smooth;
+    font-size: 16px;
   }
 
   body {
     font-family: var(--font-sans);
     background: var(--color-background);
     color: var(--color-foreground);
+    overflow-x: hidden;
   }
 }
 
-/* Glassmorphism Card */
-.glass-card {
-  background: var(--color-card);
-  border: 1px solid var(--color-border);
-  backdrop-filter: blur(12px);
-  border-radius: 1rem;
-  transition: all 0.3s ease;
+/* Glassmorphism Premium */
+.glass-card-premium {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.25rem;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.glass-card:hover {
-  background: var(--color-card-hover);
-  border-color: var(--color-primary);
-  box-shadow: 0 0 30px rgba(212, 175, 55, 0.15);
-  transform: translateY(-2px);
+.glass-card-premium:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(212, 175, 55, 0.4);
+  box-shadow: 0 0 40px rgba(212, 175, 55, 0.1);
 }
 
-/* Gradient Text */
-.gradient-text {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+/* Hive Gold Gradients */
+.gold-gradient {
+  background: linear-gradient(135deg, #d4af37 0%, #f0dfa0 50%, #b08d24 100%);
 }
 
-/* Glow Effect */
-.glow {
-  box-shadow: 0 0 20px rgba(212, 175, 55, 0.3), 0 0 60px rgba(212, 175, 55, 0.1);
+.gold-glow {
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
 }
 
-/* Animated Background Grid */
-.bg-grid {
-  background-image:
-    linear-gradient(var(--color-border) 1px, transparent 1px),
-    linear-gradient(90deg, var(--color-border) 1px, transparent 1px);
-  background-size: 60px 60px;
+/* Orb Animations */
+@keyframes float-orb {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0, 0) scale(1); }
 }
 
-/* Button Styles */
-.btn-primary {
-  background: linear-gradient(135deg, #d4af37, #b08d24);
-  color: #0a0a0a;
-  font-weight: 600;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.75rem;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(212, 175, 55, 0.4);
-  cursor: pointer;
+.animate-orb {
+  animation: float-orb 15s infinite ease-in-out;
 }
 
-.btn-primary:hover {
-  box-shadow: 0 8px 30px rgba(212, 175, 55, 0.3);
-  transform: translateY(-1px);
+/* Form Styles Premium */
+.input-premium {
+  @apply w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm transition-all duration-300;
+  @apply focus:ring-1 focus:ring-[#d4af37] focus:border-[#d4af37] focus:bg-white/10 transition-all;
 }
 
-.btn-secondary {
-  background: var(--color-card);
-  color: var(--color-foreground);
-  font-weight: 600;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.75rem;
-  border: 1px solid var(--color-border);
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.btn-secondary:hover {
-  border-color: var(--color-primary);
-  background: var(--color-card-hover);
-}
-
-/* Active Speaker Glow for Video */
-.active-speaker {
-  box-shadow: 0 0 20px rgba(212, 175, 55, 0.4), 0 0 60px rgba(212, 175, 55, 0.15);
-  border-color: var(--color-primary) !important;
-}
-
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-muted);
+/* Layout Utilities */
+.container-full {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
 }

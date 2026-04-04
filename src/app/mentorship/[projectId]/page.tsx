@@ -687,7 +687,7 @@ export default function MentorshipRoomPage() {
   // ─── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="h-screen flex flex-col bg-gray-950">
+    <div className="h-screen flex flex-col bg-[#030712] overflow-hidden">
       {/*
         CORREÇÃO P1 / P6: container oculto para elementos de áudio.
         Fica dentro da árvore React → cleanup garantido no unmount.
@@ -695,65 +695,68 @@ export default function MentorshipRoomPage() {
       <div ref={audioContainerRef} style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }} aria-hidden="true" />
 
       {/* Top Bar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gray-900/80 backdrop-blur-sm border-b border-white/5 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-r from-[#d4af37] to-[#b08d24] p-1 rounded-md">
-            <img src="/logo.png" alt="Hive Mind" className="w-4 h-4 object-contain" />
+      <div className="flex items-center justify-between px-6 py-4 bg-[#030712]/40 backdrop-blur-2xl border-b border-white/5 shrink-0 z-20">
+        <div className="flex items-center gap-4">
+          <div className="relative group">
+            <div className="absolute inset-[-2px] bg-[#d4af37]/30 rounded-lg blur opacity-50 group-hover:opacity-100 transition-opacity" />
+            <div className="relative bg-gradient-to-br from-[#d4af37] to-[#b08d24] p-1.5 rounded-lg gold-glow">
+              <img src="/logo.png" alt="Hive Mind" className="w-5 h-5 object-contain" />
+            </div>
           </div>
           <div>
-            <h1 className="text-sm font-semibold text-white">Sala de Mentoria</h1>
-            <p className="text-xs text-gray-400">4 especialistas e a apresentadora • Sessão ao vivo</p>
+            <h1 className="text-sm font-bold tracking-tight text-white uppercase bg-gradient-to-r from-[#d4af37] to-[#f0dfa0] bg-clip-text text-transparent">Sala de Mentoria de Elite</h1>
+            <p className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold mt-0.5">Comitê Executivo Hive Mind</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          {connectionIcon}
-
-          {/* Badge de reconexão */}
-          {connectionState === "reconnecting" && (
-            <span className="text-[10px] text-amber-400 font-medium">
-              Reconectando...
-            </span>
-          )}
-
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-sm text-gray-400 font-mono">
-              {formatTime(elapsedTime)}
-            </span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5">
+            {connectionIcon}
+            {connectionState === "reconnecting" && (
+              <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">Reconectando</span>
+            )}
+            <div className="h-3 w-[1px] bg-white/10" />
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+              <span className="text-[11px] text-gray-400 font-mono font-bold tracking-tighter">
+                {formatTime(elapsedTime)}
+              </span>
+            </div>
           </div>
 
-          <button
-            onClick={() => setShowUpload(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors bg-white/5 text-gray-400 hover:text-white"
-            title="Anexos do Negócio"
-          >
-            <Paperclip className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Anexos</span>
-          </button>
-
-          {executionPlan && (
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setShowPlan((v) => !v)}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${showPlan
-                ? "bg-violet-500/20 text-violet-300 border border-violet-500/30"
-                : "bg-white/5 text-gray-400 hover:text-white"
+              onClick={() => setShowUpload(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all bg-white/5 text-gray-400 hover:text-[#d4af37] hover:bg-white/10 border border-transparent hover:border-[#d4af37]/20"
+              title="Anexos do Negócio"
+            >
+              <Paperclip className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline uppercase tracking-tighter">Anexos</span>
+            </button>
+
+            {executionPlan && (
+              <button
+                onClick={() => setShowPlan((v) => !v)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xl ${showPlan
+                  ? "bg-violet-600/30 text-violet-200 border border-violet-500/50 shadow-violet-500/10"
+                  : "bg-white/5 text-gray-400 hover:text-white border border-transparent"
+                  }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span className="uppercase tracking-tighter">Plano Final</span>
+              </button>
+            )}
+
+            <button
+              onClick={() => setShowTranscript((v) => !v)}
+              className={`p-2.5 rounded-xl transition-all border ${showTranscript
+                ? "bg-[#d4af37]/10 text-[#d4af37] border-[#d4af37]/30 shadow-[0_0_20px_rgba(212,175,55,0.1)]"
+                : "bg-white/5 text-gray-400 hover:text-white border-transparent hover:bg-white/10"
                 }`}
             >
-              <FileText className="w-3.5 h-3.5" />
-              Plano
+              <MessageSquare className="w-4.5 h-4.5" />
             </button>
-          )}
-
-          <button
-            onClick={() => setShowTranscript((v) => !v)}
-            className={`p-2 rounded-lg transition-colors ${showTranscript
-              ? "bg-[#d4af37]/20 text-[#d4af37]"
-              : "bg-white/5 text-gray-400 hover:text-white"
-              }`}
-          >
-            <MessageSquare className="w-4 h-4" />
-          </button>
+          </div>
         </div>
       </div>
 
@@ -1435,100 +1438,111 @@ function AgentCard({
   return (
     <motion.div
       layout
-      className={`relative rounded-2xl overflow-hidden border-2 transition-all duration-500 ${compact ? "h-40" : "h-full"
+      className={`relative rounded-3xl overflow-hidden border transition-all duration-700 ease-in-out bg-black/40 backdrop-blur-md ${compact ? "h-40" : "h-full"
         } ${agent.speaking
-          ? "border-[#d4af37]/70 shadow-lg shadow-[#d4af37]/20"
+          ? "border-[#d4af37] shadow-[0_0_50px_rgba(212,175,55,0.25)] scale-[1.02] z-10"
           : agent.connected
-            ? "border-emerald-500/30 hover:border-emerald-500/50"
-            : "border-white/5 hover:border-white/10"
+            ? "border-white/10 hover:border-[#d4af37]/30"
+            : "border-white/5 opacity-50 grayscale-[0.5]"
         }`}
     >
+      {/* Background Glow */}
       <div
-        className={`absolute inset-0 bg-gradient-to-br ${agent.gradient} opacity-10`}
+        className={`absolute inset-0 bg-gradient-to-br ${agent.gradient} transition-opacity duration-1000 ${
+          agent.speaking ? 'opacity-20' : 'opacity-5'
+        }`}
       />
-      <div className="absolute inset-0 bg-gray-900/70" />
+      
+      {/* Abstract Pattern Layer */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
 
-      {/* Avatar */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <motion.div
-          animate={
-            agent.speaking
-              ? { scale: [1, 1.1, 1], opacity: [0.6, 1, 0.6] }
-              : { scale: 1, opacity: agent.connected ? 0.6 : 0.35 }
-          }
-          transition={
-            agent.speaking
-              ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" }
-              : {}
-          }
-          className={`${compact ? "w-14 h-14" : "w-20 h-20 sm:w-24 sm:h-24"
-            } rounded-full bg-gradient-to-r ${agent.gradient} flex items-center justify-center`}
-        >
-          <Icon
-            className={`${compact ? "w-7 h-7" : "w-10 h-10 sm:w-12 sm:h-12"
-              } text-white`}
-          />
-        </motion.div>
-      </div>
-
-      {/* F5: Status badge — Conectado ou Aguardando */}
-      {!agent.speaking && (
-        <div className="absolute top-3 right-3">
-          {agent.connected ? (
-            <div className="flex items-center gap-1 bg-emerald-500/20 border border-emerald-500/30 rounded-full px-2 py-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              <span className="text-[10px] text-emerald-300 font-medium">
-                Conectado
-              </span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-full px-2 py-1">
-              <Loader2 className="w-2.5 h-2.5 text-gray-400 animate-spin" />
-              <span className="text-[10px] text-gray-400 font-medium">
-                Aguardando...
-              </span>
-            </div>
+      {/* Avatar Container */}
+      <div className="absolute inset-0 flex items-center justify-center p-6 pb-20">
+        <div className="relative group">
+          {/* Animated Rings for Speaking */}
+          {agent.speaking && (
+            <>
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1.5, opacity: 0 }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className={`absolute inset-0 rounded-full border-2 border-[#d4af37]/30`}
+              />
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1.8, opacity: 0 }}
+                transition={{ duration: 2, repeat: Infinity, delay: 0.6 }}
+                className={`absolute inset-0 rounded-full border-2 border-[#d4af37]/10`}
+              />
+            </>
           )}
-        </div>
-      )}
 
-      {/* Speaking indicator */}
-      {agent.speaking && (
-        <div className="absolute top-3 right-3">
-          <div className="flex items-center gap-1.5 bg-[#d4af37]/20 border border-[#d4af37]/30 rounded-full px-2 py-1">
-            <div className="flex items-center gap-0.5">
-              {[0, 1, 2].map((i) => (
-                <motion.div
-                  key={i}
-                  animate={{ height: ["4px", "14px", "4px"] }}
-                  transition={{
-                    duration: 0.5,
-                    repeat: Infinity,
-                    delay: i * 0.12,
-                  }}
-                  className="w-[3px] bg-[#d4af37] rounded-full"
-                />
-              ))}
-            </div>
-            <span className="text-[10px] text-[#e6c86a] font-medium">
-              Falando
-            </span>
-          </div>
+          <motion.div
+            animate={
+              agent.speaking
+                ? { scale: 1.05, boxShadow: "0 0 40px rgba(212, 175, 55, 0.4)" }
+                : { scale: 1, boxShadow: "0 0 20px rgba(0, 0, 0, 0.5)" }
+            }
+            className={`${compact ? "w-16 h-16" : "w-32 h-32 lg:w-40 lg:h-40"
+              } rounded-full bg-[#030712] border-2 ${
+                agent.speaking ? 'border-[#d4af37]' : 'border-white/10'
+              } flex items-center justify-center relative z-10 overflow-hidden group-hover:border-[#d4af37]/50 transition-colors`}
+          >
+            <div className={`absolute inset-0 bg-gradient-to-br ${agent.gradient} opacity-20`} />
+            <Icon
+              className={`${compact ? "w-8 h-8" : "w-14 h-14 lg:w-20 lg:h-20"
+                } ${agent.speaking ? 'text-[#d4af37]' : 'text-gray-400 group-hover:text-gray-300'} transition-colors`}
+            />
+          </motion.div>
         </div>
-      )}
-
-      {/* Name badge */}
-      <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
-        <p
-          className={`font-semibold text-white ${compact ? "text-xs" : "text-sm"
-            }`}
-        >
-          {agent.name}
-        </p>
-        <p className={`text-gray-300 ${compact ? "text-[10px]" : "text-xs"}`}>
-          {agent.role}
-        </p>
       </div>
+
+      {/* Connection & Speaking Badges */}
+      <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-20">
+         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
+            <div className={`w-1.5 h-1.5 rounded-full ${agent.connected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'bg-gray-600'}`} />
+            <span className={`text-[9px] font-bold uppercase tracking-wider ${agent.connected ? 'text-emerald-400' : 'text-gray-500'}`}>
+              {agent.connected ? 'Online' : 'Standby'}
+            </span>
+         </div>
+
+         {agent.speaking && (
+           <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-2 bg-[#d4af37] px-3 py-1 rounded-full shadow-[0_0_20px_rgba(212,175,55,0.3)]"
+           >
+              <div className="flex items-center gap-1">
+                {[0, 1, 2].map((i) => (
+                  <motion.div
+                    key={i}
+                    animate={{ height: ["4px", "10px", "4px"] }}
+                    transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.1 }}
+                    className="w-[2px] bg-[#030712] rounded-full"
+                  />
+                ))}
+              </div>
+              <span className="text-[9px] font-black uppercase text-[#030712] tracking-tighter">Live Insight</span>
+           </motion.div>
+         )}
+      </div>
+
+      {/* Info Overlay */}
+      <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#030712] via-[#030712]/90 to-transparent">
+        <div className="relative z-10 text-center">
+          <h3 className={`font-black text-white tracking-tight uppercase leading-none ${compact ? "text-[10px]" : "text-lg"}`}>
+            {agent.name}
+          </h3>
+          <p className={`font-medium text-[#d4af37] tracking-widest uppercase mt-1.5 ${compact ? "text-[8px]" : "text-[10px]"}`}>
+            {agent.role}
+          </p>
+        </div>
+      </div>
+
+      {/* Speaking Glow Effect */}
+      {agent.speaking && (
+        <div className="absolute inset-x-0 bottom-0 h-1 gold-gradient shadow-[0_-10px_30px_rgba(212,175,55,0.5)]" />
+      )}
     </motion.div>
   );
 }
