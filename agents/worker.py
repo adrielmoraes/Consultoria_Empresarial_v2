@@ -1074,13 +1074,17 @@ async def _start_specialist_in_room(
         return None
 
 async def entrypoint(ctx: JobContext) -> None:
+    # Acessar nome da sala com segurança
+    room_name = ctx.job.room.name if hasattr(ctx, "job") and ctx.job.room else ctx.room.name
     try:
         await _run_entrypoint(ctx)
+    except asyncio.CancelledError:
+        logger.info(f"[Job] Erro/Tarefa Cancelada no entrypoint (CancelledError). Sala: {room_name}")
     except Exception as e:
         logger.error(f"[Job] Erro crítico no entrypoint: {e}", exc_info=True)
     finally:
-        _active_rooms.discard(ctx.room.name)
-        logger.info(f"[Guard] Sala '{ctx.room.name}' liberada do guard após encerramento global da task.")
+        _active_rooms.discard(room_name)
+        logger.info(f"[Guard] Sala '{room_name}' liberada do guard após encerramento global da task. Salas ativas após limpeza: {_active_rooms}")
 
 async def _run_entrypoint(ctx: JobContext) -> None:
     # Log em arquivo para diagnóstico (compatível com Windows e Linux)
@@ -1509,11 +1513,17 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                 await asyncio.wait_for(spec_room.disconnect(), timeout=2.0)
             except Exception as e:
                 logger.warning(f"[Job] Erro/Timeout ao desconectar room de especialista: {e}")
+            except asyncio.CancelledError:
+                # O await dentro de task cancelada vai dar throw repetidamente.
+                # Capturamos para não impedir as chamadas síncronas de baixo.
+                pass
+
+        room_name = getattr(ctx.job.room, "name", ctx.room.name) if getattr(ctx, "job", None) else ctx.room.name
 
         # Limpa o lock _active_rooms para permitir a mesma sala rodar outro job no futuro
-        _active_rooms.discard(ctx.room.name)
+        _active_rooms.discard(room_name)
         
-        logger.info(f"[Job] Encerrado com sucesso para a sala '{ctx.room.name}'. Salas ativas: {_active_rooms}")
+        logger.info(f"[Job] Encerrado com sucesso para a sala '{room_name}'. Salas ativas: {_active_rooms}")
 
 # ============================================================
 async def on_job_request(req) -> None:
