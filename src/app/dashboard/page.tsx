@@ -123,7 +123,7 @@ export default function DashboardPage() {
           className="flex flex-col items-center gap-4"
         >
           <div className="w-14 h-14 rounded-xl bg-[#0a0a0f] border border-[#d4af37]/30 flex items-center justify-center">
-            <img src="/logo-icon.svg" alt="Hive Mind" className="w-10 h-10 animate-pulse" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
+            <img src="/logo-icon.svg" alt="Hive Mind" className="w-12 h-12 animate-pulse" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
           </div>
           <div className="flex items-center gap-2 text-gray-500">
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -163,15 +163,14 @@ export default function DashboardPage() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 bottom-0 w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-white/5 flex flex-col z-50 transition-transform duration-300 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        }`}
+        className={`fixed top-0 left-0 bottom-0 w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-white/5 flex flex-col z-50 transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          }`}
       >
         {/* Logo */}
         <div className="p-6 border-b border-gray-200 dark:border-white/5 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-lg bg-[#0a0a0f] border border-[#d4af37]/30 flex items-center justify-center">
-              <img src="/logo-icon.svg" alt="Hive Mind" className="w-7 h-7" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
+              <img src="/logo-icon.svg" alt="Hive Mind" className="w-12 h-12" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
             </div>
             <span className="text-lg font-bold gradient-text">Hive Mind</span>
           </Link>
@@ -195,11 +194,10 @@ export default function DashboardPage() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-colors ${
-                  isActive
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-colors ${isActive
                     ? "bg-[#d4af37]/10 text-[#d4af37] dark:text-[#e6c86a] font-medium"
                     : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"
-                }`}
+                  }`}
               >
                 <item.icon className="w-5 h-5" />
                 {item.label}
@@ -408,7 +406,7 @@ export default function DashboardPage() {
                       className="glass-card p-5 flex items-center gap-4 cursor-pointer group block"
                     >
                       <div className="w-11 h-11 rounded-xl bg-gradient-to-r from-[#d4af37]/10 to-[#b08d24]/10 border border-[#d4af37]/20 flex items-center justify-center flex-shrink-0 p-1.5">
-                        <img src="/logo-icon.svg" alt="Project" className="w-7 h-7" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
+                        <img src="/logo-icon.svg" alt="Project" className="w-12 h-12" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-sm truncate">
@@ -416,10 +414,9 @@ export default function DashboardPage() {
                         </h3>
                         <div className="flex items-center gap-3 mt-1">
                           <span
-                            className={`text-xs px-2 py-0.5 rounded-full border ${
-                              statusMap[project.status]?.color ||
+                            className={`text-xs px-2 py-0.5 rounded-full border ${statusMap[project.status]?.color ||
                               statusMap.pending.color
-                            }`}
+                              }`}
                           >
                             {statusMap[project.status]?.label ||
                               statusMap.pending.label}

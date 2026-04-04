@@ -182,7 +182,7 @@ export default function SubscriptionPage() {
         <div className="p-6 border-b border-gray-200 dark:border-white/5 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-lg bg-[#0a0a0f] border border-[#d4af37]/30 flex items-center justify-center">
-              <img src="/logo-icon.svg" alt="Hive Mind" className="w-7 h-7" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
+              <img src="/logo-icon.svg" alt="Hive Mind" className="w-12 h-12" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
             </div>
             <span className="text-lg font-bold gradient-text">Hive Mind</span>
           </Link>
@@ -198,11 +198,10 @@ export default function SubscriptionPage() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-colors ${
-                  isActive
-                    ? "bg-[#d4af37]/10 text-[#d4af37] dark:text-[#e6c86a] font-medium"
-                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"
-                }`}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-colors ${isActive
+                  ? "bg-[#d4af37]/10 text-[#d4af37] dark:text-[#e6c86a] font-medium"
+                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"
+                  }`}
               >
                 <item.icon className="w-5 h-5" />
                 {item.label}
@@ -284,9 +283,8 @@ export default function SubscriptionPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1 }}
-                  className={`glass-card p-6 relative flex flex-col ${plan.borderColor} ${
-                    plan.popular ? "ring-2 ring-[#d4af37]/30" : ""
-                  }`}
+                  className={`glass-card p-6 relative flex flex-col ${plan.borderColor} ${plan.popular ? "ring-2 ring-[#d4af37]/30" : ""
+                    }`}
                 >
                   {plan.popular && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-[#d4af37] to-[#b08d24] rounded-full text-xs font-bold text-white">
@@ -322,13 +320,12 @@ export default function SubscriptionPage() {
                   <button
                     onClick={() => !isCurrentPlan && !plan.disabled && handleSubscribe(plan.id)}
                     disabled={isCurrentPlan || plan.disabled || purchasing === plan.id}
-                    className={`w-full py-3 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
-                      isCurrentPlan
-                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 cursor-default"
-                        : plan.popular
+                    className={`w-full py-3 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 ${isCurrentPlan
+                      ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 cursor-default"
+                      : plan.popular
                         ? "btn-primary"
                         : "btn-secondary"
-                    } disabled:opacity-60`}
+                      } disabled:opacity-60`}
                   >
                     {purchasing === plan.id ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
