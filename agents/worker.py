@@ -375,7 +375,7 @@ class SpecialistAgent(Agent):
                 ),
                 realtime_input_config=genai_types.RealtimeInputConfig(
                     automatic_activity_detection=genai_types.AutomaticActivityDetection(
-                        disabled=False,
+                        disabled=True,
                     ),
                 ),
                 context_window_compression=genai_types.ContextWindowCompressionConfig(
@@ -428,7 +428,7 @@ class HostAgent(Agent):
             ),
             realtime_input_config=genai_types.RealtimeInputConfig(
                 automatic_activity_detection=genai_types.AutomaticActivityDetection(
-                    disabled=False,
+                    disabled=True,
                 ),
             ),
             context_window_compression=genai_types.ContextWindowCompressionConfig(
@@ -1162,6 +1162,13 @@ async def _run_entrypoint(ctx: JobContext) -> None:
     def _on_room_disconnected(*args, **kwargs) -> None:
         logger.info("[Room] Room principal desconectado. Disparando shutdown.")
         shutdown_event.set()
+
+    @ctx.room.on("participant_disconnected")
+    def _on_participant_disconnected(participant: rtc.RemoteParticipant) -> None:
+        if participant.identity.startswith("user-"):
+            logger.info(f"[Room] Usuário principal {participant.identity} desconectou. Disparando shutdown para liberar a sala.")
+            # Quando a aba é fechada ou reiniciada, garante que a sala sai do cache do worker
+            shutdown_event.set()
 
     # ------------------------------------------------------------------
     # Captura transcrição do usuário → Blackboard + frontend
