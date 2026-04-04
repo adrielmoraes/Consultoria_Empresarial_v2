@@ -63,7 +63,7 @@ export default function RegisterPage() {
           {/* Logo */}
           <Link href="/" className="flex items-center justify-center gap-2 mb-8">
             <div className="bg-gradient-to-r from-[#d4af37] to-[#b08d24] p-1.5 rounded-xl">
-              <img src="/logo-icon.svg" alt="Hive Mind" className="w-7 h-7" />
+              <img src="/logo.PNG" alt="Hive Mind" className="w-7 h-7 object-contain" />
             </div>
             <span className="text-2xl font-bold gradient-text">Hive Mind</span>
           </Link>

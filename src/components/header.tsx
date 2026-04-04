@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ThemeToggle } from "./theme-toggle";
+import { InstallAppButton } from "./install-app-button";
 import { motion } from "framer-motion";
 
 export function Header() {
@@ -19,7 +20,7 @@ export function Header() {
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-[#d4af37] to-[#b08d24] rounded-lg blur-md opacity-60 group-hover:opacity-100 transition-opacity" />
               <div className="relative p-1 rounded-lg">
-                <img src="/logo-icon.svg" alt="Hive Mind" className="w-8 h-8" />
+                <img src="/logo.PNG" alt="Hive Mind" className="w-8 h-8 object-contain" />
               </div>
             </div>
             <span className="text-xl font-bold bg-gradient-to-r from-[#d4af37] to-[#e6c86a] bg-clip-text text-transparent">
@@ -42,6 +43,7 @@ export function Header() {
 
           {/* Actions */}
           <div className="flex items-center gap-3">
+            <InstallAppButton />
             <ThemeToggle />
             <Link
               href="/login"

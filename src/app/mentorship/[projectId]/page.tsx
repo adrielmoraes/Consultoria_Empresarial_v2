@@ -698,7 +698,7 @@ export default function MentorshipRoomPage() {
       <div className="flex items-center justify-between px-4 py-3 bg-gray-900/80 backdrop-blur-sm border-b border-white/5 shrink-0">
         <div className="flex items-center gap-3">
           <div className="bg-gradient-to-r from-[#d4af37] to-[#b08d24] p-1 rounded-md">
-            <img src="/logo-icon.svg" alt="Hive Mind" className="w-4 h-4" />
+            <img src="/logo.png" alt="Hive Mind" className="w-4 h-4 object-contain" />
           </div>
           <div>
             <h1 className="text-sm font-semibold text-white">Sala de Mentoria</h1>

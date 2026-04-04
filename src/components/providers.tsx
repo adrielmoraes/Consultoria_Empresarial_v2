@@ -24,6 +24,20 @@ function ClientPersistence({ children }: { children: ReactNode }) {
     // Marca que o cliente carregou completamente
     sessionStorage.setItem("client_ready", "true");
     
+    // Registra Service Worker para PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js').then(
+          function(registration) {
+            console.log('Service Worker registration successful with scope: ', registration.scope);
+          },
+          function(err) {
+            console.log('Service Worker registration failed: ', err);
+          }
+        );
+      });
+    }
+
     // Previne reload em caso de visibilidade
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {

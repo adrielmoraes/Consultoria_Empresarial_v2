@@ -537,7 +537,7 @@ export default function LandingPage() {
       <footer className="border-t border-white/10 py-12 px-4">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <img src="/logo-icon.svg" alt="Hive Mind" className="w-6 h-6" />
+            <img src="/logo.PNG" alt="Hive Mind" className="w-6 h-6 object-contain" />
             <span className="font-bold gradient-text">Hive Mind</span>
           </div>
           <p className="text-sm text-gray-500 dark:text-gray-400">
