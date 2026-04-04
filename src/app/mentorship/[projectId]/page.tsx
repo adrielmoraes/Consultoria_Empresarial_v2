@@ -699,8 +699,8 @@ export default function MentorshipRoomPage() {
         <div className="flex items-center gap-4">
           <div className="relative group">
             <div className="absolute inset-[-2px] bg-[#d4af37]/30 rounded-lg blur opacity-50 group-hover:opacity-100 transition-opacity" />
-            <div className="relative w-10 h-10 rounded-lg bg-[#0a0a0f] border border-[#d4af37]/30 flex items-center justify-center group-hover:border-[#d4af37]/60 transition-all">
-              <img src="/logo-icon.svg" alt="Hive Mind" className="w-7 h-7 object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
+            <div className="relative w-12 h-12 rounded-lg bg-[#0a0a0f] border border-[#d4af37]/30 flex items-center justify-center p-1 group-hover:border-[#d4af37]/60 transition-all">
+              <img src="/logo-icon.svg?v=2" alt="Hive Mind" className="w-full h-full object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
             </div>
           </div>
           <div>

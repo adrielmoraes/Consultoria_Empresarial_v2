@@ -122,8 +122,8 @@ export default function DashboardPage() {
           animate={{ opacity: 1 }}
           className="flex flex-col items-center gap-4"
         >
-          <div className="w-14 h-14 rounded-xl bg-[#0a0a0f] border border-[#d4af37]/30 flex items-center justify-center">
-            <img src="/logo-icon.svg" alt="Hive Mind" className="w-12 h-12 animate-pulse" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
+          <div className="w-14 h-14 rounded-xl bg-[#0a0a0f] border border-[#d4af37]/30 flex items-center justify-center p-1">
+            <img src="/logo-icon.svg?v=2" alt="Hive Mind" className="w-full h-full object-contain animate-pulse" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
           </div>
           <div className="flex items-center gap-2 text-gray-500">
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -169,8 +169,8 @@ export default function DashboardPage() {
         {/* Logo */}
         <div className="p-6 border-b border-gray-200 dark:border-white/5 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-lg bg-[#0a0a0f] border border-[#d4af37]/30 flex items-center justify-center">
-              <img src="/logo-icon.svg" alt="Hive Mind" className="w-12 h-12" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
+            <div className="w-12 h-12 rounded-lg bg-[#0a0a0f] border border-[#d4af37]/30 flex items-center justify-center p-1">
+              <img src="/logo-icon.svg?v=2" alt="Hive Mind" className="w-full h-full object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
             </div>
             <span className="text-lg font-bold gradient-text">Hive Mind</span>
           </Link>
@@ -405,8 +405,8 @@ export default function DashboardPage() {
                       href={`/mentorship/${project.id}`}
                       className="glass-card p-5 flex items-center gap-4 cursor-pointer group block"
                     >
-                      <div className="w-11 h-11 rounded-xl bg-gradient-to-r from-[#d4af37]/10 to-[#b08d24]/10 border border-[#d4af37]/20 flex items-center justify-center flex-shrink-0 p-1.5">
-                        <img src="/logo-icon.svg" alt="Project" className="w-12 h-12" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-[#d4af37]/10 to-[#b08d24]/10 border border-[#d4af37]/20 flex items-center justify-center flex-shrink-0 p-1">
+                        <img src="/logo-icon.svg?v=2" alt="Project" className="w-full h-full object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-sm truncate">
