@@ -700,7 +700,7 @@ export default function MentorshipRoomPage() {
           <div className="relative group">
             <div className="absolute inset-[-2px] bg-[#d4af37]/30 rounded-lg blur opacity-50 group-hover:opacity-100 transition-opacity" />
             <div className="relative bg-gradient-to-br from-[#d4af37] to-[#b08d24] p-1.5 rounded-lg gold-glow">
-              <img src="/logo.png" alt="Hive Mind" className="w-5 h-5 object-contain" />
+              <img src="/logo-icon.svg" alt="Hive Mind" className="w-5 h-5 object-contain brightness-0 invert" />
             </div>
           </div>
           <div>

@@ -65,7 +65,7 @@ export default function RegisterPage() {
             <Link href="/" className="group relative">
               <div className="absolute -inset-4 bg-[#d4af37]/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <div className="relative bg-gradient-to-br from-[#d4af37] to-[#b08d24] p-3 rounded-2xl gold-glow shadow-2xl">
-                <img src="/logo.png" alt="Hive Mind" className="w-10 h-10 object-contain" />
+                <img src="/logo-icon.svg" alt="Hive Mind" className="w-10 h-10 object-contain brightness-0 invert" />
               </div>
             </Link>
             <h2 className="mt-6 text-3xl font-bold tracking-tight text-white text-center">

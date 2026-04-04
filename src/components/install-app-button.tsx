@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Download } from "lucide-react";
+import { Download, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function InstallAppButton() {
@@ -58,7 +58,16 @@ export function InstallAppButton() {
     }
   };
 
-  if (!isInstallable || isInstalled) {
+  if (isInstalled) {
+    return (
+      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+        <Check className="w-3.5 h-3.5 text-emerald-400" />
+        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Instalado</span>
+      </div>
+    );
+  }
+
+  if (!isInstallable) {
     return null;
   }
 
@@ -70,11 +79,12 @@ export function InstallAppButton() {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
           onClick={handleInstallClick}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          className="relative group overflow-hidden flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[#b08d24] to-[#d4af37] text-[#030712] text-xs font-black uppercase tracking-wider transition-all duration-300 hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:scale-105"
           title="Instalar Aplicativo"
         >
-          <Download className="w-4 h-4" />
-          <span className="hidden sm:inline">Instalar App</span>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+          <Download className="w-3.5 h-3.5 relative z-10" />
+          <span className="relative z-10 hidden sm:inline">Instalar App</span>
         </motion.button>
       )}
     </AnimatePresence>

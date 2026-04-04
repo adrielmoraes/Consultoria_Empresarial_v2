@@ -255,9 +255,12 @@ export default function LandingPage() {
                     }`}
                   >
                     <div className={`absolute inset-0 bg-gradient-to-br ${spec.color} opacity-20`} />
+                    {i === 2 && (
+                      <div className="absolute -inset-[1px] bg-gradient-to-br from-[#d4af37] via-[#f0dfa0] to-[#b08d24] rounded-sm opacity-60 animate-pulse -z-0" />
+                    )}
                     <div className="absolute inset-0 bg-[#030712]/60 backdrop-blur-[2px]" />
                     <div className="absolute inset-0 flex flex-col items-center justify-center p-2 text-center">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-br ${spec.color} shadow-2xl mb-3`}>
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-br ${spec.color} shadow-2xl mb-3 ${i === 2 ? "ring-2 ring-[#d4af37]/50 ring-offset-2 ring-offset-[#030712]" : ""}`}>
                         <spec.icon className="w-6 h-6 text-white" />
                       </div>
                       <p className="text-[10px] font-black uppercase text-white tracking-widest">{spec.name}</p>

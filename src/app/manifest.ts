@@ -11,15 +11,15 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: '#d4af37', // Gold color for branding
     icons: [
       {
-        src: '/logo.png',
-        sizes: '192x192',
-        type: 'image/png',
-        purpose: 'maskable'
+        src: '/logo-icon.svg',
+        sizes: 'any',
+        type: 'image/svg+xml',
+        purpose: 'any'
       },
       {
-        src: '/logo.png',
-        sizes: '512x512',
-        type: 'image/png',
+        src: '/logo-icon.svg',
+        sizes: 'any',
+        type: 'image/svg+xml',
         purpose: 'maskable'
       }
     ],
