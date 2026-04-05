@@ -375,7 +375,7 @@ class SpecialistAgent(Agent):
                 ),
                 realtime_input_config=genai_types.RealtimeInputConfig(
                     automatic_activity_detection=genai_types.AutomaticActivityDetection(
-                        disabled=True,
+                        disabled=False,
                     ),
                 ),
                 context_window_compression=genai_types.ContextWindowCompressionConfig(
@@ -428,7 +428,7 @@ class HostAgent(Agent):
             ),
             realtime_input_config=genai_types.RealtimeInputConfig(
                 automatic_activity_detection=genai_types.AutomaticActivityDetection(
-                    disabled=True,
+                    disabled=False,
                 ),
             ),
             context_window_compression=genai_types.ContextWindowCompressionConfig(
@@ -1098,8 +1098,8 @@ async def _run_entrypoint(ctx: JobContext) -> None:
 
     # Conecta o worker ao room (HostAgent/Nathália) sem auto-subscribe para evitar
     # escutar a voz dos outros agentes e gerar confusão e interferência (mandarim/árabe).
-    await ctx.connect(auto_subscribe=AutoSubscribe.SUBSCRIBE_NONE)
-    logger.info(f"Worker conectado ao room: {ctx.room.name} [Host SUBSCRIBE_NONE]")
+    await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
+    logger.info(f"Worker conectado ao room: {ctx.room.name} [Host AUDIO_ONLY]")
 
     # Garante a subscrição manual APENAS no áudio do usuário principal
     for p in ctx.room.remote_participants.values():

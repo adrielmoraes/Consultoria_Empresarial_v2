@@ -448,6 +448,12 @@ export default function MentorshipRoomPage() {
               const micPub = room!.localParticipant.getTrackPublication(
                 Track.Source.Microphone
               );
+              
+              console.log("[LiveKit] Track do microfone gerado:", micPub ? "Sim" : "Não", " | isMuted:", micPub?.isMuted);
+              if (micPub?.track?.mediaStreamTrack) {
+                console.log("[LiveKit] readyState:", micPub.track.mediaStreamTrack.readyState, " | enabled:", micPub.track.mediaStreamTrack.enabled);
+              }
+
               if (micPub?.track?.mediaStream) {
                 try {
                   const audioCtx = new AudioContext();
