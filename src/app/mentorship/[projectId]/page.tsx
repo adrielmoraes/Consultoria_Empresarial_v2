@@ -35,11 +35,19 @@ import {
   Track,
   Participant,
   RemoteParticipant,
-  LocalTrackPublication,
   ConnectionState,
   DisconnectReason,
   DefaultReconnectPolicy,
 } from "livekit-client";
+import {
+  buildAudioCaptureOptions,
+  createVoiceCapturePipeline,
+  inspectAudioInputState,
+  resolveMicrophoneError,
+  type AudioDiagnosticsSnapshot,
+  type AudioRuntimeLog,
+  type VoiceCapturePipeline,
+} from "@/lib/audio/vad-monitor";
 
 // ─── NextAuth type extension ──────────────────────────────────────────────────
 // CORREÇÃO P3 / P8: estender o tipo da sessão para eliminar (as any).
@@ -132,6 +140,11 @@ type TranscriptMessage = {
   timestamp: string;
 };
 
+type AudioStatusBadge = {
+  label: string;
+  tone: string;
+};
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatTime(s: number): string {
@@ -190,8 +203,10 @@ export default function MentorshipRoomPage() {
   const [micActive, setMicActive] = useState(false);
   const [micLevel, setMicLevel] = useState(0); // 0..1 nível de volume
   const [micError, setMicError] = useState<string | null>(null);
-  const micAnalyserRef = useRef<{ analyser: AnalyserNode; ctx: AudioContext; source: MediaStreamAudioSourceNode } | null>(null);
-  const micAnimFrameRef = useRef<number>(0);
+  const [audioDiagnostics, setAudioDiagnostics] = useState<AudioDiagnosticsSnapshot | null>(null);
+  const [audioLogs, setAudioLogs] = useState<AudioRuntimeLog[]>([]);
+  const audioPipelineRef = useRef<VoiceCapturePipeline | null>(null);
+  const preferredInputIdRef = useRef<string | null>(null);
 
   const roomRef = useRef<Room | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
@@ -212,12 +227,211 @@ export default function MentorshipRoomPage() {
     userId?: string;
   } | null>(null);
 
+  const pushAudioLog = useCallback((entry: AudioRuntimeLog) => {
+    const printer =
+      entry.level === "error"
+        ? console.error
+        : entry.level === "warn"
+          ? console.warn
+          : console.log;
+    printer(`[Audio][${entry.timestamp}] ${entry.message}`);
+    setAudioLogs((prev) => [entry, ...prev].slice(0, 8));
+  }, []);
+
+  const refreshAudioInputProbe = useCallback(async () => {
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.enumerateDevices) {
+      return;
+    }
+
+    try {
+      const probe = await inspectAudioInputState(preferredInputIdRef.current);
+      preferredInputIdRef.current = probe.selectedDeviceId ?? preferredInputIdRef.current;
+      setAudioDiagnostics((prev) => ({
+        permissionState: probe.permissionState,
+        requestedSampleRate: prev?.requestedSampleRate ?? 48_000,
+        appliedSampleRate: prev?.appliedSampleRate ?? 48_000,
+        sampleSize: prev?.sampleSize ?? 16,
+        channelCount: prev?.channelCount ?? 1,
+        latencyMs: prev?.latencyMs ?? null,
+        echoCancellation: prev?.echoCancellation ?? null,
+        noiseSuppression: prev?.noiseSuppression ?? null,
+        autoGainControl: prev?.autoGainControl ?? null,
+        voiceIsolation: prev?.voiceIsolation ?? null,
+        selectedDeviceId: probe.selectedDeviceId,
+        selectedDeviceLabel: probe.selectedDeviceLabel,
+        availableDevices: probe.devices.length,
+        micLevel: prev?.micLevel ?? 0,
+        rmsDb: prev?.rmsDb ?? -100,
+        peakDb: prev?.peakDb ?? -100,
+        noiseFloorDb: prev?.noiseFloorDb ?? -72,
+        snrDb: prev?.snrDb ?? 0,
+        clippingRatio: prev?.clippingRatio ?? 0,
+        voiceActive: prev?.voiceActive ?? false,
+        health: prev?.health ?? "warning",
+        updatedAt: prev?.updatedAt ?? Date.now(),
+      }));
+    } catch (error) {
+      pushAudioLog({
+        level: "warn",
+        message: `Falha ao enumerar dispositivos de áudio: ${resolveMicrophoneError(error)}`,
+        timestamp: new Date().toLocaleTimeString("pt-BR"),
+      });
+    }
+  }, [pushAudioLog]);
+
+  const cleanupAudioPipeline = useCallback((room?: Room | null) => {
+    const pipeline = audioPipelineRef.current;
+    audioPipelineRef.current = null;
+
+    if (pipeline && room && room.state !== ConnectionState.Disconnected) {
+      void room.localParticipant.unpublishTrack(pipeline.localTrack, false).catch(() => undefined);
+    }
+
+    pipeline?.cleanup();
+    setMicLevel(0);
+    setMicActive(false);
+  }, []);
+
+  const initializeMicrophone = useCallback(
+    async (room: Room) => {
+      cleanupAudioPipeline(room);
+      await refreshAudioInputProbe();
+
+      try {
+        const pipeline = await createVoiceCapturePipeline({
+          deviceId: preferredInputIdRef.current,
+          onLog: pushAudioLog,
+          onDiagnostics: (snapshot) => {
+            preferredInputIdRef.current = snapshot.selectedDeviceId ?? preferredInputIdRef.current;
+            setAudioDiagnostics(snapshot);
+            setMicLevel(snapshot.micLevel);
+          },
+        });
+
+        const publication = await room.localParticipant.publishTrack(pipeline.localTrack, {
+          source: Track.Source.Microphone,
+          dtx: false,
+          red: true,
+          forceStereo: false,
+          stopMicTrackOnMute: false,
+          preConnectBuffer: true,
+          audioPreset: { maxBitrate: 32000 },
+        });
+
+        audioPipelineRef.current = pipeline;
+        preferredInputIdRef.current =
+          pipeline.getSnapshot().selectedDeviceId ?? preferredInputIdRef.current;
+        setMicActive(true);
+        setIsMuted(false);
+        setMicError(null);
+        pushAudioLog({
+          level: "info",
+          message: "Pipeline de captura com limpeza, normalização e monitoramento em tempo real publicado.",
+          timestamp: new Date().toLocaleTimeString("pt-BR"),
+        });
+
+        return publication;
+      } catch (primaryError) {
+        pushAudioLog({
+          level: "warn",
+          message: `Pipeline avançado indisponível, aplicando fallback nativo: ${resolveMicrophoneError(primaryError)}`,
+          timestamp: new Date().toLocaleTimeString("pt-BR"),
+        });
+
+        const fallbackPublication = await room.localParticipant.setMicrophoneEnabled(
+          true,
+          buildAudioCaptureOptions(preferredInputIdRef.current ?? undefined),
+          {
+            source: Track.Source.Microphone,
+            dtx: false,
+            red: true,
+            forceStereo: false,
+            stopMicTrackOnMute: false,
+            preConnectBuffer: true,
+            audioPreset: { maxBitrate: 32000 },
+          },
+        );
+
+        const settings = fallbackPublication?.track?.mediaStreamTrack.getSettings() as
+          | (MediaTrackSettings & { latency?: number })
+          | undefined;
+        const fallbackDeviceId = settings?.deviceId ?? preferredInputIdRef.current ?? null;
+        preferredInputIdRef.current = fallbackDeviceId;
+        setAudioDiagnostics((prev) => ({
+          permissionState: prev?.permissionState ?? "unknown",
+          requestedSampleRate: prev?.requestedSampleRate ?? 48_000,
+          appliedSampleRate: settings?.sampleRate ?? prev?.appliedSampleRate ?? 48_000,
+          sampleSize: settings?.sampleSize ?? prev?.sampleSize ?? 16,
+          channelCount: settings?.channelCount ?? prev?.channelCount ?? 1,
+          latencyMs:
+            typeof settings?.latency === "number"
+              ? Math.round(settings.latency * 1000)
+              : prev?.latencyMs ?? null,
+          echoCancellation:
+            typeof settings?.echoCancellation === "boolean"
+              ? settings.echoCancellation
+              : prev?.echoCancellation ?? null,
+          noiseSuppression:
+            typeof settings?.noiseSuppression === "boolean"
+              ? settings.noiseSuppression
+              : prev?.noiseSuppression ?? null,
+          autoGainControl:
+            typeof settings?.autoGainControl === "boolean"
+              ? settings.autoGainControl
+              : prev?.autoGainControl ?? null,
+          voiceIsolation: prev?.voiceIsolation ?? null,
+          selectedDeviceId: fallbackDeviceId,
+          selectedDeviceLabel: prev?.selectedDeviceLabel ?? "Microfone padrão do navegador",
+          availableDevices: prev?.availableDevices ?? 0,
+          micLevel: prev?.micLevel ?? 0,
+          rmsDb: prev?.rmsDb ?? -100,
+          peakDb: prev?.peakDb ?? -100,
+          noiseFloorDb: prev?.noiseFloorDb ?? -72,
+          snrDb: prev?.snrDb ?? 0,
+          clippingRatio: prev?.clippingRatio ?? 0,
+          voiceActive: prev?.voiceActive ?? false,
+          health: prev?.health ?? "warning",
+          updatedAt: Date.now(),
+        }));
+        setMicActive(true);
+        setIsMuted(false);
+        setMicError(null);
+
+        return fallbackPublication;
+      }
+    },
+    [cleanupAudioPipeline, pushAudioLog, refreshAudioInputProbe],
+  );
+
   // Redireciona para login se não autenticado (executa apenas quando authStatus muda)
   useEffect(() => {
     if (authStatus === "unauthenticated") {
       router.replace("/login");
     }
-  }, [authStatus]);
+  }, [authStatus, router]);
+
+  useEffect(() => {
+    void refreshAudioInputProbe();
+
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.addEventListener) {
+      return;
+    }
+
+    const handleDeviceChange = () => {
+      pushAudioLog({
+        level: "info",
+        message: "Alteração detectada na lista de dispositivos de áudio.",
+        timestamp: new Date().toLocaleTimeString("pt-BR"),
+      });
+      void refreshAudioInputProbe();
+    };
+
+    navigator.mediaDevices.addEventListener("devicechange", handleDeviceChange);
+
+    return () => {
+      navigator.mediaDevices.removeEventListener("devicechange", handleDeviceChange);
+    };
+  }, [pushAudioLog, refreshAudioInputProbe]);
 
   // Carregar lista inicial de documentos
   useEffect(() => {
@@ -347,6 +561,7 @@ export default function MentorshipRoomPage() {
 
     let room: Room | null = null;
     let isMounted = true;
+    const audioContainer = audioContainerRef.current;
 
     async function connect() {
       try {
@@ -390,27 +605,22 @@ export default function MentorshipRoomPage() {
           reconnectPolicy: new DefaultReconnectPolicy(
             [500, 1000, 2000, 5000, 10000, 30000]
           ),
-          audioCaptureDefaults: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-            channelCount: 1, // Mono — melhor qualidade para captura de voz
-          },
+          audioCaptureDefaults: buildAudioCaptureOptions(),
           publishDefaults: {
-            dtx: false, // Áudio mantido permanentemente aberto
-            red: true,  // Codificação redundante contra perda de pacotes
+            dtx: false,
+            red: true,
+            preConnectBuffer: true,
+            stopMicTrackOnMute: false,
+            audioPreset: { maxBitrate: 32000 },
           },
         });
 
         // ── Eventos da sala ──────────────────────────────────────────────────
 
         room.on(RoomEvent.Connected, async () => {
-          // CORREÇÃO StrictMode: NÃO desconectar quando isMounted=false.
-          // Apenas ignora — o cleanup do useEffect cuida da desconexão.
           if (!isMounted) return;
           roomRef.current = room;
           setConnectionState("connected");
-          // F5: Host (Nathália) conecta com o room principal — marcar como conectado
           setConnectedAgents((prev) => new Set(prev).add("host"));
           addTranscriptMessage("Sistema", "Conectado! Aguardando os especialistas...");
 
@@ -423,7 +633,6 @@ export default function MentorshipRoomPage() {
             console.warn("[LiveKit] Falha ao desbloquear AudioContext:", audioErr);
           }
 
-          // Detecta agentes que já estavam na sala antes do frontend conectar
           for (const [, p] of room!.remoteParticipants) {
             const pid = p.identity;
             if (pid.startsWith("agent-")) {
@@ -434,56 +643,17 @@ export default function MentorshipRoomPage() {
             }
           }
 
-          // CORREÇÃO VOZ: Ativa microfone com retry e feedback visual
           let micEnabled = false;
-          for (let attempt = 0; attempt < 3 && !micEnabled; attempt++) {
+          for (let attempt = 0; attempt < 2 && !micEnabled; attempt++) {
             try {
-              await room!.localParticipant.setMicrophoneEnabled(true);
+              await initializeMicrophone(room!);
               micEnabled = true;
-              setMicActive(true);
-              setMicError(null);
               console.log(`[LiveKit] Microfone ativado com sucesso (tentativa ${attempt + 1}).`);
-
-              // CORREÇÃO VOZ: Conecta analisador de nível de áudio para feedback visual
-              const micPub = room!.localParticipant.getTrackPublication(
-                Track.Source.Microphone
-              );
-              
-              console.log("[LiveKit] Track do microfone gerado:", micPub ? "Sim" : "Não", " | isMuted:", micPub?.isMuted);
-              if (micPub?.track?.mediaStreamTrack) {
-                console.log("[LiveKit] readyState:", micPub.track.mediaStreamTrack.readyState, " | enabled:", micPub.track.mediaStreamTrack.enabled);
-              }
-
-              if (micPub?.track?.mediaStream) {
-                try {
-                  const audioCtx = new AudioContext();
-                  const source = audioCtx.createMediaStreamSource(micPub.track.mediaStream);
-                  const analyser = audioCtx.createAnalyser();
-                  analyser.fftSize = 256;
-                  analyser.smoothingTimeConstant = 0.5;
-                  source.connect(analyser);
-                  micAnalyserRef.current = { analyser, ctx: audioCtx, source };
-
-                  // Loop de atualização do nível de áudio
-                  const dataArray = new Uint8Array(analyser.frequencyBinCount);
-                  const updateLevel = () => {
-                    if (!micAnalyserRef.current) return;
-                    analyser.getByteFrequencyData(dataArray);
-                    const avg = dataArray.reduce((sum, v) => sum + v, 0) / dataArray.length;
-                    setMicLevel(Math.min(avg / 128, 1)); // normaliza 0..1
-                    micAnimFrameRef.current = requestAnimationFrame(updateLevel);
-                  };
-                  micAnimFrameRef.current = requestAnimationFrame(updateLevel);
-                  console.log("[LiveKit] Analisador de áudio conectado.");
-                } catch (analyserErr) {
-                  console.warn("[LiveKit] Falha ao criar analisador de áudio:", analyserErr);
-                }
-              }
             } catch (micErr) {
               console.warn(`[LiveKit] Erro ao ativar microfone (tentativa ${attempt + 1}/3):`, micErr);
-              if (attempt < 2) await new Promise(r => setTimeout(r, 1000));
+              if (attempt < 1) await new Promise(r => setTimeout(r, 1000));
               else {
-                setMicError("Microfone não disponível. Verifique as permissões do navegador.");
+                setMicError(resolveMicrophoneError(micErr));
                 setMicActive(false);
               }
             }
@@ -510,6 +680,52 @@ export default function MentorshipRoomPage() {
           isReconnectingRef.current = false;
           setConnectionState("connected");
           addTranscriptMessage("Sistema", "Reconectado!");
+          if (!room?.localParticipant.getTrackPublication(Track.Source.Microphone)) {
+            void initializeMicrophone(room!);
+          }
+        });
+
+        room.on(RoomEvent.MediaDevicesError, (error) => {
+          const message = resolveMicrophoneError(error);
+          setMicError(message);
+          setMicActive(false);
+          pushAudioLog({
+            level: "error",
+            message,
+            timestamp: new Date().toLocaleTimeString("pt-BR"),
+          });
+        });
+
+        room.on(RoomEvent.LocalTrackPublished, (publication) => {
+          if (publication.source === Track.Source.Microphone) {
+            pushAudioLog({
+              level: "info",
+              message: "Trilha de microfone publicada com sucesso no LiveKit.",
+              timestamp: new Date().toLocaleTimeString("pt-BR"),
+            });
+          }
+        });
+
+        room.on(RoomEvent.LocalTrackUnpublished, (publication) => {
+          if (publication.source === Track.Source.Microphone) {
+            pushAudioLog({
+              level: "warn",
+              message: "Trilha de microfone removida da sessão.",
+              timestamp: new Date().toLocaleTimeString("pt-BR"),
+            });
+          }
+        });
+
+        room.on(RoomEvent.TrackMuted, (_publication, participant) => {
+          if (participant.isLocal) {
+            setMicActive(false);
+          }
+        });
+
+        room.on(RoomEvent.TrackUnmuted, (_publication, participant) => {
+          if (participant.isLocal) {
+            setMicActive(true);
+          }
         });
 
         // Track de áudio
@@ -622,27 +838,16 @@ export default function MentorshipRoomPage() {
       sessionCreatingRef.current = false;
       connectionStartedRef.current = false; // Permite re-mount reconectar
 
-      // CORREÇÃO VOZ: Limpa analisador de áudio
-      if (micAnimFrameRef.current) {
-        cancelAnimationFrame(micAnimFrameRef.current);
-        micAnimFrameRef.current = 0;
-      }
-      if (micAnalyserRef.current) {
-        try {
-          micAnalyserRef.current.source.disconnect();
-          micAnalyserRef.current.ctx.close();
-        } catch { /* ignore */ }
-        micAnalyserRef.current = null;
-      }
+      cleanupAudioPipeline(room);
 
       if (room && room.state !== ConnectionState.Disconnected) {
         room.disconnect();
       }
-      audioContainerRef.current
+      audioContainer
         ?.querySelectorAll("audio")
         .forEach((el) => el.remove());
     };
-  }, [authStatus, session]); // Re-executa quando auth muda de loading→authenticated
+  }, [addTranscriptMessage, authStatus, cleanupAudioPipeline, initializeMicrophone, pushAudioLog, session]);
 
   // ─── Handlers ───────────────────────────────────────────────────────────────
 
@@ -651,14 +856,20 @@ export default function MentorshipRoomPage() {
     if (!lp) return;
     const newMutedState = !isMuted;
     try {
-      await lp.setMicrophoneEnabled(!newMutedState);
+      if (audioPipelineRef.current) {
+        await audioPipelineRef.current.setMuted(newMutedState);
+      } else {
+        await lp.setMicrophoneEnabled(!newMutedState);
+      }
       setIsMuted(newMutedState);
       setMicActive(!newMutedState);
       if (newMutedState) {
         setMicLevel(0);
       }
+      setMicError(null);
     } catch (err) {
       console.warn("[LiveKit] Erro ao alternar microfone:", err);
+      setMicError(resolveMicrophoneError(err));
     }
   };
 
@@ -771,6 +982,25 @@ export default function MentorshipRoomPage() {
     reconnecting: <Loader2 className="w-3.5 h-3.5 text-amber-400 animate-spin" />,
     error: <WifiOff className="w-3.5 h-3.5 text-red-400" />,
   }[connectionState];
+
+  const micHealthBadge: AudioStatusBadge = audioDiagnostics
+    ? audioDiagnostics.health === "good"
+      ? { label: "Sinal estável", tone: "bg-emerald-500/10 text-emerald-300 border-emerald-500/20" }
+      : audioDiagnostics.health === "warning"
+        ? { label: "Sinal degradado", tone: "bg-amber-500/10 text-amber-300 border-amber-500/20" }
+        : { label: "Sinal crítico", tone: "bg-red-500/10 text-red-300 border-red-500/20" }
+    : { label: "Sem leitura", tone: "bg-white/5 text-gray-400 border-white/10" };
+
+  const permissionBadge: AudioStatusBadge =
+    audioDiagnostics?.permissionState === "granted"
+      ? { label: "Permissão ok", tone: "bg-emerald-500/10 text-emerald-300 border-emerald-500/20" }
+      : audioDiagnostics?.permissionState === "prompt"
+        ? { label: "Aguardando permissão", tone: "bg-amber-500/10 text-amber-300 border-amber-500/20" }
+        : audioDiagnostics?.permissionState === "denied"
+          ? { label: "Permissão negada", tone: "bg-red-500/10 text-red-300 border-red-500/20" }
+          : { label: "Permissão indisponível", tone: "bg-white/5 text-gray-400 border-white/10" };
+
+  const audioLogPreview = audioLogs.slice(0, 3);
 
   // ─── Render ──────────────────────────────────────────────────────────────────
 
@@ -1002,9 +1232,64 @@ export default function MentorshipRoomPage() {
         </AnimatePresence>
       </div>
 
+      <div className="px-4 pt-3 pb-2 bg-gray-900/80 backdrop-blur-sm border-t border-white/5 shrink-0">
+        <div className="max-w-6xl mx-auto rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={`px-2.5 py-1 rounded-full border text-[10px] font-semibold uppercase tracking-wider ${permissionBadge.tone}`}>
+              {permissionBadge.label}
+            </span>
+            <span className={`px-2.5 py-1 rounded-full border text-[10px] font-semibold uppercase tracking-wider ${micHealthBadge.tone}`}>
+              {micHealthBadge.label}
+            </span>
+            {audioDiagnostics && (
+              <>
+                <span className="px-2.5 py-1 rounded-full border border-white/10 text-[10px] font-semibold uppercase tracking-wider text-gray-300">
+                  {audioDiagnostics.appliedSampleRate}Hz · {audioDiagnostics.channelCount ?? 1} canal
+                </span>
+                <span className="px-2.5 py-1 rounded-full border border-white/10 text-[10px] font-semibold uppercase tracking-wider text-gray-300">
+                  SNR {Math.round(audioDiagnostics.snrDb)}dB · ruído {Math.round(audioDiagnostics.noiseFloorDb)}dB
+                </span>
+                <span className="px-2.5 py-1 rounded-full border border-white/10 text-[10px] font-semibold uppercase tracking-wider text-gray-300">
+                  Pico {Math.round(audioDiagnostics.peakDb)}dB · clip {(audioDiagnostics.clippingRatio * 100).toFixed(1)}%
+                </span>
+              </>
+            )}
+          </div>
+
+          <div className="mt-3 grid gap-2 text-xs text-gray-400 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+            <div className="rounded-xl border border-white/5 bg-black/20 px-3 py-2">
+              <div className="text-[10px] uppercase tracking-wider text-gray-500">Entrada</div>
+              <div className="mt-1 text-sm text-gray-200">
+                {audioDiagnostics?.selectedDeviceLabel ?? "Microfone padrão do navegador"}
+              </div>
+              <div className="mt-1 flex flex-wrap gap-3 text-[11px] text-gray-400">
+                <span>{audioDiagnostics?.availableDevices ?? 0} dispositivos</span>
+                <span>latência {audioDiagnostics?.latencyMs ?? "--"}ms</span>
+                <span>VAD {audioDiagnostics?.voiceActive ? "falando" : "silêncio"}</span>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-white/5 bg-black/20 px-3 py-2">
+              <div className="text-[10px] uppercase tracking-wider text-gray-500">Monitoramento</div>
+              <div className="mt-1 flex flex-col gap-1">
+                {audioLogPreview.length > 0 ? (
+                  audioLogPreview.map((entry, index) => (
+                    <div key={`${entry.timestamp}-${index}`} className="flex items-start justify-between gap-3">
+                      <span className="text-gray-300">{entry.message}</span>
+                      <span className="shrink-0 text-[10px] text-gray-500">{entry.timestamp}</span>
+                    </div>
+                  ))
+                ) : (
+                  <span className="text-gray-500">Aguardando eventos de captura.</span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Controls Bar */}
-      <div className="flex items-center justify-center gap-4 px-4 py-4 bg-gray-900/80 backdrop-blur-sm border-t border-white/5 shrink-0">
-        {/* CORREÇÃO VOZ: Indicador de erro no mic */}
+      <div className="flex items-center justify-center gap-4 px-4 py-4 bg-gray-900/80 backdrop-blur-sm shrink-0">
         {micError && (
           <div className="absolute bottom-20 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300 text-xs font-medium flex items-center gap-2 backdrop-blur-sm z-30">
             <AlertCircle className="w-3.5 h-3.5 shrink-0" />
@@ -1167,11 +1452,6 @@ export default function MentorshipRoomPage() {
   );
 }
 
-// ─── MarkdownRenderer ─────────────────────────────────────────────────────────
-// Renderer de markdown sem dependências externas.
-// Suporta: h1–h3, negrito, itálico, código inline, blocos de código,
-// listas ordenadas e não-ordenadas (com aninhamento), separadores e parágrafos.
-
 type MdToken =
   | { type: "h1" | "h2" | "h3"; text: string }
   | { type: "hr" }
@@ -1235,7 +1515,7 @@ function tokenize(content: string): MdToken[] {
     const olMatch = line.match(/^(\s*)(\d+)\. (.+)/);
     if (ulMatch || olMatch) {
       const items: MdListItem[] = [];
-      let topOrdered = !!olMatch;
+      const topOrdered = !!olMatch;
       while (i < lines.length) {
         const l = lines[i];
         const ul = l.match(/^(\s*)[*\-+] (.+)/);
@@ -1288,51 +1568,6 @@ function renderListItems(items: MdListItem[]): React.ReactNode {
     );
   }
   return <>{result}</>;
-}
-
-function MarkdownRenderer({ content }: { content: string }) {
-  const tokens = tokenize(content);
-
-  return (
-    <div className="space-y-1">
-      {tokens.map((tok, i) => {
-        switch (tok.type) {
-          case "h1":
-            return <h1 key={i} className="text-white font-bold text-sm mt-4 mb-1 first:mt-0">{parseInline(tok.text)}</h1>;
-          case "h2":
-            return <h2 key={i} className="text-violet-300 font-semibold text-xs mt-3 mb-1 first:mt-0">{parseInline(tok.text)}</h2>;
-          case "h3":
-            return <h3 key={i} className="text-gray-200 font-medium text-xs mt-2 mb-0.5">{parseInline(tok.text)}</h3>;
-          case "hr":
-            return <hr key={i} className="border-white/10 my-3" />;
-          case "code_block":
-            return (
-              <pre key={i} className="bg-gray-950 border border-white/10 rounded-lg p-3 overflow-x-auto my-2">
-                <code className="text-violet-300 text-[11px] font-mono">{tok.code}</code>
-              </pre>
-            );
-          case "ul":
-            return (
-              <ul key={i} className="list-disc pl-4 my-1">
-                {renderListItems(tok.items)}
-              </ul>
-            );
-          case "ol":
-            return (
-              <ol key={i} className="list-decimal pl-4 my-1">
-                {renderListItems(tok.items)}
-              </ol>
-            );
-          case "p":
-            return <p key={i} className="text-gray-400 text-xs leading-relaxed">{parseInline(tok.text)}</p>;
-          case "blank":
-            return <div key={i} className="h-1" />;
-          default:
-            return null;
-        }
-      })}
-    </div>
-  );
 }
 
 // ─── ExecutionPlanRenderer ─────────────────────────────────────────────────────
@@ -1441,8 +1676,6 @@ function ChecklistView({ content }: { content: string }) {
     return items;
   });
 
-  const [completedCount, setCompletedCount] = useState(0);
-
   const toggleItem = (id: string) => {
     setChecklist((prev) =>
       prev.map((item) =>
@@ -1451,10 +1684,7 @@ function ChecklistView({ content }: { content: string }) {
     );
   };
 
-  useEffect(() => {
-    setCompletedCount(checklist.filter((item) => item.completed).length);
-  }, [checklist]);
-
+  const completedCount = checklist.filter((item) => item.completed).length;
   const progress = checklist.length > 0 ? (completedCount / checklist.length) * 100 : 0;
 
   const groupedItems = checklist.reduce((acc, item) => {

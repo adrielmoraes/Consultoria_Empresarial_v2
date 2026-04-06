@@ -2,7 +2,7 @@
     "python.defaultInterpreterPath": "C:/Mentoria/agents/venv/Scripts/python.exe",
     "python.analysis.extraPaths": ["C:/Mentoria/agents/venv/Lib/site-packages"],
     "python.analysis.pythonPath": "C:/Mentoria/agents/venv/Scripts/python.exe",
-    "python.languageServer": "Default",
+    "python.languageServer": "None",
     "files.associations": {
         "**/worker.py": "python"
     }
