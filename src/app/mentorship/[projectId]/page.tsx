@@ -142,11 +142,6 @@ type TranscriptMessage = {
   timestamp: string;
 };
 
-type AudioStatusBadge = {
-  label: string;
-  tone: string;
-};
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatTime(s: number): string {
@@ -939,25 +934,6 @@ export default function MentorshipRoomPage() {
     error: <WifiOff className="w-3.5 h-3.5 text-red-400" />,
   }[connectionState];
 
-  const micHealthBadge: AudioStatusBadge = audioDiagnostics
-    ? audioDiagnostics.health === "good"
-      ? { label: "Sinal estável", tone: "bg-emerald-500/10 text-emerald-300 border-emerald-500/20" }
-      : audioDiagnostics.health === "warning"
-        ? { label: "Sinal degradado", tone: "bg-amber-500/10 text-amber-300 border-amber-500/20" }
-        : { label: "Sinal crítico", tone: "bg-red-500/10 text-red-300 border-red-500/20" }
-    : { label: "Sem leitura", tone: "bg-white/5 text-gray-400 border-white/10" };
-
-  const permissionBadge: AudioStatusBadge =
-    audioDiagnostics?.permissionState === "granted"
-      ? { label: "Permissão ok", tone: "bg-emerald-500/10 text-emerald-300 border-emerald-500/20" }
-      : audioDiagnostics?.permissionState === "prompt"
-        ? { label: "Aguardando permissão", tone: "bg-amber-500/10 text-amber-300 border-amber-500/20" }
-        : audioDiagnostics?.permissionState === "denied"
-          ? { label: "Permissão negada", tone: "bg-red-500/10 text-red-300 border-red-500/20" }
-          : { label: "Permissão indisponível", tone: "bg-white/5 text-gray-400 border-white/10" };
-
-  const audioLogPreview = audioLogs.slice(0, 3);
-
   // ─── Render ──────────────────────────────────────────────────────────────────
 
   return (
@@ -1186,62 +1162,6 @@ export default function MentorshipRoomPage() {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
-
-      <div className="px-4 pt-3 pb-2 bg-gray-900/80 backdrop-blur-sm border-t border-white/5 shrink-0">
-        <div className="max-w-6xl mx-auto rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className={`px-2.5 py-1 rounded-full border text-[10px] font-semibold uppercase tracking-wider ${permissionBadge.tone}`}>
-              {permissionBadge.label}
-            </span>
-            <span className={`px-2.5 py-1 rounded-full border text-[10px] font-semibold uppercase tracking-wider ${micHealthBadge.tone}`}>
-              {micHealthBadge.label}
-            </span>
-            {audioDiagnostics && (
-              <>
-                <span className="px-2.5 py-1 rounded-full border border-white/10 text-[10px] font-semibold uppercase tracking-wider text-gray-300">
-                  {audioDiagnostics.appliedSampleRate}Hz · {audioDiagnostics.channelCount ?? 1} canal
-                </span>
-                <span className="px-2.5 py-1 rounded-full border border-white/10 text-[10px] font-semibold uppercase tracking-wider text-gray-300">
-                  SNR {Math.round(audioDiagnostics.snrDb)}dB · ruído {Math.round(audioDiagnostics.noiseFloorDb)}dB
-                </span>
-                <span className="px-2.5 py-1 rounded-full border border-white/10 text-[10px] font-semibold uppercase tracking-wider text-gray-300">
-                  Pico {Math.round(audioDiagnostics.peakDb)}dB · clip {(audioDiagnostics.clippingRatio * 100).toFixed(1)}%
-                </span>
-              </>
-            )}
-          </div>
-
-          <div className="mt-3 grid gap-2 text-xs text-gray-400 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-            <div className="rounded-xl border border-white/5 bg-black/20 px-3 py-2">
-              <div className="text-[10px] uppercase tracking-wider text-gray-500">Entrada</div>
-              <div className="mt-1 text-sm text-gray-200">
-                {audioDiagnostics?.selectedDeviceLabel ?? "Microfone padrão do navegador"}
-              </div>
-              <div className="mt-1 flex flex-wrap gap-3 text-[11px] text-gray-400">
-                <span>{audioDiagnostics?.availableDevices ?? 0} dispositivos</span>
-                <span>latência {audioDiagnostics?.latencyMs ?? "--"}ms</span>
-                <span>VAD {audioDiagnostics?.voiceActive ? "falando" : "silêncio"}</span>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-white/5 bg-black/20 px-3 py-2">
-              <div className="text-[10px] uppercase tracking-wider text-gray-500">Monitoramento</div>
-              <div className="mt-1 flex flex-col gap-1">
-                {audioLogPreview.length > 0 ? (
-                  audioLogPreview.map((entry, index) => (
-                    <div key={`${entry.timestamp}-${index}`} className="flex items-start justify-between gap-3">
-                      <span className="text-gray-300">{entry.message}</span>
-                      <span className="shrink-0 text-[10px] text-gray-500">{entry.timestamp}</span>
-                    </div>
-                  ))
-                ) : (
-                  <span className="text-gray-500">Aguardando eventos de captura.</span>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Controls Bar */}
