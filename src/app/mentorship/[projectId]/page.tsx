@@ -41,13 +41,15 @@ import {
 } from "livekit-client";
 import {
   buildAudioCaptureOptions,
-  createVoiceCapturePipeline,
   inspectAudioInputState,
   resolveMicrophoneError,
   type AudioDiagnosticsSnapshot,
   type AudioRuntimeLog,
-  type VoiceCapturePipeline,
 } from "@/lib/audio/vad-monitor";
+import {
+  createNativeAudioCapture,
+  type NativeAudioCapture,
+} from "@/lib/audio/native-capture";
 
 // ─── NextAuth type extension ──────────────────────────────────────────────────
 // CORREÇÃO P3 / P8: estender o tipo da sessão para eliminar (as any).
@@ -205,8 +207,8 @@ export default function MentorshipRoomPage() {
   const [micError, setMicError] = useState<string | null>(null);
   const [audioDiagnostics, setAudioDiagnostics] = useState<AudioDiagnosticsSnapshot | null>(null);
   const [audioLogs, setAudioLogs] = useState<AudioRuntimeLog[]>([]);
-  const audioPipelineRef = useRef<VoiceCapturePipeline | null>(null);
   const preferredInputIdRef = useRef<string | null>(null);
+  const nativeCaptureRef = useRef<NativeAudioCapture | null>(null);
 
   const roomRef = useRef<Room | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
@@ -280,14 +282,11 @@ export default function MentorshipRoomPage() {
   }, [pushAudioLog]);
 
   const cleanupAudioPipeline = useCallback((room?: Room | null) => {
-    const pipeline = audioPipelineRef.current;
-    audioPipelineRef.current = null;
-
-    if (pipeline && room && room.state !== ConnectionState.Disconnected) {
-      void room.localParticipant.unpublishTrack(pipeline.localTrack, false).catch(() => undefined);
+    const capture = nativeCaptureRef.current;
+    nativeCaptureRef.current = null;
+    if (capture) {
+      capture.cleanup();
     }
-
-    pipeline?.cleanup();
     setMicLevel(0);
     setMicActive(false);
   }, []);
@@ -295,10 +294,12 @@ export default function MentorshipRoomPage() {
   const initializeMicrophone = useCallback(
     async (room: Room) => {
       cleanupAudioPipeline(room);
-      await refreshAudioInputProbe();
 
       try {
-        const pipeline = await createVoiceCapturePipeline({
+        const probe = await inspectAudioInputState(preferredInputIdRef.current);
+        preferredInputIdRef.current = probe.selectedDeviceId ?? preferredInputIdRef.current;
+
+        const capture = await createNativeAudioCapture({
           deviceId: preferredInputIdRef.current,
           onLog: pushAudioLog,
           onDiagnostics: (snapshot) => {
@@ -308,99 +309,40 @@ export default function MentorshipRoomPage() {
           },
         });
 
-        const publication = await room.localParticipant.publishTrack(pipeline.localTrack, {
+        nativeCaptureRef.current = capture;
+
+        const publication = await room.localParticipant.publishTrack(capture.localTrack, {
           source: Track.Source.Microphone,
           dtx: false,
-          red: true,
+          red: false,
           forceStereo: false,
           stopMicTrackOnMute: false,
           preConnectBuffer: true,
-          audioPreset: { maxBitrate: 32000 },
         });
 
-        audioPipelineRef.current = pipeline;
-        preferredInputIdRef.current =
-          pipeline.getSnapshot().selectedDeviceId ?? preferredInputIdRef.current;
         setMicActive(true);
         setIsMuted(false);
         setMicError(null);
         pushAudioLog({
           level: "info",
-          message: "Pipeline de captura com limpeza, normalização e monitoramento em tempo real publicado.",
+          message: "Captura de áudio nativa (getUserMedia) iniciada e publicada no LiveKit.",
           timestamp: new Date().toLocaleTimeString("pt-BR"),
         });
 
         return publication;
-      } catch (primaryError) {
+      } catch (micError) {
+        const message = resolveMicrophoneError(micError);
+        setMicError(message);
+        setMicActive(false);
         pushAudioLog({
-          level: "warn",
-          message: `Pipeline avançado indisponível, aplicando fallback nativo: ${resolveMicrophoneError(primaryError)}`,
+          level: "error",
+          message: `Falha ao ativar microfone: ${message}`,
           timestamp: new Date().toLocaleTimeString("pt-BR"),
         });
-
-        const fallbackPublication = await room.localParticipant.setMicrophoneEnabled(
-          true,
-          buildAudioCaptureOptions(preferredInputIdRef.current ?? undefined),
-          {
-            source: Track.Source.Microphone,
-            dtx: false,
-            red: true,
-            forceStereo: false,
-            stopMicTrackOnMute: false,
-            preConnectBuffer: true,
-            audioPreset: { maxBitrate: 32000 },
-          },
-        );
-
-        const settings = fallbackPublication?.track?.mediaStreamTrack.getSettings() as
-          | (MediaTrackSettings & { latency?: number })
-          | undefined;
-        const fallbackDeviceId = settings?.deviceId ?? preferredInputIdRef.current ?? null;
-        preferredInputIdRef.current = fallbackDeviceId;
-        setAudioDiagnostics((prev) => ({
-          permissionState: prev?.permissionState ?? "unknown",
-          requestedSampleRate: prev?.requestedSampleRate ?? 48_000,
-          appliedSampleRate: settings?.sampleRate ?? prev?.appliedSampleRate ?? 48_000,
-          sampleSize: settings?.sampleSize ?? prev?.sampleSize ?? 16,
-          channelCount: settings?.channelCount ?? prev?.channelCount ?? 1,
-          latencyMs:
-            typeof settings?.latency === "number"
-              ? Math.round(settings.latency * 1000)
-              : prev?.latencyMs ?? null,
-          echoCancellation:
-            typeof settings?.echoCancellation === "boolean"
-              ? settings.echoCancellation
-              : prev?.echoCancellation ?? null,
-          noiseSuppression:
-            typeof settings?.noiseSuppression === "boolean"
-              ? settings.noiseSuppression
-              : prev?.noiseSuppression ?? null,
-          autoGainControl:
-            typeof settings?.autoGainControl === "boolean"
-              ? settings.autoGainControl
-              : prev?.autoGainControl ?? null,
-          voiceIsolation: prev?.voiceIsolation ?? null,
-          selectedDeviceId: fallbackDeviceId,
-          selectedDeviceLabel: prev?.selectedDeviceLabel ?? "Microfone padrão do navegador",
-          availableDevices: prev?.availableDevices ?? 0,
-          micLevel: prev?.micLevel ?? 0,
-          rmsDb: prev?.rmsDb ?? -100,
-          peakDb: prev?.peakDb ?? -100,
-          noiseFloorDb: prev?.noiseFloorDb ?? -72,
-          snrDb: prev?.snrDb ?? 0,
-          clippingRatio: prev?.clippingRatio ?? 0,
-          voiceActive: prev?.voiceActive ?? false,
-          health: prev?.health ?? "warning",
-          updatedAt: Date.now(),
-        }));
-        setMicActive(true);
-        setIsMuted(false);
-        setMicError(null);
-
-        return fallbackPublication;
+        throw micError;
       }
     },
-    [cleanupAudioPipeline, pushAudioLog, refreshAudioInputProbe],
+    [cleanupAudioPipeline, pushAudioLog],
   );
 
   // Redireciona para login se não autenticado (executa apenas quando authStatus muda)
@@ -607,7 +549,7 @@ export default function MentorshipRoomPage() {
           ),
           audioCaptureDefaults: buildAudioCaptureOptions(),
           publishDefaults: {
-            dtx: false,
+            dtx: true,
             red: true,
             preConnectBuffer: true,
             stopMicTrackOnMute: false,
@@ -856,11 +798,7 @@ export default function MentorshipRoomPage() {
     if (!lp) return;
     const newMutedState = !isMuted;
     try {
-      if (audioPipelineRef.current) {
-        await audioPipelineRef.current.setMuted(newMutedState);
-      } else {
-        await lp.setMicrophoneEnabled(!newMutedState);
-      }
+      await lp.setMicrophoneEnabled(!newMutedState);
       setIsMuted(newMutedState);
       setMicActive(!newMutedState);
       if (newMutedState) {

@@ -86,16 +86,16 @@ type ExtendedMediaTrackSettings = MediaTrackSettings & {
 };
 
 export const DEFAULT_VAD_THRESHOLDS: VadThresholds = {
-  minVoiceDb: -48,
-  minPeak: 0.018,
-  activationSnrDb: 10,
-  holdSnrDb: 6,
-  hangoverFrames: 10,
-  noiseFloorAlpha: 0.92,
-  targetRms: 0.14,
-  minGain: 0.85,
-  maxGain: 2.8,
-  idleGain: 0.72,
+  minVoiceDb: -44,
+  minPeak: 0.024,
+  activationSnrDb: 14,
+  holdSnrDb: 8,
+  hangoverFrames: 8,
+  noiseFloorAlpha: 0.94,
+  targetRms: 0.15,
+  minGain: 0.8,
+  maxGain: 3.0,
+  idleGain: 0.65,
 };
 
 const REQUESTED_SAMPLE_RATE = 48_000;

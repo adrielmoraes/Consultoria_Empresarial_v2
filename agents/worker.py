@@ -376,6 +376,8 @@ class SpecialistAgent(Agent):
                 realtime_input_config=genai_types.RealtimeInputConfig(
                     automatic_activity_detection=genai_types.AutomaticActivityDetection(
                         disabled=False,
+                        prefix_padding_ms=500,
+                        silence_duration_ms=1500,
                     ),
                 ),
                 context_window_compression=genai_types.ContextWindowCompressionConfig(
@@ -429,6 +431,8 @@ class HostAgent(Agent):
             realtime_input_config=genai_types.RealtimeInputConfig(
                 automatic_activity_detection=genai_types.AutomaticActivityDetection(
                     disabled=False,
+                    prefix_padding_ms=500,
+                    silence_duration_ms=1500,
                 ),
             ),
             context_window_compression=genai_types.ContextWindowCompressionConfig(
@@ -1182,6 +1186,14 @@ async def _run_entrypoint(ctx: JobContext) -> None:
         if not blackboard.is_active:
             return
 
+        # ==========================================================
+        # FILTRO 1: Apenas transcrições FINAIS são relevantes.
+        # Transcrições parciais (is_final=False) são intermediárias
+        # e podem conter ruído/alucinações. Ignoramos até ser final.
+        # ==========================================================
+        if not getattr(event, "is_final", True):
+            return
+
         text = ""
         if hasattr(event, "transcript"):
             text = event.transcript
@@ -1195,11 +1207,39 @@ async def _run_entrypoint(ctx: JobContext) -> None:
             return
 
         # ==========================================================
-        # Filtro de Ruído / Alucinações (DTX fallback)
+        # Filtro de Ruído / Alucinações (VAD/STT robustness)
         # ==========================================================
         lower_text = text.lower()
-        if lower_text in ["<noise>", "[noise]", "silence", "noise", "ruído"]:
-            logger.info(f"[Filtro] Ruído explícito capturado e descartado: {text}")
+
+        # 1. Filtro de ruído explícito
+        if lower_text in ["<noise>", "[noise]", "silence", "noise", "ruído", "interruption", "breath"]:
+            logger.info(f"[Filtro] Ruído explícito descartado: {text}")
+            return
+
+        # 2. Filtro de Script Não-Latino (Thai, Arabic, Bengali, etc.)
+        # O sistema é focado em pt-BR. Se houver scripts totalmente diferentes, é alucinação de ruído.
+        # Range Thai: \u0e00-\u0e7f, Arabic: \u0600-\u06ff, Bengali: \u0980-\u09ff, etc.
+        non_latin_pattern = re.compile(r"[\u0e00-\u0e7f\u0600-\u06ff\u0980-\u09ff\u0e80-\u0eff\uac00-\ud7af]")
+        if non_latin_pattern.search(text):
+            logger.info(f"[Filtro] Alucinação de idioma detectada e descartada: {text}")
+            return
+
+        # 3. Filtro de fragmentos curtíssimos sem vogais (ruído VAD)
+        # Palavras em PT sempre têm vogais. "é", "o", "a" são válidos.
+        if len(text) <= 3 and not any(v in lower_text for v in "aeiouáéíóúâêôãõ"):
+             logger.info(f"[Filtro] Fragmento curto sem vogais (ruído) descartado: {text}")
+             return
+
+        # 4. Filtro de monossílabos suspeitos que não são pt-BR comuns
+        common_pt_monos = {"oi", "é", "o", "a", "um", "eu", "se", "ir", "da", "do", "no", "na", "te", "me", "vc", "bj", "obg"}
+        if len(text) <= 2 and lower_text not in common_pt_monos:
+             logger.info(f"[Filtro] Monossílabo suspeito descartado: {text}")
+             return
+
+        # 5. Filtro de linguagem informal mas reconhecível (evita eco de agente)
+        # Se o texto parece resposta do agente (não fala de usuário), descarte
+        if lower_text.startswith("entendido") or lower_text.startswith("perfeito") or lower_text.startswith("claro"):
+            logger.info(f"[Filtro] Possível eco de agente descartado: {text}")
             return
         # ==========================================================
 
