@@ -285,6 +285,9 @@ export default function MentorshipRoomPage() {
     const capture = nativeCaptureRef.current;
     nativeCaptureRef.current = null;
     if (capture) {
+      if (room && room.state === ConnectionState.Connected) {
+        void room.localParticipant.unpublishTrack(capture.localTrack, false).catch(() => undefined);
+      }
       capture.cleanup();
     }
     setMicLevel(0);
@@ -296,6 +299,10 @@ export default function MentorshipRoomPage() {
       cleanupAudioPipeline(room);
 
       try {
+        if (room.state !== ConnectionState.Connected) {
+          throw new Error("Sala ainda não conectada para publicar microfone.");
+        }
+        await new Promise((resolve) => setTimeout(resolve, 250));
         const probe = await inspectAudioInputState(preferredInputIdRef.current);
         preferredInputIdRef.current = probe.selectedDeviceId ?? preferredInputIdRef.current;
 
@@ -331,6 +338,11 @@ export default function MentorshipRoomPage() {
 
         return publication;
       } catch (micError) {
+        const capture = nativeCaptureRef.current;
+        if (capture) {
+          capture.cleanup();
+          nativeCaptureRef.current = null;
+        }
         const message = resolveMicrophoneError(micError);
         setMicError(message);
         setMicActive(false);
@@ -794,11 +806,17 @@ export default function MentorshipRoomPage() {
   // ─── Handlers ───────────────────────────────────────────────────────────────
 
   const toggleMute = async () => {
-    const lp = roomRef.current?.localParticipant;
-    if (!lp) return;
+    const capture = nativeCaptureRef.current;
+    if (!capture) return;
     const newMutedState = !isMuted;
     try {
-      await lp.setMicrophoneEnabled(!newMutedState);
+      if (newMutedState) {
+        await capture.localTrack.mute();
+        capture.sourceTrack.enabled = false;
+      } else {
+        capture.sourceTrack.enabled = true;
+        await capture.localTrack.unmute();
+      }
       setIsMuted(newMutedState);
       setMicActive(!newMutedState);
       if (newMutedState) {

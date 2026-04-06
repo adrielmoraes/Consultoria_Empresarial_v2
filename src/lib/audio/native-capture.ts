@@ -48,19 +48,6 @@ export type NativeAudioCapture = {
 
 const REQUESTED_SAMPLE_RATE = 48_000;
 const DEFAULT_SAMPLE_SIZE = 16;
-const CLIPPING_LIMIT = 0.985;
-const ANALYSER_FFT_SIZE = 2048;
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
-
-function amplitudeToDb(amplitude: number): number {
-  if (!Number.isFinite(amplitude) || amplitude <= 0) {
-    return -100;
-  }
-  return 20 * Math.log10(amplitude);
-}
 
 export function buildAudioCaptureOptions(deviceId?: string): AudioCaptureOptions {
   return {
@@ -165,32 +152,6 @@ type ExtendedMediaTrackSettings = MediaTrackSettings & {
   voiceIsolation?: boolean;
 };
 
-function computeRmsDb(samples: Float32Array): { rms: number; rmsDb: number; peak: number; peakDb: number; clippingRatio: number } {
-  if (!samples.length) {
-    return { rms: 0, rmsDb: -100, peak: 0, peakDb: -100, clippingRatio: 0 };
-  }
-
-  let sumSquares = 0;
-  let peak = 0;
-  let clipping = 0;
-
-  for (let i = 0; i < samples.length; i++) {
-    const abs = Math.abs(samples[i]);
-    sumSquares += samples[i] * samples[i];
-    if (abs > peak) peak = abs;
-    if (abs >= CLIPPING_LIMIT) clipping++;
-  }
-
-  const rms = Math.sqrt(sumSquares / samples.length);
-  return {
-    rms,
-    rmsDb: amplitudeToDb(rms),
-    peak,
-    peakDb: amplitudeToDb(peak),
-    clippingRatio: clipping / samples.length,
-  };
-}
-
 export async function createNativeAudioCapture(
   options: NativeAudioCaptureOptions = {},
 ): Promise<NativeAudioCapture> {
@@ -213,98 +174,40 @@ export async function createNativeAudioCapture(
 
   sourceTrack.contentHint = "speech";
 
+  const settings = sourceTrack.getSettings() as ExtendedMediaTrackSettings;
+  const appliedSampleRate = settings.sampleRate || REQUESTED_SAMPLE_RATE;
   const localTrack = new LocalAudioTrack(sourceTrack, captureOptions, true);
 
-  const audioContext = new AudioContext({ latencyHint: "interactive", sampleRate: REQUESTED_SAMPLE_RATE });
-  if (audioContext.state === "suspended") {
-    await audioContext.resume().catch(() => undefined);
-  }
-
-  const sourceNode = audioContext.createMediaStreamSource(stream);
-  const analyser = audioContext.createAnalyser();
-  analyser.fftSize = ANALYSER_FFT_SIZE;
-  analyser.smoothingTimeConstant = 0.75;
-
-  const destination = audioContext.createMediaStreamDestination();
-  sourceNode.connect(analyser);
-  analyser.connect(destination);
-
-  const processedTrack = destination.stream.getAudioTracks()[0];
-  if (!processedTrack) {
-    throw new Error("Falha ao gerar a trilha processada do microfone.");
-  }
-  processedTrack.contentHint = "speech";
-
-  const settings = sourceTrack.getSettings() as ExtendedMediaTrackSettings;
-  const appliedSampleRate = audioContext.sampleRate || settings.sampleRate || REQUESTED_SAMPLE_RATE;
-
   emitLog(onLog, "info", `Captura nativa iniciada em ${appliedSampleRate}Hz.`);
-
-  let frameHandle = 0;
-  let destroyed = false;
-  let lastLogAt = 0;
-  let noiseFloorDb = -72;
-  const buffer = new Float32Array(ANALYSER_FFT_SIZE);
-
-  const tick = () => {
-    if (destroyed) return;
-
-    analyser.getFloatTimeDomainData(buffer);
-    const { rms, rmsDb, peak, peakDb, clippingRatio } = computeRmsDb(buffer);
-
-    const candidateNoiseFloor = rmsDb < -60 ? noiseFloorDb * 0.95 + rmsDb * 0.05 : noiseFloorDb;
-    noiseFloorDb = Number.isFinite(candidateNoiseFloor) ? candidateNoiseFloor : -72;
-    const snrDb = rmsDb - noiseFloorDb;
-    const health: AudioDiagnosticsSnapshot["health"] =
-      clippingRatio > 0.08 || rmsDb < -62 ? "critical" :
-      snrDb < 12 || clippingRatio > 0.025 || rmsDb < -52 ? "warning" : "good";
-
-    if (health !== "good" && Date.now() - lastLogAt > 5000) {
-      lastLogAt = Date.now();
-      emitLog(onLog, "warn", `Qualidade de entrada: ${health === "critical" ? "crítica" : "degradada"} (rms=${Math.round(rmsDb)}dB, snr=${Math.round(snrDb)}dB).`);
-    }
-
-    onDiagnostics?.({
-      permissionState: "granted",
-      requestedSampleRate: REQUESTED_SAMPLE_RATE,
-      appliedSampleRate,
-      sampleSize: settings.sampleSize ?? DEFAULT_SAMPLE_SIZE,
-      channelCount: settings.channelCount ?? 1,
-      latencyMs: typeof settings.latency === "number" ? Math.round(settings.latency * 1000) : null,
-      echoCancellation: typeof settings.echoCancellation === "boolean" ? settings.echoCancellation : null,
-      noiseSuppression: typeof settings.noiseSuppression === "boolean" ? settings.noiseSuppression : null,
-      autoGainControl: typeof settings.autoGainControl === "boolean" ? settings.autoGainControl : null,
-      voiceIsolation: typeof settings.voiceIsolation === "boolean" ? settings.voiceIsolation : null,
-      selectedDeviceId: settings.deviceId ?? null,
-      selectedDeviceLabel: null,
-      availableDevices: 0,
-      micLevel: clamp(rms / 0.2, 0, 1),
-      rmsDb,
-      peakDb,
-      noiseFloorDb,
-      snrDb,
-      clippingRatio,
-      voiceActive: rmsDb > -48 && snrDb > 10,
-      health,
-      updatedAt: Date.now(),
-    });
-
-    frameHandle = window.requestAnimationFrame(tick);
-  };
-
-  frameHandle = window.requestAnimationFrame(tick);
+  onDiagnostics?.({
+    permissionState: "granted",
+    requestedSampleRate: REQUESTED_SAMPLE_RATE,
+    appliedSampleRate,
+    sampleSize: settings.sampleSize ?? DEFAULT_SAMPLE_SIZE,
+    channelCount: settings.channelCount ?? 1,
+    latencyMs: typeof settings.latency === "number" ? Math.round(settings.latency * 1000) : null,
+    echoCancellation: typeof settings.echoCancellation === "boolean" ? settings.echoCancellation : null,
+    noiseSuppression: typeof settings.noiseSuppression === "boolean" ? settings.noiseSuppression : null,
+    autoGainControl: typeof settings.autoGainControl === "boolean" ? settings.autoGainControl : null,
+    voiceIsolation: typeof settings.voiceIsolation === "boolean" ? settings.voiceIsolation : null,
+    selectedDeviceId: settings.deviceId ?? null,
+    selectedDeviceLabel: null,
+    availableDevices: 0,
+    micLevel: 0,
+    rmsDb: -100,
+    peakDb: -100,
+    noiseFloorDb: -72,
+    snrDb: 0,
+    clippingRatio: 0,
+    voiceActive: false,
+    health: "good",
+    updatedAt: Date.now(),
+  });
 
   const cleanup = () => {
-    if (destroyed) return;
-    destroyed = true;
-    if (frameHandle) window.cancelAnimationFrame(frameHandle);
     localTrack.stop();
-    sourceTrack?.stop();
-    stream?.getTracks().forEach((t) => t.stop());
-    sourceNode.disconnect();
-    analyser.disconnect();
-    destination.disconnect();
-    void audioContext.close().catch(() => undefined);
+    sourceTrack.stop();
+    stream.getTracks().forEach((track) => track.stop());
     emitLog(onLog, "info", "Captura nativa encerrada.");
   };
 
