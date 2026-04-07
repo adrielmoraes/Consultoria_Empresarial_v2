@@ -624,13 +624,14 @@ export default function MentorshipRoomPage() {
         sessionDataRef.current = { sessionId: sid, roomName, userId };
 
         // Obtém token LiveKit
+        const participantIdentity = `user-${userId}-${Date.now()}`;
         const tokenRes = await safeFetch("/api/livekit/token", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             roomName,
             participantName: userName,
-            participantIdentity: `user-${userId}`,
+            participantIdentity,
           }),
         });
         if (!isMounted) return;

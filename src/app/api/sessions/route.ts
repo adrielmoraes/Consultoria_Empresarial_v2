@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { mentoringSessions, projects } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
-import { AgentDispatchClient } from "livekit-server-sdk";
+import { AgentDispatchClient, RoomServiceClient } from "livekit-server-sdk";
 
 const DISPATCH_DEDUP_WINDOW_MS = 30_000; // 30 segundos
 
@@ -14,6 +14,25 @@ async function dispatchAgent(roomName: string) {
   );
   await dispatchClient.createDispatch(roomName, "mentoria-agent");
   console.log(`[Sessions API] Agent dispatch criado para a sala ${roomName}`);
+}
+
+async function getNonAgentParticipantCount(roomName: string): Promise<number | null> {
+  const roomServiceClient = new RoomServiceClient(
+    process.env.LIVEKIT_URL!,
+    process.env.LIVEKIT_API_KEY!,
+    process.env.LIVEKIT_API_SECRET!,
+  );
+
+  try {
+    const participants = await roomServiceClient.listParticipants(roomName);
+    return participants.filter((participant) => {
+      const identity = participant.identity ?? "";
+      return !identity.startsWith("agent-");
+    }).length;
+  } catch (error) {
+    console.warn(`[Sessions API] Falha ao listar participantes da sala ${roomName}:`, error);
+    return null;
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -51,19 +70,38 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (existingSession) {
+      const existingRoomName = existingSession.livekitRoomId ?? roomName;
       const ageMs = Date.now() - existingSession.startedAt.getTime();
+      const nonAgentParticipantCount = await getNonAgentParticipantCount(existingRoomName);
 
-      if (ageMs <= DISPATCH_DEDUP_WINDOW_MS) {
-        // Sessão recente (< 30s): é o double-mount do React — reutiliza sem novo dispatch
-        console.log(`[Sessions API] Sessão recente reutilizada (${Math.round(ageMs / 1000)}s) para ${roomName}`);
+      if (nonAgentParticipantCount !== null && nonAgentParticipantCount > 0) {
+        console.log(
+          `[Sessions API] Sessão ativa reutilizada (${Math.round(ageMs / 1000)}s) com ${nonAgentParticipantCount} participante(s) não-agent em ${existingRoomName}.`,
+        );
         return NextResponse.json({
           sessionId: existingSession.id,
-          roomName: existingSession.livekitRoomId ?? roomName,
+          roomName: existingRoomName,
         });
       }
 
-      // Sessão antiga (> 30s): é fantasma — cancela e cria nova com dispatch
-      console.log(`[Sessions API] Sessão fantasma encontrada (${Math.round(ageMs / 1000)}s) — cancelando e criando nova.`);
+      if (nonAgentParticipantCount === null && ageMs <= DISPATCH_DEDUP_WINDOW_MS) {
+        try {
+          await dispatchAgent(existingRoomName);
+        } catch (dispatchError) {
+          console.error("[Sessions API] Erro ao redisparar agente em sessão reutilizada:", dispatchError);
+        }
+        console.log(
+          `[Sessions API] Sessão recente reutilizada (${Math.round(ageMs / 1000)}s) sem confirmação de participantes em ${existingRoomName}.`,
+        );
+        return NextResponse.json({
+          sessionId: existingSession.id,
+          roomName: existingRoomName,
+        });
+      }
+
+      console.log(
+        `[Sessions API] Encerrando sessão ativa anterior (${Math.round(ageMs / 1000)}s) para recriar ${existingRoomName}.`,
+      );
       await db
         .update(mentoringSessions)
         .set({ status: "cancelled", endedAt: new Date() })
