@@ -17,8 +17,16 @@ import {
   Sparkles,
   MessageSquare,
   Video,
+  Building2,
+  Target,
+  Handshake,
+  LockKeyhole,
+  Mail,
+  PhoneCall,
+  CalendarCheck2,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 30 },
@@ -142,6 +150,52 @@ const steps = [
     step: "04",
     title: "Receba seu Plano",
     description: "Ao final, um Plano de Execução detalhado em PDF é gerado para download.",
+  },
+];
+
+const companyPillars = [
+  {
+    icon: Building2,
+    title: "Foco em PME e Startups",
+    description: "Soluções desenhadas para negócios em tração, com decisões críticas de crescimento.",
+  },
+  {
+    icon: Target,
+    title: "Decisão Orientada a Resultado",
+    description: "Cada sessão prioriza impacto em receita, eficiência operacional e execução prática.",
+  },
+  {
+    icon: Handshake,
+    title: "Modelo de Parceria",
+    description: "Atuação contínua para evolução do negócio, e não apenas recomendações pontuais.",
+  },
+];
+
+const securityControls = [
+  "Criptografia de dados em trânsito e em repouso",
+  "Autenticação de usuário e proteção de rotas privadas",
+  "Processamento de pagamento com Stripe",
+  "Camadas de validação em APIs críticas",
+];
+
+const contactChannels = [
+  {
+    icon: Mail,
+    title: "E-mail Comercial",
+    value: "contato@hivemind.ai",
+    href: "mailto:contato@hivemind.ai",
+  },
+  {
+    icon: PhoneCall,
+    title: "WhatsApp Executivo",
+    value: "+55 (11) 99999-0000",
+    href: "https://wa.me/5511999990000",
+  },
+  {
+    icon: CalendarCheck2,
+    title: "Demonstração Guiada",
+    value: "Agendar conversa de 20 min",
+    href: "/register",
   },
 ];
 
@@ -489,6 +543,153 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <section id="company" className="py-20 px-4">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <motion.h2
+              variants={fadeUp}
+              custom={0}
+              className="text-3xl sm:text-4xl font-bold mb-4"
+            >
+              Empresa e <span className="gradient-text">Modelo de Negócio</span>
+            </motion.h2>
+            <motion.p
+              variants={fadeUp}
+              custom={1}
+              className="text-gray-500 dark:text-gray-400 max-w-3xl mx-auto"
+            >
+              Unimos mentoria executiva e IA para acelerar decisões estratégicas com clareza,
+              velocidade e padrão de execução.
+            </motion.p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {companyPillars.map((pillar, i) => (
+              <motion.div
+                key={pillar.title}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                variants={fadeUp}
+                custom={i}
+                className="glass-card p-6"
+              >
+                <div className="w-11 h-11 rounded-xl bg-[#d4af37]/10 border border-[#d4af37]/20 flex items-center justify-center mb-4">
+                  <pillar.icon className="w-5 h-5 text-[#d4af37]" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{pillar.title}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {pillar.description}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="security" className="py-20 px-4 bg-gray-50/50 dark:bg-gray-900/30">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <motion.h2
+              variants={fadeUp}
+              custom={0}
+              className="text-3xl sm:text-4xl font-bold mb-4"
+            >
+              Segurança e <span className="gradient-text">Confiabilidade</span>
+            </motion.h2>
+            <motion.p
+              variants={fadeUp}
+              custom={1}
+              className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto"
+            >
+              Estrutura técnica orientada à proteção de dados e continuidade da operação.
+            </motion.p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeUp}
+            custom={2}
+            className="glass-card p-8"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-lg bg-[#d4af37]/10 border border-[#d4af37]/20 flex items-center justify-center">
+                <LockKeyhole className="w-5 h-5 text-[#d4af37]" />
+              </div>
+              <h3 className="text-xl font-semibold">Pilares de Segurança</h3>
+            </div>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {securityControls.map((item) => (
+                <li key={item} className="flex items-start gap-3 text-sm">
+                  <Check className="w-4 h-4 text-[#d4af37] shrink-0 mt-0.5" />
+                  <span className="text-gray-600 dark:text-gray-300">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+        </div>
+      </section>
+
+      <section id="contact" className="py-20 px-4">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <motion.h2
+              variants={fadeUp}
+              custom={0}
+              className="text-3xl sm:text-4xl font-bold mb-4"
+            >
+              Contato <span className="gradient-text">Comercial</span>
+            </motion.h2>
+            <motion.p
+              variants={fadeUp}
+              custom={1}
+              className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto"
+            >
+              Fale com nosso time para implantação, treinamento e parceria estratégica.
+            </motion.p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {contactChannels.map((channel, i) => (
+              <motion.div
+                key={channel.title}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                variants={fadeUp}
+                custom={i}
+                className="glass-card p-6"
+              >
+                <div className="w-11 h-11 rounded-xl bg-[#d4af37]/10 border border-[#d4af37]/20 flex items-center justify-center mb-4">
+                  <channel.icon className="w-5 h-5 text-[#d4af37]" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{channel.title}</h3>
+                <Link href={channel.href} className="text-sm text-[#d4af37] hover:text-[#f0dfa0] transition-colors">
+                  {channel.value}
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
@@ -532,7 +733,7 @@ export default function LandingPage() {
             <div className="flex flex-col items-center md:items-start gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 p-1 rounded-xl bg-[#0a0a0f] border border-[#d4af37]/30 shadow-[0_0_15px_rgba(212,175,55,0.15)] flex items-center justify-center">
-                  <img src="/logo-icon.svg?v=2" alt="Hive Mind" className="w-full h-full object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
+                  <Image src="/logo-icon.svg?v=2" alt="Hive Mind" width={40} height={40} className="w-full h-full object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
                 </div>
                 <span className="text-2xl font-black bg-linear-to-r from-[#d4af37] via-[#f0dfa0] to-[#b08d24] bg-clip-text text-transparent uppercase tracking-tight">Hive Mind</span>
               </div>
@@ -549,8 +750,9 @@ export default function LandingPage() {
                </div>
                <div className="flex flex-col gap-4">
                   <span className="text-xs font-black uppercase tracking-widest text-[#d4af37]">Empresa</span>
-                  <Link href="#" className="text-sm text-gray-500 hover:text-white transition-colors">Segurança</Link>
-                  <Link href="#" className="text-sm text-gray-500 hover:text-white transition-colors">Contato</Link>
+                  <Link href="#company" className="text-sm text-gray-500 hover:text-white transition-colors">Empresa</Link>
+                  <Link href="#security" className="text-sm text-gray-500 hover:text-white transition-colors">Segurança</Link>
+                  <Link href="#contact" className="text-sm text-gray-500 hover:text-white transition-colors">Contato</Link>
                </div>
             </div>
           </div>
@@ -560,8 +762,8 @@ export default function LandingPage() {
               © 2026 Hive Mind Enterprise. Todos os direitos reservados.
             </p>
             <div className="flex gap-8">
-               <Link href="#" className="text-[10px] uppercase font-black text-gray-700 hover:text-gray-400 tracking-widest">Privacy Policy</Link>
-               <Link href="#" className="text-[10px] uppercase font-black text-gray-700 hover:text-gray-400 tracking-widest">Terms of Service</Link>
+               <Link href="/privacy-policy" className="text-[10px] uppercase font-black text-gray-700 hover:text-gray-400 tracking-widest">Privacy Policy</Link>
+               <Link href="/terms-of-service" className="text-[10px] uppercase font-black text-gray-700 hover:text-gray-400 tracking-widest">Terms of Service</Link>
             </div>
           </div>
         </div>

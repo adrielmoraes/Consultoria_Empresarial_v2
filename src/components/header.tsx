@@ -4,6 +4,15 @@ import Link from "next/link";
 import { ThemeToggle } from "./theme-toggle";
 import { InstallAppButton } from "./install-app-button";
 import { motion } from "framer-motion";
+import Image from "next/image";
+
+const navigationLinks = [
+  { label: "Recursos", href: "#features" },
+  { label: "Planos", href: "#pricing" },
+  { label: "Empresa", href: "#company" },
+  { label: "Segurança", href: "#security" },
+  { label: "Contato", href: "#contact" },
+];
 
 export function Header() {
   return (
@@ -20,11 +29,11 @@ export function Header() {
             <div className="relative">
               <div className="absolute inset-[-4px] bg-[#d4af37]/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <div className="relative w-12 h-12 p-1 rounded-xl bg-[#0a0a0f] border border-[#d4af37]/30 shadow-[0_0_15px_rgba(212,175,55,0.15)] flex items-center justify-center transform group-hover:scale-105 transition-transform duration-300 group-hover:border-[#d4af37]/60">
-                <img src="/logo-icon.svg?v=2" alt="Hive Mind" className="w-full h-full object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
+                <Image src="/logo-icon.svg?v=2" alt="Hive Mind" width={48} height={48} className="w-full h-full object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
               </div>
             </div>
             <div className="flex flex-col">
-              <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-[#d4af37] via-[#f0dfa0] to-[#b08d24] bg-clip-text text-transparent">
+              <span className="text-xl font-bold tracking-tight bg-linear-to-r from-[#d4af37] via-[#f0dfa0] to-[#b08d24] bg-clip-text text-transparent">
                 Hive Mind
               </span>
               <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 group-hover:text-[#d4af37] transition-colors">
@@ -35,13 +44,13 @@ export function Header() {
 
           {/* Navigation */}
           <nav className="hidden lg:flex items-center gap-10">
-            {['Recursos', 'Preços', 'Metodologia', 'Empresa'].map((item) => (
+            {navigationLinks.map((item) => (
               <Link 
-                key={item}
-                href={`#${item.toLowerCase()}`} 
+                key={item.label}
+                href={item.href} 
                 className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-[#d4af37] dark:hover:text-[#f0dfa0] transition-all relative group"
               >
-                {item}
+                {item.label}
                 <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-[#d4af37] transition-all duration-300 group-hover:w-full" />
               </Link>
             ))}
@@ -54,7 +63,7 @@ export function Header() {
               <ThemeToggle />
             </div>
             
-            <div className="h-6 w-[1px] bg-white/10 hidden sm:block" />
+            <div className="h-6 w-px bg-white/10 hidden sm:block" />
 
             <div className="flex items-center gap-4">
               <Link
@@ -68,7 +77,7 @@ export function Header() {
                 href="/register"
                 className="relative group overflow-hidden"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-[#b08d24] to-[#d4af37] p-[1px] rounded-xl">
+                <div className="absolute inset-0 bg-linear-to-r from-[#b08d24] to-[#d4af37] p-[1px] rounded-xl">
                   <div className="w-full h-full bg-[#030712] group-hover:bg-transparent rounded-[11px] transition-all duration-300" />
                 </div>
                 <span className="relative block px-6 py-2.5 text-sm font-bold text-white group-hover:text-[#030712] transition-colors">
