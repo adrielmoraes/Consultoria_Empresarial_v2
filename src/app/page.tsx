@@ -162,7 +162,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-[#d4af37]/10 to-[#b08d24]/10 border border-[#d4af37]/20 rounded-full px-6 py-2.5 mb-10 backdrop-blur-md shadow-[0_0_20px_rgba(212,175,55,0.1)]"
+            className="inline-flex items-center gap-2 bg-linear-to-r from-[#d4af37]/10 to-[#b08d24]/10 border border-[#d4af37]/20 rounded-full px-6 py-2.5 mb-10 backdrop-blur-md shadow-[0_0_20px_rgba(212,175,55,0.1)]"
           >
             <Sparkles className="w-4 h-4 text-[#d4af37]" />
             <span className="text-xs font-black uppercase tracking-[0.2em] text-[#d4af37]">
@@ -177,7 +177,7 @@ export default function LandingPage() {
             className="text-6xl sm:text-7xl lg:text-8xl font-black tracking-tighter mb-8 leading-[0.9] uppercase"
           >
             Seu Conselho de<br />
-            <span className="bg-gradient-to-r from-[#d4af37] via-[#f0dfa0] to-[#b08d24] bg-clip-text text-transparent italic">Elite</span> Executiva
+            <span className="bg-linear-to-r from-[#d4af37] via-[#f0dfa0] to-[#b08d24] bg-clip-text text-transparent italic">Elite</span> Executiva
           </motion.h1>
 
           <motion.p
@@ -199,7 +199,7 @@ export default function LandingPage() {
           >
             <Link 
               href="/register" 
-              className="group relative px-10 py-5 bg-gradient-to-r from-[#b08d24] to-[#d4af37] rounded-2xl shadow-[0_0_40px_rgba(212,175,55,0.2)] hover:shadow-[0_0_60px_rgba(212,175,55,0.4)] transition-all duration-500 transform hover:-translate-y-1"
+              className="group relative px-10 py-5 bg-linear-to-r from-[#b08d24] to-[#d4af37] rounded-2xl shadow-[0_0_40px_rgba(212,175,55,0.2)] hover:shadow-[0_0_60px_rgba(212,175,55,0.4)] transition-all duration-500 transform hover:-translate-y-1"
             >
               <div className="flex items-center gap-3">
                 <span className="text-lg font-black text-[#030712] uppercase tracking-tighter">Convocação do Comitê</span>
@@ -222,7 +222,7 @@ export default function LandingPage() {
             transition={{ duration: 1, delay: 0.8 }}
             className="mt-20 max-w-5xl mx-auto relative group"
           >
-            <div className="absolute -inset-1 bg-gradient-to-r from-[#d4af37]/20 via-transparent to-[#b08d24]/20 rounded-[40px] blur-2xl opacity-50 group-hover:opacity-100 transition-opacity duration-1000" />
+            <div className="absolute -inset-1 bg-linear-to-r from-[#d4af37]/20 via-transparent to-[#b08d24]/20 rounded-[40px] blur-2xl opacity-50 group-hover:opacity-100 transition-opacity duration-1000" />
             <div className="relative glass-card-premium p-4 sm:p-2 border-white/5 bg-black/60">
               <div className="grid grid-cols-5 gap-2 sm:gap-4 overflow-hidden rounded-[30px]">
                 {[
@@ -234,17 +234,17 @@ export default function LandingPage() {
                 ].map((spec, i) => (
                   <div
                     key={spec.name}
-                    className={`relative aspect-[3/5] overflow-hidden group/agent transition-all duration-500 ${
+                    className={`relative aspect-3/5 overflow-hidden group/agent transition-all duration-500 ${
                       i === 2 ? "scale-105 z-10" : "scale-100"
                     }`}
                   >
-                    <div className={`absolute inset-0 bg-gradient-to-br ${spec.color} opacity-20`} />
+                    <div className={`absolute inset-0 bg-linear-to-br ${spec.color} opacity-20`} />
                     {i === 2 && (
-                      <div className="absolute -inset-[1px] bg-gradient-to-br from-[#d4af37] via-[#f0dfa0] to-[#b08d24] rounded-sm opacity-60 animate-pulse -z-0" />
+                      <div className="absolute -inset-px bg-linear-to-br from-[#d4af37] via-[#f0dfa0] to-[#b08d24] rounded-sm opacity-60 animate-pulse z-0" />
                     )}
                     <div className="absolute inset-0 bg-[#030712]/60 backdrop-blur-[2px]" />
                     <div className="absolute inset-0 flex flex-col items-center justify-center p-2 text-center">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-br ${spec.color} shadow-2xl mb-3 ${i === 2 ? "ring-2 ring-[#d4af37]/50 ring-offset-2 ring-offset-[#030712]" : ""}`}>
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center bg-linear-to-br ${spec.color} shadow-2xl mb-3 ${i === 2 ? "ring-2 ring-[#d4af37]/50 ring-offset-2 ring-offset-[#030712]" : ""}`}>
                         <spec.icon className="w-6 h-6 text-white" />
                       </div>
                       <p className="text-[10px] font-black uppercase text-white tracking-widest">{spec.name}</p>
@@ -301,7 +301,7 @@ export default function LandingPage() {
                 className="glass-card p-6"
               >
                 <div
-                  className={`w-12 h-12 rounded-xl bg-gradient-to-r ${spec.color} flex items-center justify-center mb-4`}
+                  className={`w-12 h-12 rounded-xl bg-linear-to-r ${spec.color} flex items-center justify-center mb-4`}
                 >
                   <spec.icon className="w-6 h-6 text-white" />
                 </div>
@@ -387,7 +387,7 @@ export default function LandingPage() {
                 className="relative"
               >
                 {i < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-8 left-full w-full h-px bg-gradient-to-r from-[#d4af37]/50 to-transparent z-10" />
+                  <div className="hidden lg:block absolute top-8 left-full w-full h-px bg-linear-to-r from-[#d4af37]/50 to-transparent z-10" />
                 )}
                 <div className="glass-card p-6 text-center">
                   <span className="text-4xl font-black gradient-text">
@@ -448,7 +448,7 @@ export default function LandingPage() {
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="bg-gradient-to-r from-[#d4af37] to-[#b08d24] text-[#0a0a0a] text-xs font-bold px-3 py-1 rounded-full">
+                    <span className="bg-linear-to-r from-[#d4af37] to-[#b08d24] text-[#0a0a0a] text-xs font-bold px-3 py-1 rounded-full">
                       Mais Popular
                     </span>
                   </div>
@@ -468,7 +468,7 @@ export default function LandingPage() {
                 <ul className="space-y-3 mb-8">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-center gap-2 text-sm">
-                      <Check className="w-4 h-4 text-[#d4af37] flex-shrink-0" />
+                      <Check className="w-4 h-4 text-[#d4af37] shrink-0" />
                       <span className="text-gray-600 dark:text-gray-300">{f}</span>
                     </li>
                   ))}
@@ -534,7 +534,7 @@ export default function LandingPage() {
                 <div className="w-10 h-10 p-1 rounded-xl bg-[#0a0a0f] border border-[#d4af37]/30 shadow-[0_0_15px_rgba(212,175,55,0.15)] flex items-center justify-center">
                   <img src="/logo-icon.svg?v=2" alt="Hive Mind" className="w-full h-full object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
                 </div>
-                <span className="text-2xl font-black bg-gradient-to-r from-[#d4af37] via-[#f0dfa0] to-[#b08d24] bg-clip-text text-transparent uppercase tracking-tight">Hive Mind</span>
+                <span className="text-2xl font-black bg-linear-to-r from-[#d4af37] via-[#f0dfa0] to-[#b08d24] bg-clip-text text-transparent uppercase tracking-tight">Hive Mind</span>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-500 font-medium max-w-xs text-center md:text-left">
                 Redefinindo os limites da consultoria executiva com inteligência artificial de elite.

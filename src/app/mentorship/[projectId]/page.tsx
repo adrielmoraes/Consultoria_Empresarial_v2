@@ -27,6 +27,7 @@ import {
   useRef,
   useCallback,
 } from "react";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
@@ -269,8 +270,8 @@ export default function MentorshipRoomPage() {
   const [micActive, setMicActive] = useState(false);
   const [micLevel, setMicLevel] = useState(0); // 0..1 nível de volume
   const [micError, setMicError] = useState<string | null>(null);
-  const [audioDiagnostics, setAudioDiagnostics] = useState<AudioDiagnosticsSnapshot | null>(null);
-  const [audioLogs, setAudioLogs] = useState<AudioRuntimeLog[]>([]);
+  const [, setAudioDiagnostics] = useState<AudioDiagnosticsSnapshot | null>(null);
+  const [, setAudioLogs] = useState<AudioRuntimeLog[]>([]);
   const preferredInputIdRef = useRef<string | null>(null);
   const nativeCaptureRef = useRef<NativeAudioCapture | null>(null);
 
@@ -292,6 +293,9 @@ export default function MentorshipRoomPage() {
     url?: string;
     userId?: string;
   } | null>(null);
+  const handleSessionCompletedRef = useRef<(fullTranscript?: string) => void | Promise<void>>(
+    () => undefined
+  );
 
   const pushAudioLog = useCallback((entry: AudioRuntimeLog) => {
     const printer =
@@ -865,7 +869,7 @@ export default function MentorshipRoomPage() {
                   "Plano de Execução gerado!"
                 );
               } else if (data.type === "session_end") {
-                handleSessionCompleted(data.transcript);
+                void handleSessionCompletedRef.current?.(data.transcript);
               } else if (data.type === "agent_ready") {
                 // F5: Marca o agente como conectado quando recebe health-check do backend
                 const agentId = data.agent_id as string;
@@ -974,7 +978,7 @@ export default function MentorshipRoomPage() {
         ?.querySelectorAll("audio")
         .forEach((el) => el.remove());
     };
-  }, [addTranscriptMessage, authStatus, cleanupAudioPipeline, initializeMicrophone, pushAudioLog, session]);
+  }, [addTranscriptMessage, authStatus, cleanupAudioPipeline, initializeMicrophone, projectId, pushAudioLog, session]);
 
   // ─── Handlers ───────────────────────────────────────────────────────────────
 
@@ -1078,6 +1082,10 @@ export default function MentorshipRoomPage() {
     [sessionId, transcript, executionPlan, router]
   );
 
+  useEffect(() => {
+    handleSessionCompletedRef.current = handleSessionCompleted;
+  }, [handleSessionCompleted]);
+
   // ─── Guards de render ────────────────────────────────────────────────────────
 
   if (authStatus === "loading") {
@@ -1127,13 +1135,13 @@ export default function MentorshipRoomPage() {
       <div className="flex items-center justify-between px-6 py-4 bg-[#030712]/40 backdrop-blur-2xl border-b border-white/5 shrink-0 z-20">
         <div className="flex items-center gap-4">
           <div className="relative group">
-            <div className="absolute inset-[-2px] bg-[#d4af37]/30 rounded-lg blur opacity-50 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute -inset-0.5 bg-[#d4af37]/30 rounded-lg blur opacity-50 group-hover:opacity-100 transition-opacity" />
             <div className="relative w-12 h-12 rounded-lg bg-[#0a0a0f] border border-[#d4af37]/30 flex items-center justify-center p-1 group-hover:border-[#d4af37]/60 transition-all">
-              <img src="/logo-icon.svg?v=2" alt="Hive Mind" className="w-full h-full object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
+              <Image src="/logo-icon.svg?v=2" alt="Hive Mind" width={48} height={48} className="w-full h-full object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
             </div>
           </div>
           <div>
-            <h1 className="text-sm font-bold tracking-tight text-white uppercase bg-gradient-to-r from-[#d4af37] to-[#f0dfa0] bg-clip-text text-transparent">Sala de Mentoria de Elite</h1>
+            <h1 className="text-sm font-bold tracking-tight uppercase bg-linear-to-r from-[#d4af37] to-[#f0dfa0] bg-clip-text text-transparent">Sala de Mentoria de Elite</h1>
             <p className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold mt-0.5">Comitê Executivo Hive Mind</p>
           </div>
         </div>
@@ -1144,7 +1152,7 @@ export default function MentorshipRoomPage() {
             {connectionState === "reconnecting" && (
               <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">Reconectando</span>
             )}
-            <div className="h-3 w-[1px] bg-white/10" />
+            <div className="h-3 w-px bg-white/10" />
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
               <span className="text-[11px] text-gray-400 font-mono font-bold tracking-tighter">
@@ -1458,7 +1466,7 @@ export default function MentorshipRoomPage() {
 
       {/* Modal de Upload de Anexos */}
       {showUpload && (
-        <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-60 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -1772,7 +1780,7 @@ function ChecklistView({ content }: { content: string }) {
         </div>
         <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
           <motion.div
-            className="h-full bg-gradient-to-r from-emerald-500 to-teal-400"
+            className="h-full bg-linear-to-r from-emerald-500 to-teal-400"
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.3 }}
@@ -1861,7 +1869,7 @@ function AgentCard({
     >
       {/* Background Glow */}
       <div
-        className={`absolute inset-0 bg-gradient-to-br ${agent.gradient} transition-opacity duration-1000 ${
+        className={`absolute inset-0 bg-linear-to-br ${agent.gradient} transition-opacity duration-1000 ${
           agent.speaking ? 'opacity-20' : 'opacity-5'
         }`}
       />
@@ -1901,7 +1909,7 @@ function AgentCard({
                 agent.speaking ? 'border-[#d4af37]' : 'border-white/10'
               } flex items-center justify-center relative z-10 overflow-hidden group-hover:border-[#d4af37]/50 transition-colors`}
           >
-            <div className={`absolute inset-0 bg-gradient-to-br ${agent.gradient} opacity-20`} />
+            <div className={`absolute inset-0 bg-linear-to-br ${agent.gradient} opacity-20`} />
             <Icon
               className={`${compact ? "w-8 h-8" : "w-14 h-14 lg:w-20 lg:h-20"
                 } ${agent.speaking ? 'text-[#d4af37]' : 'text-gray-400 group-hover:text-gray-300'} transition-colors`}
@@ -1935,7 +1943,7 @@ function AgentCard({
                   key={i}
                   animate={{ height: ["4px", "10px", "4px"] }}
                   transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.1 }}
-                  className="w-[2px] bg-[#030712] rounded-full"
+                  className="w-0.5 bg-[#030712] rounded-full"
                 />
               ))}
             </div>
@@ -1945,7 +1953,7 @@ function AgentCard({
       </div>
 
       {/* Info Overlay */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#030712] via-[#030712]/90 to-transparent">
+      <div className="absolute bottom-0 left-0 right-0 p-6 bg-linear-to-t from-[#030712] via-[#030712]/90 to-transparent">
         <div className="relative z-10 text-center">
           <h3 className={`font-black text-white tracking-tight uppercase leading-none ${compact ? "text-[10px]" : "text-lg"}`}>
             {agent.name}
