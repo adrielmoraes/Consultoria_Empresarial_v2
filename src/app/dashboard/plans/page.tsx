@@ -6,13 +6,11 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import {
-  Brain,
   Plus,
   FileText,
   CreditCard,
   LogOut,
   Download,
-  Video,
   LayoutDashboard,
   Loader2,
   FolderOpen,
@@ -56,7 +54,8 @@ export default function PlansPage() {
   const fetchPlans = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/plans?userId=${(session?.user as any)?.id}`);
+      const userId = (session?.user as { id?: string } | undefined)?.id;
+      const res = await fetch(`/api/plans?userId=${userId ?? ""}`);
       if (res.ok) {
         const data = await res.json();
         setPlans(data.plans);
@@ -214,7 +213,7 @@ export default function PlansPage() {
                   </div>
                   {plan.pdfUrl && (
                     <a
-                      href={plan.pdfUrl}
+                      href={`/api/execution-plan/${plan.sessionId}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="btn-primary text-xs px-4 py-2 flex items-center gap-1.5 flex-shrink-0"
@@ -224,8 +223,18 @@ export default function PlansPage() {
                     </a>
                   )}
                   {!plan.pdfUrl && plan.hasMarkdown && (
-                    <span className="text-xs px-3 py-1.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 flex-shrink-0">
-                      Disponível online
+                    <a
+                      href={`/api/execution-plan/${plan.sessionId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs px-3 py-1.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 flex-shrink-0 hover:bg-blue-500/20 transition-colors"
+                    >
+                      Abrir Plano
+                    </a>
+                  )}
+                  {!plan.pdfUrl && !plan.hasMarkdown && (
+                    <span className="text-xs px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 flex-shrink-0">
+                      Em processamento
                     </span>
                   )}
                 </motion.div>

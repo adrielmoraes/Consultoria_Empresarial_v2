@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { projects, mentoringSessions, executionPlans } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+
+type PlanListItem = {
+  id: string;
+  projectTitle: string;
+  projectId: string;
+  sessionId: string;
+  pdfUrl: string | null;
+  hasMarkdown: boolean;
+  generatedAt: string;
+};
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,7 +32,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Para cada projeto, buscar sessões e planos
-    const allPlans: any[] = [];
+    const allPlans: PlanListItem[] = [];
 
     for (const project of userProjects) {
       const sessions = await db

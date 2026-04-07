@@ -3,14 +3,26 @@ import { stripe, STRIPE_PRICES } from "@/lib/stripe";
 
 export async function POST(request: NextRequest) {
   try {
-    const { priceId, userId, userEmail } = await request.json();
+    const { planId, priceId, userId, userEmail } = await request.json();
 
-    if (!priceId || !userId) {
+    if (!userId) {
       return NextResponse.json({ error: "Dados incompletos" }, { status: 400 });
     }
 
-    // Verificar se é sessão avulsa ou assinatura
-    const isSubscription = priceId !== STRIPE_PRICES.SESSION;
+    const planToPrice: Record<string, string> = {
+      session: STRIPE_PRICES.SESSION,
+      professional: STRIPE_PRICES.PROFESSIONAL,
+    };
+
+    const resolvedPriceId =
+      (typeof planId === "string" ? planToPrice[planId] : undefined) ??
+      (typeof priceId === "string" ? priceId : undefined);
+
+    if (!resolvedPriceId) {
+      return NextResponse.json({ error: "Plano inválido" }, { status: 400 });
+    }
+
+    const isSubscription = resolvedPriceId !== STRIPE_PRICES.SESSION;
 
     const session = await stripe.checkout.sessions.create({
       mode: isSubscription ? "subscription" : "payment",
@@ -18,13 +30,13 @@ export async function POST(request: NextRequest) {
       customer_email: userEmail,
       line_items: [
         {
-          price: priceId,
+          price: resolvedPriceId,
           quantity: 1,
         },
       ],
       metadata: {
         userId,
-        priceId,
+        priceId: resolvedPriceId,
       },
       success_url: `${process.env.NEXTAUTH_URL}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXTAUTH_URL}/dashboard?canceled=true`,

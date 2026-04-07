@@ -40,8 +40,8 @@ export function NewProjectModal({ isOpen, onClose, userId }: Props) {
 
       // Redirecionar para a sala de mentoria
       router.push(`/mentorship/${data.project.id}`);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erro ao criar projeto");
     } finally {
       setLoading(false);
     }

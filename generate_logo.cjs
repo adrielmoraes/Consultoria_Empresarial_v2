@@ -1,17 +1,16 @@
 // Script para gerar logo.png a partir do logo-icon.svg com fundo transparente
 // Usa puppeteer (headless Chrome) para renderizar SVG → PNG com transparência
 
-const fs = require('fs');
-const path = require('path');
-
 async function generatePNG() {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
   let puppeteer;
   try {
-    puppeteer = require('puppeteer');
+    puppeteer = await import('puppeteer');
   } catch {
     console.log('Puppeteer não instalado. Usando método alternativo com sharp...');
     try {
-      const sharp = require('sharp');
+      const sharp = (await import('sharp')).default;
       const svgPath = path.join(__dirname, 'public', 'logo-icon.svg');
       const pngPath = path.join(__dirname, 'public', 'logo.png');
       const svgBuffer = fs.readFileSync(svgPath);
@@ -23,7 +22,7 @@ async function generatePNG() {
       
       console.log('✅ logo.png gerado com sharp:', pngPath);
       return;
-    } catch (sharpErr) {
+    } catch {
       console.log('Sharp também não disponível. Tentando com canvas...');
     }
     

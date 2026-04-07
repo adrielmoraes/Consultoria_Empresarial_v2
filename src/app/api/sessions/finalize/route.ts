@@ -26,13 +26,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Sessão não encontrada" }, { status: 404 });
     }
 
-    // Criar plano de execução se houver conteúdo
-    if (markdownContent || pdfUrl) {
-      await db.insert(executionPlans).values({
-        sessionId,
-        pdfUrl: pdfUrl || null,
-        markdownContent: markdownContent || null,
+    const normalizedTranscript = typeof transcript === "string" ? transcript.trim() : "";
+    const normalizedMarkdown = typeof markdownContent === "string" ? markdownContent.trim() : "";
+    const fallbackMarkdown =
+      normalizedTranscript.length > 0
+        ? `# Plano de Execução\n\n## Resumo da Sessão\n\nEste plano foi salvo automaticamente a partir da sessão finalizada.\n\n## Transcrição\n\n${normalizedTranscript}`
+        : "";
+    const finalMarkdown = normalizedMarkdown || fallbackMarkdown || null;
+    const finalPdfUrl = typeof pdfUrl === "string" && pdfUrl.trim() ? pdfUrl.trim() : null;
+
+    if (finalMarkdown || finalPdfUrl) {
+      const existingPlan = await db.query.executionPlans.findFirst({
+        where: eq(executionPlans.sessionId, sessionId),
       });
+
+      if (existingPlan) {
+        await db
+          .update(executionPlans)
+          .set({
+            pdfUrl: finalPdfUrl,
+            markdownContent: finalMarkdown,
+            generatedAt: new Date(),
+          })
+          .where(eq(executionPlans.id, existingPlan.id));
+      } else {
+        await db.insert(executionPlans).values({
+          sessionId,
+          pdfUrl: finalPdfUrl,
+          markdownContent: finalMarkdown,
+        });
+      }
     }
 
     // Atualizar status do projeto para completado

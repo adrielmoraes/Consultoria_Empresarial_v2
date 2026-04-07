@@ -29,6 +29,7 @@ import os
 import re
 import tempfile
 from dataclasses import dataclass, field
+from time import monotonic
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -72,17 +73,24 @@ GEMINI_REALTIME_CONFIG = {
     "speech_config": {
         "voice_config": {
             "prebuilt_voice_config": {
-                "voice_name": "Fenrir",
+                "voice_name": "Orus",
             }
         }
     }
 }
 
+DATA_PACKET_SCHEMA_VERSION = "1.0"
+ACTIVATION_ACK_TIMEOUT_SECONDS = 8.0
+ACTIVATION_DONE_TIMEOUT_SECONDS = 45.0
+ACTIVATION_DEBOUNCE_SECONDS = 0.8
+SPECIALIST_GENERATION_TIMEOUT_SECONDS = 35.0
+CONTEXT_RECENT_WINDOW = 12
+
 # Vozes por agente (Gemini TTS nativo)
 AGENT_VOICES: dict[str, str] = {
     "host":  "Aoede",    # Nathália – feminina suave
     "cfo":   "Charon",   # Carlos   – masculina grave
-    "legal": "Fenrir",   # Daniel   – masculina formal
+    "legal": "Orus",   # Daniel   – masculina formal
     "cmo":   "Puck",     # Rodrigo  – masculina dinâmica
     "cto":   "Kore",     # Ana      – feminina técnica
     "plan":  "Fenrir",   # Marco    – masculina autoritativa (reusa Fenrir pois o Gemini tem 5 vozes)
@@ -288,14 +296,61 @@ class Blackboard:
     user_query: str = ""
     active_agent: Optional[str] = None
     transcript: list[dict] = field(default_factory=list)
+    current_objective: str = ""
+    last_user_question: str = ""
+    user_pain_points: list[str] = field(default_factory=list)
+    decisions: list[str] = field(default_factory=list)
+    pending_items: list[str] = field(default_factory=list)
     is_active: bool = True
     specialist_sessions: dict[str, AgentSession] = field(default_factory=dict)
     specialist_rooms: list[rtc.Room] = field(default_factory=list)
     documentos_disponiveis: list[str] = field(default_factory=list)
+    orchestration_metrics: dict[str, float] = field(default_factory=lambda: {
+        "activations_total": 0,
+        "activations_succeeded": 0,
+        "activations_timeout": 0,
+        "activations_cancelled": 0,
+        "activation_ack_latency_ms_total": 0,
+        "activation_done_latency_ms_total": 0,
+    })
 
     def add_message(self, role: str, content: str) -> None:
         self.transcript.append({"role": role, "content": content})
+        self._update_memory(role, content)
         logger.debug(f"[Blackboard] [{role}]: {content[:80]}...")
+
+    def _append_unique(self, bucket: list[str], value: str, max_size: int = 10) -> None:
+        normalized = value.strip()
+        if not normalized:
+            return
+        lowered = normalized.lower()
+        if any(existing.lower() == lowered for existing in bucket):
+            return
+        bucket.append(normalized)
+        if len(bucket) > max_size:
+            del bucket[:-max_size]
+
+    def _update_memory(self, role: str, content: str) -> None:
+        text = content.strip()
+        if not text:
+            return
+        role_lower = role.lower()
+        if role_lower == "usuário":
+            if not self.user_query:
+                self.user_query = text
+            if "?" in text:
+                self.last_user_question = text
+            lowered = text.lower()
+            if any(k in lowered for k in ("dor", "dificuld", "problema", "trav", "desafio")):
+                self._append_unique(self.user_pain_points, text, max_size=6)
+            if any(k in lowered for k in ("objetivo", "meta", "quero", "preciso", "planejo")):
+                self.current_objective = text
+        elif role in SPECIALIST_NAMES.values() or role == "Nathália":
+            lowered = text.lower()
+            if any(k in lowered for k in ("decisão", "decid", "recomend", "sugiro", "prior")):
+                self._append_unique(self.decisions, text, max_size=8)
+            if any(k in lowered for k in ("próximo passo", "fazer", "ação", "execut", "pendente")):
+                self._append_unique(self.pending_items, text, max_size=8)
 
     def get_context_summary(self) -> str:
         """Retorna um resumo do contexto atual para injetar nos prompts."""
@@ -306,12 +361,38 @@ class Blackboard:
             parts.append(f"Projeto: {self.project_name}")
         if self.user_query:
             parts.append(f"Necessidade do usuário: {self.user_query}")
-        recent = self.transcript[-20:]
+        if self.current_objective:
+            parts.append(f"Objetivo atual: {self.current_objective}")
+        if self.last_user_question:
+            parts.append(f"Última pergunta do usuário: {self.last_user_question}")
+        if self.decisions:
+            parts.append("Decisões registradas:")
+            for item in self.decisions[-4:]:
+                parts.append(f"- {item}")
+        if self.pending_items:
+            parts.append("Pendências registradas:")
+            for item in self.pending_items[-4:]:
+                parts.append(f"- {item}")
+        recent = self.transcript[-CONTEXT_RECENT_WINDOW:]
         if recent:
             parts.append("--- Conversa Recente ---")
             for msg in recent:
                 parts.append(f"[{msg['role']}]: {msg['content']}")
         return "\n".join(parts)
+
+    def get_structured_context(self) -> dict:
+        return {
+            "user_name": self.user_name,
+            "project_name": self.project_name,
+            "user_query": self.user_query,
+            "current_objective": self.current_objective,
+            "last_user_question": self.last_user_question,
+            "pain_points": self.user_pain_points[-6:],
+            "decisions": self.decisions[-8:],
+            "pending_items": self.pending_items[-8:],
+            "active_agent": self.active_agent,
+            "recent_messages": self.transcript[-CONTEXT_RECENT_WINDOW:],
+        }
 
     def get_full_transcript(self) -> str:
         return "\n\n".join(f"[{m['role']}]: {m['content']}" for m in self.transcript)
@@ -451,6 +532,37 @@ class HostAgent(Agent):
         )
         self._blackboard = blackboard
         self._room = room
+        self._turn_lock = asyncio.Lock()
+        self._turn_seq = 0
+        self._turn_events: dict[int, dict[str, asyncio.Event]] = {}
+        self._turn_status: dict[int, dict] = {}
+        self._last_activation_at: dict[str, float] = {}
+
+    async def _publish_packet(self, payload: dict) -> None:
+        base_payload = {
+            "version": DATA_PACKET_SCHEMA_VERSION,
+            "sent_at": monotonic(),
+            **payload,
+        }
+        await self._room.local_participant.publish_data(
+            json.dumps(base_payload).encode(),
+            reliable=True,
+        )
+
+    def handle_specialist_signal(self, msg: dict) -> None:
+        turn_id = msg.get("turn_id")
+        if not isinstance(turn_id, int):
+            return
+        events = self._turn_events.get(turn_id)
+        if not events:
+            return
+        msg_type = msg.get("type")
+        if msg_type == "agent_activated":
+            self._turn_status[turn_id] = msg
+            events["activated"].set()
+        elif msg_type in ("agent_done", "agent_timeout", "agent_cancelled", "agent_error"):
+            self._turn_status[turn_id] = msg
+            events["done"].set()
 
     @function_tool
     async def consultar_documento_empresa(
@@ -470,17 +582,94 @@ class HostAgent(Agent):
     # Método auxiliar: publica um data packet para ativar um especialista
     # ------------------------------------------------------------------
 
-    async def _activate_specialist(self, spec_id: str, context: str) -> None:
-        self._blackboard.active_agent = spec_id
-        self._blackboard.add_message("Sistema", f"Acionando {SPECIALIST_NAMES[spec_id]}: {context}")
-        payload = json.dumps({
-            "type": "activate_agent",
-            "agent_id": spec_id,
-            "context": context,
-            "transcript_summary": self._blackboard.get_context_summary(),
-        }).encode()
-        await self._room.local_participant.publish_data(payload, reliable=True)
-        logger.info(f"[Host] Acionando especialista: {spec_id} | contexto: {context}")
+    async def _activate_specialist(self, spec_id: str, context: str) -> str:
+        async with self._turn_lock:
+            now = monotonic()
+            last_activation = self._last_activation_at.get(spec_id, 0.0)
+            if now - last_activation < ACTIVATION_DEBOUNCE_SECONDS:
+                logger.info(f"[Host] Ativação de {spec_id} ignorada por debounce.")
+                return (
+                    f"{SPECIALIST_NAMES[spec_id]} já está sendo acionado neste instante. "
+                    f"Mantenha a conversa enquanto ele conclui o turno."
+                )
+            self._last_activation_at[spec_id] = now
+
+            self._turn_seq += 1
+            turn_id = self._turn_seq
+            start_ts = monotonic()
+
+            self._turn_events[turn_id] = {
+                "activated": asyncio.Event(),
+                "done": asyncio.Event(),
+            }
+            self._turn_status.pop(turn_id, None)
+            self._blackboard.orchestration_metrics["activations_total"] += 1
+            self._blackboard.active_agent = spec_id
+            self._blackboard.add_message("Sistema", f"Acionando {SPECIALIST_NAMES[spec_id]}: {context}")
+
+            await self._publish_packet({
+                "type": "activate_agent",
+                "agent_id": spec_id,
+                "turn_id": turn_id,
+                "context": context,
+                "transcript_summary": self._blackboard.get_context_summary(),
+                "context_state": self._blackboard.get_structured_context(),
+            })
+            logger.info(f"[Host] Acionando especialista: {spec_id} | turno={turn_id} | contexto: {context}")
+
+            try:
+                await asyncio.wait_for(
+                    self._turn_events[turn_id]["activated"].wait(),
+                    timeout=ACTIVATION_ACK_TIMEOUT_SECONDS,
+                )
+                ack_latency = (monotonic() - start_ts) * 1000
+                self._blackboard.orchestration_metrics["activation_ack_latency_ms_total"] += ack_latency
+            except asyncio.TimeoutError:
+                self._blackboard.orchestration_metrics["activations_timeout"] += 1
+                self._blackboard.active_agent = None
+                self._turn_events.pop(turn_id, None)
+                self._turn_status.pop(turn_id, None)
+                logger.warning(f"[Host] Timeout aguardando ACK de {spec_id} no turno {turn_id}.")
+                return (
+                    f"{SPECIALIST_NAMES[spec_id]} não respondeu a tempo. "
+                    f"Tente reformular a pergunta ou seguir com outro especialista."
+                )
+
+            try:
+                await asyncio.wait_for(
+                    self._turn_events[turn_id]["done"].wait(),
+                    timeout=ACTIVATION_DONE_TIMEOUT_SECONDS,
+                )
+            except asyncio.TimeoutError:
+                self._blackboard.orchestration_metrics["activations_timeout"] += 1
+                self._blackboard.active_agent = None
+                self._turn_events.pop(turn_id, None)
+                self._turn_status.pop(turn_id, None)
+                logger.warning(f"[Host] Timeout aguardando conclusão de {spec_id} no turno {turn_id}.")
+                return (
+                    f"{SPECIALIST_NAMES[spec_id]} demorou além do limite esperado. "
+                    f"Você pode tentar novamente ou avançar para outro tema."
+                )
+
+            done_latency = (monotonic() - start_ts) * 1000
+            self._blackboard.orchestration_metrics["activation_done_latency_ms_total"] += done_latency
+            status_payload = self._turn_status.get(turn_id, {})
+            status_type = status_payload.get("type")
+            self._blackboard.active_agent = None
+            self._turn_events.pop(turn_id, None)
+            self._turn_status.pop(turn_id, None)
+
+            if status_type == "agent_done":
+                self._blackboard.orchestration_metrics["activations_succeeded"] += 1
+                return f"{SPECIALIST_NAMES[spec_id]} concluiu a análise sobre: {context}"
+            if status_type == "agent_cancelled":
+                self._blackboard.orchestration_metrics["activations_cancelled"] += 1
+                return f"{SPECIALIST_NAMES[spec_id]} teve o turno interrompido. Você pode repetir a solicitação."
+            if status_type in ("agent_timeout", "agent_error"):
+                self._blackboard.orchestration_metrics["activations_timeout"] += 1
+                return f"{SPECIALIST_NAMES[spec_id]} encontrou instabilidade. Siga para outro especialista ou tente novamente."
+
+            return f"{SPECIALIST_NAMES[spec_id]} foi acionado para analisar: {context}"
 
     # ------------------------------------------------------------------
     # Function tools – chamados pelo LLM da Nathália quando necessário
@@ -497,8 +686,7 @@ class HostAgent(Agent):
         Use quando o usuário precisar de: precificação, projeção de receita,
         viabilidade financeira, estrutura de custos ou fontes de financiamento.
         """
-        await self._activate_specialist("cfo", questao)
-        return f"Carlos (CFO) foi acionado para analisar: {questao}"
+        return await self._activate_specialist("cfo", questao)
 
     @function_tool
     async def acionar_daniel_advogado(
@@ -511,8 +699,7 @@ class HostAgent(Agent):
         Use quando o usuário precisar de: tipo societário, contratos,
         LGPD, compliance ou proteção de propriedade intelectual.
         """
-        await self._activate_specialist("legal", questao)
-        return f"Daniel (Advogado) foi acionado para analisar: {questao}"
+        return await self._activate_specialist("legal", questao)
 
     @function_tool
     async def acionar_rodrigo_cmo(
@@ -525,8 +712,7 @@ class HostAgent(Agent):
         Use quando o usuário precisar de: posicionamento, go-to-market,
         aquisição de clientes, branding ou estratégia de crescimento.
         """
-        await self._activate_specialist("cmo", questao)
-        return f"Rodrigo (CMO) foi acionado para analisar: {questao}"
+        return await self._activate_specialist("cmo", questao)
 
     @function_tool
     async def acionar_ana_cto(
@@ -539,8 +725,7 @@ class HostAgent(Agent):
         Use quando o usuário precisar de: stack tecnológico, arquitetura,
         infraestrutura, escalabilidade ou estimativa de desenvolvimento.
         """
-        await self._activate_specialist("cto", questao)
-        return f"Ana (CTO) foi acionada para analisar: {questao}"
+        return await self._activate_specialist("cto", questao)
 
     @function_tool
     async def gerar_plano_execucao(
@@ -566,12 +751,11 @@ class HostAgent(Agent):
         markdown_plan = await self._generate_markdown_plan_with_agent(user_name, project_name)
 
         try:
-            plan_payload = json.dumps({
+            await self._publish_packet({
                 "type": "execution_plan",
                 "plan": markdown_plan,
                 "text": markdown_plan,
-            }).encode()
-            await self._room.local_participant.publish_data(plan_payload, reliable=True)
+            })
             logger.info("[Marco] Plano de Execução Markdown publicado como data packet (bastidores).")
         except Exception as e:
             logger.warning(f"[Marco] Erro ao publicar plano de execução: {e}")
@@ -857,10 +1041,10 @@ async def _start_specialist_in_room(
             try:
                 await host_room.local_participant.publish_data(
                     json.dumps({
+                        "version": DATA_PACKET_SCHEMA_VERSION,
                         "type": "agent_error",
                         "agent_id": spec_id,
-
-"name": name,
+                        "name": name,
                     }).encode(),
                     reliable=True,
                 )
@@ -905,6 +1089,7 @@ async def _start_specialist_in_room(
             try:
                 await host_room.local_participant.publish_data(
                     json.dumps({
+                        "version": DATA_PACKET_SCHEMA_VERSION,
                         "type": "agent_error",
                         "agent_id": spec_id,
                         "name": name,
@@ -928,6 +1113,7 @@ async def _start_specialist_in_room(
         try:
             await host_room.local_participant.publish_data(
                 json.dumps({
+                    "version": DATA_PACKET_SCHEMA_VERSION,
                     "type": "agent_ready",
                     "agent_id": spec_id,
                     "name": name,
@@ -996,6 +1182,7 @@ async def _start_specialist_in_room(
             asyncio.create_task(
                 host_room.local_participant.publish_data(
                     json.dumps({
+                        "version": DATA_PACKET_SCHEMA_VERSION,
                         "type": "transcript",
                         "speaker": name,
                         "text": text,
@@ -1009,15 +1196,35 @@ async def _start_specialist_in_room(
         # em session.generate_reply() e agent.update_instructions().
         async def _handle_activation(msg: dict) -> None:
             """Processa ativação deste especialista de forma assíncrona."""
+            turn_id = msg.get("turn_id")
+            started_at = monotonic()
+
+            async def _emit(signal_type: str, extra: Optional[dict] = None) -> None:
+                payload = {
+                    "version": DATA_PACKET_SCHEMA_VERSION,
+                    "type": signal_type,
+                    "turn_id": turn_id,
+                    "agent_id": spec_id,
+                    "name": name,
+                }
+                if extra:
+                    payload.update(extra)
+                await room.local_participant.publish_data(
+                    json.dumps(payload).encode(),
+                    reliable=True,
+                )
+
             try:
                 ctx_summary = msg.get("transcript_summary", "")
                 context_text = msg.get("context", "")
+                context_state = msg.get("context_state") or {}
+                context_state_str = json.dumps(context_state, ensure_ascii=False)
 
-                # Atualiza instruções com contexto da sessão
-                if ctx_summary:
+                if ctx_summary or context_state:
                     new_instructions = (
                         SPECIALIST_SYSTEM_PROMPTS[spec_id]
                         + f"\n\n--- CONTEXTO ATUAL DA SESSÃO ---\n{ctx_summary}"
+                        + f"\n\n--- ESTADO ESTRUTURADO DA SESSÃO ---\n{context_state_str}"
                     )
                     try:
                         result = agent.update_instructions(new_instructions)
@@ -1026,42 +1233,67 @@ async def _start_specialist_in_room(
                     except Exception as ui_err:
                         logger.warning(f"[{name}] Erro ao atualizar instruções: {ui_err}")
 
-                # C5: Subscreve ao áudio do usuário
+                await _emit("agent_activated", {"activated_in_ms": int((monotonic() - started_at) * 1000)})
                 _subscribe_user_audio()
 
-                # Gera resposta com await correto
                 prompt = (
                     f"Nathália acabou de te acionar. O contexto é: {context_text}. "
                     f"Responda de forma objetiva e profissional."
                 )
-                await session.generate_reply(instructions=prompt)
+                await asyncio.wait_for(
+                    session.generate_reply(instructions=prompt),
+                    timeout=SPECIALIST_GENERATION_TIMEOUT_SECONDS,
+                )
+                await _emit("agent_done", {"elapsed_ms": int((monotonic() - started_at) * 1000)})
                 logger.info(f"[{name}] ATIVADO via data packet — áudio ON + reply gerado.")
             except asyncio.CancelledError:
+                asyncio.create_task(_emit("agent_cancelled", {"elapsed_ms": int((monotonic() - started_at) * 1000)}))
                 logger.info(f"[{name}] Geração INTERROMPIDA (turno de outro agente).")
-                _unsubscribe_user_audio()
+                raise
+            except asyncio.TimeoutError:
+                await _emit("agent_timeout", {"elapsed_ms": int((monotonic() - started_at) * 1000)})
+                logger.warning(f"[{name}] Timeout na geração da resposta (turno={turn_id}).")
             except Exception as e:
+                await _emit("agent_error", {"error": str(e)[:240]})
                 logger.warning(f"[{name}] Erro na ativação assíncrona: {e}")
+            finally:
+                _unsubscribe_user_audio()
 
-        # C5: Escuta data packets para ativação/desativação coordenada.
-        # Callback síncrono delega lógica async para _handle_activation.
-        # Rastreia a task de geração para cancelar ao desativar (turn-taking).
         _generation_task: Optional[asyncio.Task] = None
+        _last_activation_at: float = 0.0
+        _last_turn_id: int = -1
 
         @room.on("data_received")
         def _on_data(dp: rtc.DataPacket) -> None:
-            nonlocal _generation_task
+            nonlocal _generation_task, _last_activation_at, _last_turn_id
             try:
                 msg = json.loads(dp.data.decode())
-                if msg.get("type") == "activate_agent":
+                msg_version = msg.get("version")
+                msg_type = msg.get("type")
+
+                if msg_version and msg_version != DATA_PACKET_SCHEMA_VERSION:
+                    logger.warning(
+                        f"[{name}] Data packet versão incompatível: {msg_version} "
+                        f"(esperado: {DATA_PACKET_SCHEMA_VERSION})."
+                    )
+
+                if msg_type == "activate_agent":
+                    turn_id = msg.get("turn_id")
                     if msg.get("agent_id") == spec_id:
-                        # Cancela geração anterior deste agente, se houver
+                        if isinstance(turn_id, int) and turn_id <= _last_turn_id:
+                            logger.info(f"[{name}] Turno ignorado por ordem antiga (turno={turn_id}).")
+                            return
+                        now = monotonic()
+                        if now - _last_activation_at < ACTIVATION_DEBOUNCE_SECONDS:
+                            logger.info(f"[{name}] Ativação ignorada por debounce.")
+                            return
+                        _last_activation_at = now
+                        if isinstance(turn_id, int):
+                            _last_turn_id = turn_id
                         if _generation_task and not _generation_task.done():
                             _generation_task.cancel()
-                        # Delega para handler assíncrono e rastreia a task
                         _generation_task = asyncio.create_task(_handle_activation(msg))
                     else:
-                        # === DESATIVAÇÃO: outro especialista foi chamado ===
-                        # Cancela geração em andamento para parar de falar
                         if _generation_task and not _generation_task.done():
                             _generation_task.cancel()
                             logger.info(f"[{name}] Geração CANCELADA (turno de {msg.get('agent_id')}).")
@@ -1120,14 +1352,74 @@ async def _run_entrypoint(ctx: JobContext) -> None:
             pub.set_subscribed(True)
             logger.info(f"[Host] Áudio de {participant.identity} subscrito dinamicamente.")
 
+    room_name = ctx.room.name
+    project_id = room_name.replace("mentoria-", "", 1) if room_name.startswith("mentoria-") else room_name
+
     # Blackboard compartilhado
-    blackboard = Blackboard(project_name=ctx.room.name)
+    blackboard = Blackboard(project_name=project_id)
+
+    def _parse_transcript(raw_transcript: str) -> list[dict]:
+        entries: list[dict] = []
+        for line in raw_transcript.splitlines():
+            text_line = line.strip()
+            if not text_line:
+                continue
+            match = re.match(r"^\[(.+?)\]:\s*(.*)$", text_line)
+            if not match:
+                continue
+            role = match.group(1).strip()
+            content = match.group(2).strip()
+            if content:
+                entries.append({"role": role, "content": content})
+        return entries
+
+    # Carregar contexto de retomada da API
+    async def fetch_resume_context():
+        import urllib.request
+        import json
+
+        api_url = os.getenv("NEXT_API_URL", "http://localhost:3000") + f"/api/projects/{project_id}/resume-context"
+
+        def _get():
+            try:
+                req = urllib.request.Request(api_url)
+                with urllib.request.urlopen(req) as resp:
+                    return json.loads(resp.read().decode())
+            except Exception as e:
+                logger.warning(f"Erro ao buscar contexto de retomada: {e}")
+                return None
+
+        loop = asyncio.get_running_loop()
+        payload = await loop.run_in_executor(None, _get)
+        if not payload:
+            return
+
+        project_info = payload.get("project") or {}
+        last_session = payload.get("lastSession") or {}
+        transcript = last_session.get("transcript") or ""
+
+        blackboard.project_name = project_info.get("projectTitle") or blackboard.project_name
+        blackboard.user_name = project_info.get("userName") or blackboard.user_name
+
+        if transcript:
+            parsed_entries = _parse_transcript(transcript)
+            if parsed_entries:
+                blackboard.transcript = parsed_entries[-250:]
+                for entry in blackboard.transcript:
+                    role = (entry.get("role") or "").lower()
+                    content = (entry.get("content") or "").strip()
+                    if not content:
+                        continue
+                    blackboard._update_memory(entry.get("role", ""), content)
+                    if not blackboard.user_query and role in ("usuário", "você", "user"):
+                        blackboard.user_query = content
+                logger.info(f"[Resume] Contexto de retomada carregado com {len(blackboard.transcript)} mensagens.")
 
     # Carregar documentos da API em background
     async def fetch_docs():
         import urllib.request
         import json
-        api_url = os.getenv("NEXT_API_URL", "http://localhost:3000") + f"/api/projects/{ctx.room.name}/documents"
+        api_url = os.getenv("NEXT_API_URL", "http://localhost:3000") + f"/api/projects/{project_id}/documents"
         def _get():
             try:
                 req = urllib.request.Request(api_url)
@@ -1142,7 +1434,8 @@ async def _run_entrypoint(ctx: JobContext) -> None:
         docs = await loop.run_in_executor(None, _get)
         blackboard.documentos_disponiveis = docs
         logger.info(f"[Docs] Foram carregados {len(docs)} documentos para a sessão.")
-        
+
+    await fetch_resume_context()
     asyncio.create_task(fetch_docs())
 
     # Variáveis de ambiente para conectar especialistas
@@ -1249,7 +1542,12 @@ async def _run_entrypoint(ctx: JobContext) -> None:
             blackboard.user_query = text
         asyncio.create_task(
             ctx.room.local_participant.publish_data(
-                json.dumps({"type": "transcript", "speaker": "Você", "text": text}).encode(),
+                json.dumps({
+                    "version": DATA_PACKET_SCHEMA_VERSION,
+                    "type": "transcript",
+                    "speaker": "Você",
+                    "text": text,
+                }).encode(),
                 reliable=True,
             )
         )
@@ -1294,7 +1592,12 @@ async def _run_entrypoint(ctx: JobContext) -> None:
         blackboard.add_message("Nathália", text)
         asyncio.create_task(
             ctx.room.local_participant.publish_data(
-                json.dumps({"type": "transcript", "speaker": "Nathália", "text": text}).encode(),
+                json.dumps({
+                    "version": DATA_PACKET_SCHEMA_VERSION,
+                    "type": "transcript",
+                    "speaker": "Nathália",
+                    "text": text,
+                }).encode(),
                 reliable=True,
             )
         )
@@ -1508,26 +1811,33 @@ async def _run_entrypoint(ctx: JobContext) -> None:
     def _on_data_received(dp: rtc.DataPacket) -> None:
         try:
             msg = json.loads(dp.data.decode())
+            msg_type = msg.get("type")
 
-            if msg.get("type") == "end_session":
+            if msg_type in {"agent_activated", "agent_done", "agent_timeout", "agent_cancelled", "agent_error"}:
+                host_agent.handle_specialist_signal(msg)
+                return
+
+            if msg_type == "end_session":
                 logger.info("[Room] Pedido de encerramento recebido do frontend.")
                 asyncio.create_task(
                     ctx.room.local_participant.publish_data(
                         json.dumps({
+                            "version": DATA_PACKET_SCHEMA_VERSION,
                             "type": "session_end",
                             "full_transcript": blackboard.get_full_transcript(),
                             "context_summary": blackboard.get_context_summary(),
+                            "context_state": blackboard.get_structured_context(),
                         }).encode(),
                         reliable=True,
                     )
                 )
                 shutdown_event.set()
 
-            elif msg.get("type") == "set_project_name":
+            elif msg_type == "set_project_name":
                 blackboard.project_name = msg.get("name", "")
                 logger.info(f"[Room] Nome do projeto definido: {blackboard.project_name}")
 
-            elif msg.get("type") == "set_user_name":
+            elif msg_type == "set_user_name":
                 blackboard.user_name = msg.get("name", "")
                 logger.info(f"[Room] Nome do usuário definido: {blackboard.user_name}")
 
@@ -1547,6 +1857,36 @@ async def _run_entrypoint(ctx: JobContext) -> None:
         blackboard.is_active = False
         logger.info("[Job] Iniciando limpeza de recursos...")
 
+        async def persist_resume_snapshot() -> None:
+            import urllib.request
+            import json
+
+            transcript_snapshot = blackboard.get_full_transcript().strip()
+            if not transcript_snapshot:
+                return
+
+            api_url = os.getenv("NEXT_API_URL", "http://localhost:3000") + f"/api/projects/{project_id}/resume-context"
+            payload = json.dumps({"transcript": transcript_snapshot}).encode("utf-8")
+
+            def _post():
+                try:
+                    req = urllib.request.Request(
+                        api_url,
+                        data=payload,
+                        headers={"Content-Type": "application/json"},
+                        method="POST",
+                    )
+                    with urllib.request.urlopen(req):
+                        return True
+                except Exception as e:
+                    logger.warning(f"[Resume] Falha ao persistir snapshot de retomada: {e}")
+                    return False
+
+            loop = asyncio.get_running_loop()
+            await loop.run_in_executor(None, _post)
+
+        await persist_resume_snapshot()
+
         # Desconecta especialistas com timeout máximo para evitar travamentos
         for spec_room in blackboard.specialist_rooms:
             try:
@@ -1560,7 +1900,25 @@ async def _run_entrypoint(ctx: JobContext) -> None:
 
         room_name = getattr(ctx.job.room, "name", ctx.room.name) if getattr(ctx, "job", None) else ctx.room.name
 
-        # Limpa o lock _active_rooms para permitir a mesma sala rodar outro job no futuro
+        metrics = blackboard.orchestration_metrics
+        avg_ack_ms = (
+            metrics["activation_ack_latency_ms_total"] / metrics["activations_total"]
+            if metrics["activations_total"] else 0.0
+        )
+        avg_done_ms = (
+            metrics["activation_done_latency_ms_total"] / metrics["activations_total"]
+            if metrics["activations_total"] else 0.0
+        )
+        logger.info(
+            "[Metrics] activations_total=%s succeeded=%s timeout=%s cancelled=%s avg_ack_ms=%.1f avg_done_ms=%.1f",
+            int(metrics["activations_total"]),
+            int(metrics["activations_succeeded"]),
+            int(metrics["activations_timeout"]),
+            int(metrics["activations_cancelled"]),
+            avg_ack_ms,
+            avg_done_ms,
+        )
+
         _active_rooms.discard(room_name)
         
         logger.info(f"[Job] Encerrado com sucesso para a sala '{room_name}'. Salas ativas: {_active_rooms}")

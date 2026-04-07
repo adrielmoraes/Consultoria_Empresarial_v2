@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Query 1: usuário
-    const [user] = await db
+    const [rawUser] = await db
       .select({
         id: users.id,
         name: users.name,
@@ -24,8 +24,20 @@ export async function GET(request: NextRequest) {
       .from(users)
       .where(eq(users.id, userId));
 
-    if (!user) {
+    if (!rawUser) {
       return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
+    }
+
+    let user = rawUser;
+    if (user.subscriptionStatus === "trial" && (user.credits ?? 0) > 1) {
+      await db
+        .update(users)
+        .set({
+          credits: 1,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId));
+      user = { ...user, credits: 1 };
     }
 
     // Query 2: todos os projetos do usuário

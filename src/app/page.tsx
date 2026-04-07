@@ -2,6 +2,7 @@
 
 import { Header } from "@/components/header";
 import { motion } from "framer-motion";
+import type { Variants } from "framer-motion";
 import {
   Brain,
   Users,
@@ -19,7 +20,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-const fadeUp: any = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 30 },
   visible: (i: number) => ({
     opacity: 1,
@@ -91,7 +92,7 @@ const features = [
 const plans = [
   {
     name: "Sessão Avulsa",
-    price: "R$ 49",
+    price: "R$ 149,90",
     period: "por sessão",
     description: "Ideal para quem quer experimentar ou resolver uma dúvida pontual.",
     features: [
@@ -105,7 +106,7 @@ const plans = [
   },
   {
     name: "Profissional",
-    price: "R$ 149",
+    price: "R$ 399,90",
     period: "por mês",
     description: "Para empreendedores que precisam de mentorias regulares.",
     features: [
@@ -118,23 +119,6 @@ const plans = [
     ],
     cta: "Assinar Agora",
     popular: true,
-  },
-  {
-    name: "Enterprise",
-    price: "R$ 399",
-    period: "por mês",
-    description: "Para equipes e empresas que necessitam de mentorias ilimitadas.",
-    features: [
-      "Sessões ilimitadas",
-      "5 especialistas de IA",
-      "Plano de Execução em PDF",
-      "Sem limite de tempo",
-      "Histórico completo",
-      "Suporte dedicado",
-      "API access",
-    ],
-    cta: "Falar com Vendas",
-    popular: false,
   },
 ];
 

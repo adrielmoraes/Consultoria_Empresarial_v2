@@ -72,8 +72,9 @@ export async function POST(request: NextRequest) {
         const customerId = invoice.customer as string;
 
         if (invoice.billing_reason === "subscription_cycle") {
-          const lineItem = invoice.lines.data[0] as any;
-          const priceId = lineItem?.price?.id;
+          const lineItem = invoice.lines.data[0] as Stripe.InvoiceLineItem | undefined;
+          const priceData = lineItem?.pricing?.price_details?.price;
+          const priceId = typeof priceData === "string" ? priceData : priceData?.id;
           const creditsToAdd = priceId ? PLAN_CREDITS[priceId] || 0 : 0;
 
           await db

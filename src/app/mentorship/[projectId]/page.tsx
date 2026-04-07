@@ -142,6 +142,67 @@ type TranscriptMessage = {
   timestamp: string;
 };
 
+const DATA_PACKET_SCHEMA_VERSION = "1.0";
+
+type AgentTurnStatus =
+  | "idle"
+  | "activated"
+  | "running"
+  | "completed"
+  | "timeout"
+  | "error"
+  | "cancelled";
+
+type ProtocolHealth = "ok" | "warn" | "error";
+
+function initialTurnStatusState(): Record<string, AgentTurnStatus> {
+  return Object.keys(AGENTS_MAP).reduce<Record<string, AgentTurnStatus>>(
+    (acc, id) => {
+      acc[id] = "idle";
+      return acc;
+    },
+    {}
+  );
+}
+
+function getTurnStatusLabel(status: AgentTurnStatus): string {
+  switch (status) {
+    case "activated":
+      return "Ativado";
+    case "running":
+      return "Em execução";
+    case "completed":
+      return "Finalizado";
+    case "timeout":
+      return "Timeout";
+    case "error":
+      return "Erro";
+    case "cancelled":
+      return "Cancelado";
+    default:
+      return "Aguardando";
+  }
+}
+
+function getTurnStatusClass(status: AgentTurnStatus): string {
+  switch (status) {
+    case "activated":
+      return "text-cyan-300 border-cyan-500/40 bg-cyan-500/15";
+    case "running":
+      return "text-[#d4af37] border-[#d4af37]/40 bg-[#d4af37]/10";
+    case "completed":
+      return "text-emerald-300 border-emerald-500/40 bg-emerald-500/15";
+    case "timeout":
+      return "text-amber-300 border-amber-500/40 bg-amber-500/15";
+    case "error":
+      return "text-red-300 border-red-500/40 bg-red-500/15";
+    case "cancelled":
+      return "text-gray-300 border-gray-500/40 bg-gray-500/15";
+    default:
+      return "text-gray-400 border-white/10 bg-black/40";
+  }
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatTime(s: number): string {
@@ -195,6 +256,14 @@ export default function MentorshipRoomPage() {
 
   // F5: Status individual dos agentes conectados
   const [connectedAgents, setConnectedAgents] = useState<Set<string>>(new Set());
+  const [agentTurnStatus, setAgentTurnStatus] = useState<Record<string, AgentTurnStatus>>(
+    () => initialTurnStatusState()
+  );
+  const [protocolHealth, setProtocolHealth] = useState<ProtocolHealth>("ok");
+  const [protocolMessage, setProtocolMessage] = useState<string>("Protocolo sincronizado");
+  const unsupportedVersionRef = useRef<Set<string>>(new Set());
+  const turnTimersRef = useRef<Map<string, number>>(new Map());
+  const turnSequencerRef = useRef<Map<string, number>>(new Map());
 
   // F6: Estado real do microfone e feedback visual
   const [micActive, setMicActive] = useState(false);
@@ -509,6 +578,28 @@ export default function MentorshipRoomPage() {
     const userName = user.name ?? "Usuário";
 
     let room: Room | null = null;
+    const turnTimers = turnTimersRef.current;
+
+    const clearTurnTimer = (agentId: string) => {
+      const timer = turnTimers.get(agentId);
+      if (timer) {
+        window.clearTimeout(timer);
+        turnTimers.delete(agentId);
+      }
+    };
+
+    const scheduleTurnStatus = (
+      agentId: string,
+      status: AgentTurnStatus,
+      delayMs: number
+    ) => {
+      clearTurnTimer(agentId);
+      const timer = window.setTimeout(() => {
+        setAgentTurnStatus((prev) => ({ ...prev, [agentId]: status }));
+        turnTimers.delete(agentId);
+      }, delayMs);
+      turnTimers.set(agentId, timer);
+    };
     let isMounted = true;
     const audioContainer = audioContainerRef.current;
 
@@ -582,6 +673,15 @@ export default function MentorshipRoomPage() {
             console.warn("[LiveKit] Falha ao desbloquear AudioContext:", audioErr);
           }
 
+          try {
+            const payload = new TextEncoder().encode(
+              JSON.stringify({ type: "set_user_name", name: userName }),
+            );
+            await room!.localParticipant.publishData(payload, { reliable: true });
+          } catch (error) {
+            console.warn("[Room] Não foi possível sincronizar nome do usuário com o worker:", error);
+          }
+
           for (const [, p] of room!.remoteParticipants) {
             const pid = p.identity;
             if (pid.startsWith("agent-")) {
@@ -629,6 +729,10 @@ export default function MentorshipRoomPage() {
           isReconnectingRef.current = false;
           setConnectionState("connected");
           addTranscriptMessage("Sistema", "Reconectado!");
+          const payload = new TextEncoder().encode(
+            JSON.stringify({ type: "set_user_name", name: userName }),
+          );
+          void room?.localParticipant.publishData(payload, { reliable: true }).catch(() => undefined);
           if (!room?.localParticipant.getTrackPublication(Track.Source.Microphone)) {
             void initializeMicrophone(room!);
           }
@@ -724,6 +828,32 @@ export default function MentorshipRoomPage() {
           (payload: Uint8Array) => {
             try {
               const data = JSON.parse(new TextDecoder().decode(payload));
+              const packetVersion = typeof data.version === "string" ? data.version : null;
+
+              if (packetVersion && packetVersion !== DATA_PACKET_SCHEMA_VERSION) {
+                if (!unsupportedVersionRef.current.has(packetVersion)) {
+                  unsupportedVersionRef.current.add(packetVersion);
+                  setProtocolHealth("error");
+                  setProtocolMessage(`Versão incompatível: ${packetVersion}`);
+                  addTranscriptMessage(
+                    "Sistema",
+                    `Pacote ignorado por versão incompatível (${packetVersion}). Esperado ${DATA_PACKET_SCHEMA_VERSION}.`
+                  );
+                }
+                return;
+              }
+
+              if (!packetVersion) {
+                setProtocolHealth((prev) => (prev === "error" ? prev : "warn"));
+                setProtocolMessage((prev) =>
+                  prev.startsWith("Versão incompatível")
+                    ? prev
+                    : "Recebendo pacotes sem versão (modo compatível)"
+                );
+              } else if (packetVersion === DATA_PACKET_SCHEMA_VERSION) {
+                setProtocolHealth((prev) => (prev === "error" ? prev : "ok"));
+                setProtocolMessage("Protocolo sincronizado");
+              }
 
               if (data.type === "transcript") {
                 addTranscriptMessage(data.speaker, data.text);
@@ -741,6 +871,52 @@ export default function MentorshipRoomPage() {
                 const agentId = data.agent_id as string;
                 if (agentId) {
                   setConnectedAgents((prev) => new Set(prev).add(agentId));
+                }
+              } else if (data.type === "agent_activated") {
+                const agentId = data.agent_id as string;
+                const turnId =
+                  typeof data.turn_id === "number" ? data.turn_id : Date.now();
+                if (agentId) {
+                  const lastTurn = turnSequencerRef.current.get(agentId) ?? -1;
+                  if (turnId >= lastTurn) {
+                    turnSequencerRef.current.set(agentId, turnId);
+                    setAgentTurnStatus((prev) => ({ ...prev, [agentId]: "activated" }));
+                    scheduleTurnStatus(agentId, "running", 1200);
+                  }
+                }
+              } else if (data.type === "agent_done") {
+                const agentId = data.agent_id as string;
+                const turnId =
+                  typeof data.turn_id === "number" ? data.turn_id : Date.now();
+                if (agentId) {
+                  const lastTurn = turnSequencerRef.current.get(agentId) ?? -1;
+                  if (turnId >= lastTurn) {
+                    turnSequencerRef.current.set(agentId, turnId);
+                    clearTurnTimer(agentId);
+                    setAgentTurnStatus((prev) => ({ ...prev, [agentId]: "completed" }));
+                    scheduleTurnStatus(agentId, "idle", 6000);
+                  }
+                }
+              } else if (data.type === "agent_timeout") {
+                const agentId = data.agent_id as string;
+                if (agentId) {
+                  clearTurnTimer(agentId);
+                  setAgentTurnStatus((prev) => ({ ...prev, [agentId]: "timeout" }));
+                  scheduleTurnStatus(agentId, "idle", 9000);
+                }
+              } else if (data.type === "agent_error") {
+                const agentId = data.agent_id as string;
+                if (agentId) {
+                  clearTurnTimer(agentId);
+                  setAgentTurnStatus((prev) => ({ ...prev, [agentId]: "error" }));
+                  scheduleTurnStatus(agentId, "idle", 9000);
+                }
+              } else if (data.type === "agent_cancelled") {
+                const agentId = data.agent_id as string;
+                if (agentId) {
+                  clearTurnTimer(agentId);
+                  setAgentTurnStatus((prev) => ({ ...prev, [agentId]: "cancelled" }));
+                  scheduleTurnStatus(agentId, "idle", 5000);
                 }
               }
             } catch {
@@ -786,6 +962,8 @@ export default function MentorshipRoomPage() {
       isMounted = false;
       sessionCreatingRef.current = false;
       connectionStartedRef.current = false; // Permite re-mount reconectar
+      turnTimers.forEach((timer) => window.clearTimeout(timer));
+      turnTimers.clear();
 
       cleanupAudioPipeline(room);
 
@@ -925,6 +1103,7 @@ export default function MentorshipRoomPage() {
     ...a,
     speaking: activeSpeakers.has(a.id),
     connected: connectedAgents.has(a.id),
+    turnStatus: agentTurnStatus[a.id] ?? "idle",
   }));
 
   const connectionIcon = {
@@ -972,6 +1151,16 @@ export default function MentorshipRoomPage() {
                 {formatTime(elapsedTime)}
               </span>
             </div>
+          </div>
+          <div className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-wider ${
+            protocolHealth === "error"
+              ? "bg-red-500/10 border-red-500/30 text-red-300"
+              : protocolHealth === "warn"
+                ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
+                : "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+          }`}>
+            <span>{protocolHealth === "ok" ? "Protocolo OK" : protocolHealth === "warn" ? "Compatível" : "Incompatível"}</span>
+            <span className="text-[9px] normal-case tracking-normal opacity-80">{protocolMessage}</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -1651,10 +1840,13 @@ function AgentCard({
   agent,
   compact = false,
 }: {
-  agent: AgentInfo & { connected?: boolean };
+  agent: AgentInfo & { connected?: boolean; turnStatus?: AgentTurnStatus };
   compact?: boolean;
 }) {
   const Icon = agent.icon;
+  const turnStatus = agent.turnStatus ?? "idle";
+  const turnLabel = getTurnStatusLabel(turnStatus);
+  const turnClass = getTurnStatusClass(turnStatus);
 
   return (
     <motion.div
@@ -1718,34 +1910,38 @@ function AgentCard({
         </div>
       </div>
 
-      {/* Connection & Speaking Badges */}
-      <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-20">
-         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
+      <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-20">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
             <div className={`w-1.5 h-1.5 rounded-full ${agent.connected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'bg-gray-600'}`} />
             <span className={`text-[9px] font-bold uppercase tracking-wider ${agent.connected ? 'text-emerald-400' : 'text-gray-500'}`}>
               {agent.connected ? 'Online' : 'Standby'}
             </span>
-         </div>
+          </div>
+          <div className={`px-2.5 py-1 rounded-full border text-[9px] font-bold uppercase tracking-wider ${turnClass}`}>
+            {turnLabel}
+          </div>
+        </div>
 
-         {agent.speaking && (
-           <motion.div 
+        {agent.speaking && (
+          <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-2 bg-[#d4af37] px-3 py-1 rounded-full shadow-[0_0_20px_rgba(212,175,55,0.3)]"
-           >
-              <div className="flex items-center gap-1">
-                {[0, 1, 2].map((i) => (
-                  <motion.div
-                    key={i}
-                    animate={{ height: ["4px", "10px", "4px"] }}
-                    transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.1 }}
-                    className="w-[2px] bg-[#030712] rounded-full"
-                  />
-                ))}
-              </div>
-              <span className="text-[9px] font-black uppercase text-[#030712] tracking-tighter">Live Insight</span>
-           </motion.div>
-         )}
+          >
+            <div className="flex items-center gap-1">
+              {[0, 1, 2].map((i) => (
+                <motion.div
+                  key={i}
+                  animate={{ height: ["4px", "10px", "4px"] }}
+                  transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.1 }}
+                  className="w-[2px] bg-[#030712] rounded-full"
+                />
+              ))}
+            </div>
+            <span className="text-[9px] font-black uppercase text-[#030712] tracking-tighter">Live Insight</span>
+          </motion.div>
+        )}
       </div>
 
       {/* Info Overlay */}

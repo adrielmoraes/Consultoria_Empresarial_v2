@@ -96,8 +96,22 @@ export async function POST(request: NextRequest) {
       }
 
       // Verifica créditos dentro da transação, com dados garantidamente frescos
-      const hasCredits = (user.credits ?? 0) > 0;
+      const normalizedCredits =
+        user.subscriptionStatus === "trial"
+          ? Math.min(user.credits ?? 0, 1)
+          : (user.credits ?? 0);
+      const hasCredits = normalizedCredits > 0;
       const hasActiveSubscription = user.subscriptionStatus === "active";
+
+      if (user.subscriptionStatus === "trial" && (user.credits ?? 0) > 1) {
+        await tx
+          .update(users)
+          .set({
+            credits: 1,
+            updatedAt: new Date(),
+          })
+          .where(eq(users.id, userId));
+      }
 
       if (!hasCredits && !hasActiveSubscription) {
         throw new Error("NO_CREDITS");
@@ -120,7 +134,7 @@ export async function POST(request: NextRequest) {
         await tx
           .update(users)
           .set({
-            credits: Math.max(0, (user.credits ?? 0) - 1),
+            credits: Math.max(0, normalizedCredits - 1),
             updatedAt: new Date(),
           })
           .where(eq(users.id, userId));

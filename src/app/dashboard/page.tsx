@@ -139,7 +139,7 @@ export default function DashboardPage() {
   const userName = dashData?.user?.name || session?.user?.name || "Usuário";
   const userEmail = dashData?.user?.email || session?.user?.email || "";
   const userInitial = userName.charAt(0).toUpperCase();
-  const userId = (session?.user as any)?.id || "";
+  const userId = (session?.user as { id?: string } | undefined)?.id || "";
 
   const stats = dashData?.stats || {
     totalProjects: 0,

@@ -26,8 +26,9 @@ export async function POST(
       textContent = new TextDecoder().decode(buffer);
     } else if (file.name.endsWith(".pdf")) {
       try {
-        const pdfParse = require("pdf-parse");
-        const pdfData = await pdfParse(Buffer.from(buffer));
+        const { PDFParse } = await import("pdf-parse");
+        const parser = new PDFParse({ data: Buffer.from(buffer) });
+        const pdfData = await parser.getText();
         textContent = pdfData.text;
       } catch (e) {
          console.error("Erro no pdf-parse:", e);

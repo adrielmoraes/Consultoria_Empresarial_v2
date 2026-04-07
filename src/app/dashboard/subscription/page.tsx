@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import {
-  Brain,
   FileText,
   CreditCard,
   LogOut,
@@ -37,52 +36,49 @@ const plans = [
     gradient: "from-gray-500 to-gray-600",
     borderColor: "border-gray-500/20",
     features: [
-      "3 créditos de teste",
+      "1 crédito de teste",
       "Mentoria com 5 especialistas IA",
+      "12 minutos de mentoria",
       "Plano de execução básico",
     ],
     cta: "Plano Atual",
     disabled: true,
-    statusMatch: ["trial", "inactive", null],
   },
   {
-    id: "starter",
-    name: "Starter",
-    price: "R$ 49",
-    period: "/mês",
+    id: "session",
+    name: "Sessão Avulsa",
+    price: "R$ 149,90",
+    period: "/sessão",
     icon: Zap,
     gradient: "from-[#d4af37] to-[#b08d24]",
     borderColor: "border-[#d4af37]/30",
     popular: true,
     features: [
-      "5 mentorias por mês",
+      "1 mentoria",
       "Mentoria com 5 especialistas IA",
       "Plano de execução completo em PDF",
-      "Suporte por e-mail",
+      "30 minutos de reunião",
     ],
-    cta: "Assinar Starter",
+    cta: "Comprar Sessão",
     disabled: false,
-    statusMatch: ["starter"],
   },
   {
-    id: "pro",
-    name: "Pro",
-    price: "R$ 149",
+    id: "professional",
+    name: "Profissional",
+    price: "R$ 399,90",
     period: "/mês",
     icon: Crown,
     gradient: "from-amber-500 to-orange-600",
     borderColor: "border-amber-500/30",
     features: [
-      "Mentorias ilimitadas",
+      "5 mentorias por mês",
       "Mentoria com 5 especialistas IA",
       "Plano de execução completo em PDF",
-      "Relatórios avançados",
-      "Suporte prioritário",
-      "Acesso antecipado a novas features",
+      "60 minutos por reunião",
+      "Suporte prioritário por e-mail",
     ],
-    cta: "Assinar Pro",
+    cta: "Assinar Profissional",
     disabled: false,
-    statusMatch: ["pro", "active"],
   },
 ];
 
@@ -111,7 +107,8 @@ export default function SubscriptionPage() {
   const fetchUserData = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/dashboard?userId=${(session?.user as any)?.id}`);
+      const userId = (session?.user as { id?: string } | undefined)?.id;
+      const res = await fetch(`/api/dashboard?userId=${userId ?? ""}`);
       if (res.ok) {
         const data = await res.json();
         setUserData({
@@ -128,12 +125,34 @@ export default function SubscriptionPage() {
 
   const handleSubscribe = async (planId: string) => {
     setPurchasing(planId);
-    // Integração com Stripe será adicionada futuramente
-    // Por agora, mostra feedback visual
-    setTimeout(() => {
+    try {
+      const userId = (session?.user as { id?: string } | undefined)?.id;
+      if (!userId) {
+        throw new Error("Usuário não autenticado");
+      }
+
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planId,
+          userId,
+          userEmail: session?.user?.email ?? undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data?.error || "Falha ao iniciar checkout");
+      }
+
+      window.location.href = data.url;
+    } catch (error) {
+      console.error("Erro ao iniciar checkout:", error);
+      alert("Não foi possível iniciar o checkout. Tente novamente.");
+    } finally {
       setPurchasing(null);
-      alert("Integração com pagamento será ativada em breve! Por enquanto, você tem créditos gratuitos para testar.");
-    }, 1500);
+    }
   };
 
   const handleLogout = async () => {
@@ -164,6 +183,18 @@ export default function SubscriptionPage() {
   const userInitial = userName.charAt(0).toUpperCase();
   const currentStatus = userData?.subscriptionStatus || "trial";
   const currentCredits = userData?.credits ?? 0;
+  const currentPlanId =
+    currentStatus === "active"
+      ? "professional"
+      : currentCredits > 0
+        ? "session"
+        : "free";
+  const currentPlanName =
+    currentPlanId === "professional"
+        ? "Profissional"
+        : currentPlanId === "session"
+          ? "Sessão Avulsa"
+          : "Gratuito (Trial)";
 
   const navItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -260,7 +291,7 @@ export default function SubscriptionPage() {
                 <h3 className="text-lg font-bold mb-1">
                   Seu Plano:{" "}
                   <span className="gradient-text capitalize">
-                    {currentStatus === "trial" ? "Gratuito (Trial)" : currentStatus}
+                    {currentPlanName}
                   </span>
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -275,7 +306,7 @@ export default function SubscriptionPage() {
           {/* Plans Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {plans.map((plan, i) => {
-              const isCurrentPlan = plan.statusMatch.includes(currentStatus);
+              const isCurrentPlan = plan.id === currentPlanId;
               const Icon = plan.icon;
               return (
                 <motion.div

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { executionPlans, mentoringSessions, projects, users } from "@/lib/db/schema";
+import { executionPlans, mentoringSessions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function GET(
@@ -9,6 +9,7 @@ export async function GET(
 ) {
   try {
     const { sessionId } = await params;
+    const format = request.nextUrl.searchParams.get("format");
 
     if (!sessionId) {
       return NextResponse.json({ error: "sessionId é obrigatório" }, { status: 400 });
@@ -31,15 +32,32 @@ export async function GET(
 
     const plan = await db.query.executionPlans.findFirst({
       where: eq(executionPlans.sessionId, sessionId),
+      orderBy: (plans, { desc }) => [desc(plans.generatedAt)],
     });
 
     if (!plan) {
       return NextResponse.json({ error: "Plano não encontrado" }, { status: 404 });
     }
 
+    if (format !== "json") {
+      if (plan.pdfUrl) {
+        return NextResponse.redirect(plan.pdfUrl);
+      }
+
+      if (plan.markdownContent) {
+        return new NextResponse(plan.markdownContent, {
+          headers: {
+            "Content-Type": "text/markdown; charset=utf-8",
+            "Content-Disposition": `inline; filename="plano-${sessionId}.md"`,
+          },
+        });
+      }
+    }
+
     return NextResponse.json({
       plan: {
         id: plan.id,
+        pdfUrl: plan.pdfUrl,
         markdownContent: plan.markdownContent,
         generatedAt: plan.generatedAt,
       },
