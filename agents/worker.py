@@ -154,7 +154,7 @@ SPECIALIST_INTRODUCTIONS: dict[str, str] = {
 SPECIALIST_ORDER: list[str] = ["cfo", "legal", "cmo", "cto"]
 
 # Pausa entre apresentações de especialistas
-POST_INTRO_WAIT: float = 1.0
+POST_INTRO_WAIT: float = 0.50
 
 LANGUAGE_ENFORCEMENT = """
 ## REGRA ABSOLUTA DE IDIOMA
@@ -458,8 +458,8 @@ class SpecialistAgent(Agent):
                 realtime_input_config=genai_types.RealtimeInputConfig(
                     automatic_activity_detection=genai_types.AutomaticActivityDetection(
                         disabled=False,
-                        prefix_padding_ms=500,
-                        silence_duration_ms=1500,
+                        prefix_padding_ms=300,
+                        silence_duration_ms=550,
                     ),
                 ),
                 context_window_compression=genai_types.ContextWindowCompressionConfig(
@@ -513,8 +513,8 @@ class HostAgent(Agent):
             realtime_input_config=genai_types.RealtimeInputConfig(
                 automatic_activity_detection=genai_types.AutomaticActivityDetection(
                     disabled=False,
-                    prefix_padding_ms=500,
-                    silence_duration_ms=1500,
+                    prefix_padding_ms=300,
+                    silence_duration_ms=550,
                 ),
             ),
             context_window_compression=genai_types.ContextWindowCompressionConfig(
@@ -827,7 +827,7 @@ class HostAgent(Agent):
                     contents=draft_prompt,
                     config=types.GenerateContentConfig(
                         temperature=0.65,
-                        max_output_tokens=16000,
+                        max_output_tokens=36000,
                         tools=[{"google_search": {}}],
                     ),
                 )
@@ -890,7 +890,7 @@ class HostAgent(Agent):
                     contents=review_prompt,
                     config=types.GenerateContentConfig(
                         temperature=0.3,
-                        max_output_tokens=16000,
+                        max_output_tokens=36000,
                     ),
                 )
 
