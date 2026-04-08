@@ -1466,15 +1466,16 @@ async def _run_entrypoint(ctx: JobContext) -> None:
         import urllib.request
         import json
 
-        api_url = os.getenv("NEXT_API_URL", "http://localhost:3000") + f"/api/projects/{project_id}/resume-context"
+        api_url = os.getenv("NEXT_API_URL", "http://localhost:3000").rstrip("/") + f"/api/projects/{project_id}/resume-context"
 
         def _get():
             try:
-                req = urllib.request.Request(api_url)
+                logger.info(f"[Resume] Tentando buscar contexto em: {api_url}")
+                req = urllib.request.Request(api_url, headers={"User-Agent": "MentoriaAI-Worker/1.0"})
                 with urllib.request.urlopen(req) as resp:
                     return json.loads(resp.read().decode())
             except Exception as e:
-                logger.warning(f"Erro ao buscar contexto de retomada: {e}")
+                logger.warning(f"Erro ao buscar contexto de retomada na URL {api_url}: {e}")
                 return None
 
         loop = asyncio.get_running_loop()
@@ -1507,15 +1508,16 @@ async def _run_entrypoint(ctx: JobContext) -> None:
     async def fetch_docs():
         import urllib.request
         import json
-        api_url = os.getenv("NEXT_API_URL", "http://localhost:3000") + f"/api/projects/{project_id}/documents"
+        api_url = os.getenv("NEXT_API_URL", "http://localhost:3000").rstrip("/") + f"/api/projects/{project_id}/documents"
         def _get():
             try:
-                req = urllib.request.Request(api_url)
+                logger.info(f"[Docs] Tentando buscar documentos em: {api_url}")
+                req = urllib.request.Request(api_url, headers={"User-Agent": "MentoriaAI-Worker/1.0"})
                 with urllib.request.urlopen(req) as resp:
                     data = json.loads(resp.read().decode())
                     return [d.get("content", "") for d in data if d.get("content")]
             except Exception as e:
-                logger.warning(f"Erro ao buscar documentos da API: {e}")
+                logger.warning(f"Erro ao buscar documentos da API na URL {api_url}: {e}")
                 return []
         
         loop = asyncio.get_running_loop()
