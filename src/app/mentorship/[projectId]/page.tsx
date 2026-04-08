@@ -243,6 +243,7 @@ export default function MentorshipRoomPage() {
   const [showTranscript, setShowTranscript] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [executionPlan, setExecutionPlan] = useState<string | null>(null);
+  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
   const [showPlan, setShowPlan] = useState<boolean | "content" | "checklist">(false);
 
   // F4: Timeout de connecting
@@ -864,10 +865,16 @@ export default function MentorshipRoomPage() {
                 addTranscriptMessage(data.speaker, data.text);
               } else if (data.type === "execution_plan") {
                 setExecutionPlan(data.plan ?? data.text ?? "");
+                // Captura o PDF Base64 enviado pelo Marco via LiveKit packet
+                if (data.pdf_base64 && typeof data.pdf_base64 === "string") {
+                  setPdfBase64(data.pdf_base64);
+                }
                 setShowPlan(true);
                 addTranscriptMessage(
                   "Marco",
-                  "Plano de Execução gerado!"
+                  data.pdf_base64
+                    ? "Plano de Execução gerado! PDF disponível para download."
+                    : "Plano de Execução gerado!"
                 );
               } else if (data.type === "session_end") {
                 void handleSessionCompletedRef.current?.(data.transcript);
@@ -1040,6 +1047,7 @@ export default function MentorshipRoomPage() {
               sessionId,
               transcript: fullTranscript,
               markdownContent: executionPlan ?? null,
+              ...(pdfBase64 ? { pdfUrl: `data:application/pdf;base64,${pdfBase64}` } : {}),
             }),
           });
         } catch (err) {
@@ -1071,6 +1079,7 @@ export default function MentorshipRoomPage() {
               sessionId,
               transcript: text,
               markdownContent: executionPlan ?? null,
+              ...(pdfBase64 ? { pdfUrl: `data:application/pdf;base64,${pdfBase64}` } : {}),
             }),
           });
         } catch (err) {
@@ -1080,7 +1089,7 @@ export default function MentorshipRoomPage() {
       roomRef.current?.disconnect();
       router.push("/dashboard");
     },
-    [sessionId, transcript, executionPlan, router]
+    [sessionId, transcript, executionPlan, pdfBase64, router]
   );
 
   useEffect(() => {
@@ -1193,6 +1202,18 @@ export default function MentorshipRoomPage() {
                 <FileText className="w-3.5 h-3.5" />
                 <span className="uppercase tracking-tighter">Plano Final</span>
               </button>
+            )}
+
+            {pdfBase64 && (
+              <a
+                href={`data:application/pdf;base64,${pdfBase64}`}
+                download="Plano_Execucao_HiveMind.pdf"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all bg-[#d4af37]/15 text-[#d4af37] hover:bg-[#d4af37]/25 border border-[#d4af37]/30 hover:border-[#d4af37]/60 shadow-[0_0_20px_rgba(212,175,55,0.1)] hover:shadow-[0_0_30px_rgba(212,175,55,0.2)]"
+                title="Baixar PDF do Plano de Execução"
+              >
+                <Star className="w-3.5 h-3.5" />
+                <span className="uppercase tracking-tighter hidden sm:inline">PDF</span>
+              </a>
             )}
 
             <button

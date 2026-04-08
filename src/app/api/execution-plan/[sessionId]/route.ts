@@ -41,6 +41,25 @@ export async function GET(
 
     if (format !== "json") {
       if (plan.pdfUrl) {
+        // Detecta se é um payload Base64 inline (gerado pelo Marco sem S3)
+        const BASE64_PREFIX = "data:application/pdf;base64,";
+        if (plan.pdfUrl.startsWith(BASE64_PREFIX)) {
+          // Decodifica Base64 → Buffer → responde como download de PDF
+          const b64 = plan.pdfUrl.slice(BASE64_PREFIX.length);
+          const pdfBuffer = Buffer.from(b64, "base64");
+          const fileName = `plano-${sessionId}.pdf`;
+          return new NextResponse(pdfBuffer, {
+            status: 200,
+            headers: {
+              "Content-Type": "application/pdf",
+              "Content-Disposition": `attachment; filename="${fileName}"`,
+              "Content-Length": pdfBuffer.byteLength.toString(),
+              "Cache-Control": "no-store",
+            },
+          });
+        }
+
+        // URL externa (S3, Cloudinary etc.) — mantém redirect
         return NextResponse.redirect(plan.pdfUrl);
       }
 

@@ -23,6 +23,7 @@ Correções aplicadas (v4 → v5):
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
 import logging
 import os
@@ -750,13 +751,33 @@ class HostAgent(Agent):
         # Gera o documento Markdown estruturado de forma inteligente
         markdown_plan = await self._generate_markdown_plan_with_agent(user_name, project_name)
 
+        # Gera o PDF profissional com a logomarca Hive Mind
+        pdf_base64: str | None = None
         try:
-            await self._publish_packet({
+            from pdf_generator import generate_pdf
+            loop = asyncio.get_running_loop()
+            pdf_bytes = await loop.run_in_executor(
+                None,
+                generate_pdf,
+                markdown_plan,
+                project_name,
+                user_name,
+            )
+            pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
+            logger.info(f"[Marco] PDF gerado com sucesso ({len(pdf_bytes)} bytes / {len(pdf_base64)} chars Base64).")
+        except Exception as pdf_err:
+            logger.warning(f"[Marco] Falha ao gerar PDF — apenas Markdown será enviado: {pdf_err}")
+
+        try:
+            packet: dict = {
                 "type": "execution_plan",
                 "plan": markdown_plan,
                 "text": markdown_plan,
-            })
-            logger.info("[Marco] Plano de Execução Markdown publicado como data packet (bastidores).")
+            }
+            if pdf_base64:
+                packet["pdf_base64"] = pdf_base64
+            await self._publish_packet(packet)
+            logger.info("[Marco] Plano de Execução publicado como data packet (bastidores).")
         except Exception as e:
             logger.warning(f"[Marco] Erro ao publicar plano de execução: {e}")
 
@@ -768,61 +789,128 @@ class HostAgent(Agent):
 
     async def _generate_markdown_plan_with_agent(self, user_name: str, project_name: str) -> str:
         """
-        Invoca o Marco (gemini-2.5-pro com suporte a Google Search) 
-        para gerar o plano de execução via LLM, nos bastidores.
+        Fluxo em 2 etapas para gerar o plano de execução com o Marco:
+
+        ETAPA 1 — Draft: Gemini 2.5 Pro + Google Search sintetiza toda a sessão
+                         e gera o Markdown estruturado com as 8 seções obrigatórias.
+
+        ETAPA 2 — Revisão de Completude: Uma segunda chamada ao LLM verifica se
+                  todas as seções críticas (Objetivos SMART, Orçamento concreto,
+                  Cronograma, Responsabilidades, Riscos e Contingências) estão
+                  bem preenchidas. Se não, o LLM detalha o que faltou antes de
+                  retornar a versão final.
         """
         from google import genai
         from google.genai import types
+        from pdf_generator import SUMMARIZATION_PROMPT
 
         full_transcript = self._blackboard.get_full_transcript()
-        marco_prompt = SPECIALIST_SYSTEM_PROMPTS["plan"]
 
-        prompt = (
-            f"DIRETRIZES DA PERSONA:\n{marco_prompt}\n\n"
-            f"INSTRUÇÃO DE EXECUÇÃO:\n"
-            f"Você é o Marco. Através de todo o histórico da conversa entre os especialistas, "
-            f"sintetize um plano estruturado e rico. O formato final deve ser EXCLUSIVAMENTE em MARKDOWN.\n"
-            f"Use a ferramenta de PESAQUISA no GOOGLE para complementar ideias, analisar tendências atuais (ex: ferramentas, "
-            f"estratégias de mercado recentes, legislações, frameworks recomendados) que se apliquem ao caso.\n"
-            f"Usuário: {user_name}\n"
-            f"Descrição do Projeto: {project_name}\n\n"
-            f"--- TRANSCRIÇÃO DA CONVERSA ---\n"
-            f"{full_transcript}\n"
-            f"--- FIM DA TRANSCRIÇÃO ---\n\n"
-            f"AGORA INICIE SUA RESPOSTA MANTENDO FORMATAÇÃO RICA EM MARKDOWN."
+        # ── ETAPA 1: Geração do Draft ──────────────────────────────────────────
+        logger.info("[Marco] ETAPA 1 — Gerando Draft com Gemini 2.5 Pro + Google Search...")
+
+        draft_prompt = SUMMARIZATION_PROMPT.format(
+            transcript=(
+                f"Usuário: {user_name}\n"
+                f"Projeto: {project_name}\n\n"
+                f"{full_transcript}"
+            )
         )
 
+        draft_text: str = ""
         try:
             client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY", ""))
-            
-            # Geração textual usa run_in_executor para não bloquear o event loop
-            def _call_gemini():
+
+            def _call_draft():
                 return client.models.generate_content(
-                    model='gemini-2.5-pro',
-                    contents=prompt,
+                    model="gemini-2.5-pro",
+                    contents=draft_prompt,
                     config=types.GenerateContentConfig(
-                        temperature=0.7,
+                        temperature=0.65,
+                        max_output_tokens=16000,
                         tools=[{"google_search": {}}],
-                    )
+                    ),
                 )
 
             loop = asyncio.get_running_loop()
-            response = await loop.run_in_executor(None, _call_gemini)
-            
-            text_result = response.text
-            # Limpa possíveis formatações excessivas de bloco de código do Gemini
-            if text_result.startswith("```markdown"):
-                text_result = text_result[11:]
-            if text_result.startswith("```"):
-                text_result = text_result[3:]
-            if text_result.endswith("```"):
-                text_result = text_result[:-3]
-
-            return text_result.strip()
+            draft_resp = await loop.run_in_executor(None, _call_draft)
+            draft_text = draft_resp.text.strip()
+            # Remove wrapper de código se o LLM adicionar
+            for prefix in ("```markdown", "```"):
+                if draft_text.startswith(prefix):
+                    draft_text = draft_text[len(prefix):]
+            if draft_text.endswith("```"):
+                draft_text = draft_text[:-3]
+            draft_text = draft_text.strip()
+            logger.info(f"[Marco] Draft gerado: {len(draft_text)} chars.")
         except Exception as e:
-            logger.error(f"[Marco] Erro na geração LLM: {e}. Fazendo fallback para versão estática.")
-            # Fallback seguro
+            logger.error(f"[Marco] ETAPA 1 falhou: {e}. Usando fallback estático.")
             return self._generate_markdown_plan(user_name, project_name)
+
+        # ── ETAPA 2: Revisão de Completude ────────────────────────────────────
+        logger.info("[Marco] ETAPA 2 — Executando revisão de completude e coerência...")
+
+        VALIDATION_SECTIONS = [
+            "Objetivos SMART (Específicos, Mensuráveis, Atingíveis, Relevantes, com Prazo)",
+            "Roadmap Financeiro com valores concretos em R$",
+            "Estrutura Jurídica Recomendada",
+            "Estratégia de Marketing e Vendas com canais e métricas",
+            "Arquitetura Técnica com stack e estimativa de tempo",
+            "Cronograma de Execução com divisão de responsabilidades",
+            "KPIs e Métricas de Sucesso com metas numéricas",
+            "Riscos E seus Planos de Contingência (não apenas mitigação)",
+            "Checklist de Ações Imediatas com responsável e prazo por ação",
+        ]
+        sections_list = "\n".join(f"  {idx+1}. {s}" for idx, s in enumerate(VALIDATION_SECTIONS))
+
+        review_prompt = (
+            f"Você é Marco, Estrategista-Chefe do Hive Mind, revisando seu próprio trabalho.\n\n"
+            f"Abaixo está o PLANO que você gerou na etapa anterior.\n\n"
+            f"## CHECKLIST DE COMPLETUDE OBRIGATÓRIO\n"
+            f"Verifique ITEM A ITEM se as seguintes seções estão presentes, detalhadas e com dados concretos:\n"
+            f"{sections_list}\n\n"
+            f"## SUA TAREFA:\n"
+            f"1. Para cada seção faltante ou superficial, DETALHE-A com dados precisos.\n"
+            f"2. Garanta que valores financeiros têm números reais (não 'a definir').\n"
+            f"3. Garanta que o cronograma tem responsáveis nomeados para cada ação.\n"
+            f"4. Garanta que cada risco tem UM plano de mitigação E UM plano de contingência.\n\n"
+            f"## INSTRUÇÃO FINAL:\n"
+            f"Retorne O PLANO COMPLETO E CORRIGIDO em formato MARKDOWN.\n"
+            f"Não adicione introdução, apenas o documento Markdown revisado.\n\n"
+            f"--- PLANO ORIGINAL ---\n"
+            f"{draft_text}\n"
+            f"--- FIM DO PLANO ORIGINAL ---"
+        )
+
+        final_text = draft_text  # fallback: se revisão falhar, usa o draft
+        try:
+            def _call_review():
+                return client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=review_prompt,
+                    config=types.GenerateContentConfig(
+                        temperature=0.3,
+                        max_output_tokens=16000,
+                    ),
+                )
+
+            review_resp = await loop.run_in_executor(None, _call_review)
+            reviewed = review_resp.text.strip()
+            for prefix in ("```markdown", "```"):
+                if reviewed.startswith(prefix):
+                    reviewed = reviewed[len(prefix):]
+            if reviewed.endswith("```"):
+                reviewed = reviewed[:-3]
+            reviewed = reviewed.strip()
+            if len(reviewed) >= len(draft_text) * 0.8:  # revisão deve ser ao menos 80% do draft
+                final_text = reviewed
+                logger.info(f"[Marco] Revisão aprovada: {len(final_text)} chars.")
+            else:
+                logger.warning("[Marco] Revisão muito curta — mantendo draft original.")
+        except Exception as e:
+            logger.warning(f"[Marco] ETAPA 2 (revisão) falhou: {e}. Usando Draft sem revisão.")
+
+        return final_text
 
     def _generate_markdown_plan(self, user_name: str, project_name: str) -> str:
         """Gera documento Markdown secundário apenas se o LLM falhar."""

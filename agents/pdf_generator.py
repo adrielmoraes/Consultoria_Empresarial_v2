@@ -1,16 +1,16 @@
 """
-Mentoria AI - Gerador de Plano de Execução (PDF)
-==================================================
-Recebe a transcrição da sessão, envia ao Gemini 1.5 Pro para sumarização
-e gera um PDF profissional com o plano de ação.
+Hive Mind — Gerador de Plano de Execução (PDF)
+===============================================
+Recebe o Markdown estruturado gerado pelo Marco e converte
+em um PDF profissional com identidade visual Gold & Dark.
+
+Versão 2: Cabeçalho e rodapé em TODAS as páginas via canvas hooks.
 """
 
-import asyncio
 import logging
 from datetime import datetime
 from io import BytesIO
 
-import google.generativeai as genai
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -23,397 +23,491 @@ from reportlab.platypus import (
     TableStyle,
     PageBreak,
 )
-from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 
 logger = logging.getLogger("mentoria-ai.pdf")
 
-# Prompt para o Gemini gerar o plano de execução
-SUMMARIZATION_PROMPT = """Você é um Estrategista-Chefe especializado em Planos de Execução para startups e PMEs brasileiras.
-Com base na transcrição da sessão de mentoria, gere um plano de ação ESTRATÉGICO e EXECUTÁVEL.
+# ─── Paleta de cores ───────────────────────────────────────────────────────────
+GOLD     = colors.HexColor("#d4af37")
+GOLD_DIM = colors.HexColor("#b08d24")
+DARK_BG  = colors.HexColor("#0f1117")
+DARK_MID = colors.HexColor("#1a1d2e")
+DARK_CARD= colors.HexColor("#1e2138")
+LIGHT_TXT= colors.HexColor("#e2e8f0")
+MUTED_TXT= colors.HexColor("#94a3b8")
+GREEN    = colors.HexColor("#10b981")
+WHITE    = colors.white
 
-## FORMATO OBRIGATÓRIO DO PLANO:
+PAGE_W, PAGE_H = A4
+MARGIN_X = 20 * mm
+MARGIN_T = 30 * mm  # espaço para o cabeçalho
+MARGIN_B = 22 * mm  # espaço para o rodapé
 
-### # Resumo Executivo
-[Apresentação em 3 parágrafos: o que é, proposta de valor, diferenciação]
+CONTENT_WIDTH = PAGE_W - 2 * MARGIN_X
 
-### ## Diagnóstico do Projeto
-[Pontos fortes identificados + principais desafios + oportunidades]
+# ─── Prompt do Estrategista ────────────────────────────────────────────────────
+SUMMARIZATION_PROMPT = """Você é Marco, o Estrategista-Chefe do Hive Mind — uma plataforma de mentoria empresarial multi-agentes de alto nível.
+Com base na transcrição completa da sessão, gere um Plano de Execução ESTRATÉGICO, PROFUNDO e EXECUTÁVEL.
 
-### ## 1. Roadmap Financeiro
-- **Investimento Inicial Estimado:** R$ [valor]
+## INSTRUÇÕES CRÍTICAS DE QUALIDADE:
+
+Antes de escrever qualquer seção, faça uma VERIFICAÇÃO INTERNA:
+✅ Há metas SMART (Específicas, Mensuráveis, Atingíveis, Relevantes, com Tempo)?
+✅ Há valores financeiros concretos em R$ (não apenas "a definir")?
+✅ Há um cronograma com datas reais ou prazos em semanas/meses?
+✅ Há divisão de responsabilidades com dono de cada ação?
+✅ Há mapeamento de riscos E os planos de contingência?
+Se algum item faltar, DETALHE antes de prosseguir.
+
+## FORMATO OBRIGATÓRIO DO PLANO (8 seções + capa):
+
+# Plano de Execução Estratégico — Hive Mind
+
+## Resumo Executivo
+[3 parágrafos: (1) O que o usuário quer construir e o potencial real do mercado, (2) proposta de valor única e diferenciação competitiva, (3) por que este momento é estratégico para entrar]
+
+## Diagnóstico do Projeto
+**Forças identificadas:**
+- [força 1 com base na sessão]
+- [força 2 com base na sessão]
+
+**Principais desafios:**
+- [desafio 1]
+- [desafio 2]
+
+**Oportunidades de mercado:**
+- [oportunidade 1 — com dados de mercado se possível]
+- [oportunidade 2]
+
+## 1. Roadmap Financeiro
+- **Investimento Inicial Estimado:** R$ [valor concreto]
 - **Custos Mensais Fixos:** R$ [valor]
-- **Ponto de Equilíbrio:** [meses]
+- **Custos Mensais Variáveis:** R$ [valor estimado]
+- **Ponto de Equilíbrio:** [X] meses
+- **Projeção Mês 1:** R$ [receita estimada]
+- **Projeção Mês 6:** R$ [receita estimada]
+- **Projeção Mês 12:** R$ [receita estimada]
 - **Margem Bruta Projetada:** [%]
-- **Fontes de Financiamento Sugeridas:** [opções]
+- **Fontes de Financiamento Recomendadas:** [opções ranqueadas por adequação ao perfil]
 
-### ## 2. Estrutura Jurídica Recomendada
-- **Tipo Societário:** [LTDA/EIRELI/Startup]
-- **CNPJ e Inscrições:** [o que precisa]
-- **Contratos Essenciais:** [lista]
-- **Conformidade LGPD:** [sim/não + ações]
+## 2. Estrutura Jurídica Recomendada
+- **Tipo Societário:** [LTDA/MEI/SA — com justificativa]
+- **CNPJ e Inscrições:** [lista do que precisa abrir]
+- **Contratos Essenciais:** [lista priorizada]
+- **Conformidade LGPD:** [ações concretas necessárias]
+- **Proteção de Propriedade Intelectual:** [registro de marca, patentes, etc.]
+- **Prazo sugerido para regularização:** [X semanas/meses]
 
-### ## 3. Estratégia de Marketing e Vendas
-- **Posicionamento:** [frase de impacto]
-- **ICP (Cliente Ideal):** [perfil detalhado]
-- **Canais Prioritários:** [top 3 com justificativa]
+## 3. Estratégia de Marketing e Vendas
+- **Posicionamento:** [frase de impacto clara]
+- **ICP (Cliente Ideal):** [perfil detalhado: setor, tamanho, dor principal, orçamento]
+- **Canais Prioritários (Top 3 ranqueados):**
+  1. [canal] — [razão estratégica] — [CAC estimado]
+  2. [canal] — [razão estratégica] — [CAC estimado]
+  3. [canal] — [razão estratégica] — [CAC estimado]
 - **CAC Alvo:** R$ [valor]
 - **LTV Mínimo:** R$ [valor]
-- **Go-to-Market:** [fases]
+- **Ratio LTV/CAC:** [X:1 — meta saudável é > 3:1]
+- **Estratégia de Go-to-Market:** [fases com marcos]
 
-### ## 4. Arquitetura Técnica
-- **Stack Recomendada:** [tecnologias com razão]
-- **Infraestrutura:** [nuvem + specs]
-- **MVP - Funcionalidades Essenciais:** [top 5]
-- **Escalabilidade:** [previsão de crescimento]
+## 4. Arquitetura Técnica
+- **Stack Recomendada:** [tecnologias com justificativa de custo/benefício]
+- **Infraestrutura:** [cloud + configurações + estimativa de custo mensal]
+- **MVP — 5 Funcionalidades Essenciais:**
+  1. [funcionalidade] — [esforço estimado]
+  2. [funcionalidade] — [esforço estimado]
+  3. [funcionalidade] — [esforço estimado]
+  4. [funcionalidade] — [esforço estimado]
+  5. [funcionalidade] — [esforço estimado]
+- **Tempo Estimado para MVP:** [X semanas com time de Y pessoas]
+- **Escalabilidade:** [plano para 10x o volume atual]
 
-### ## 5. Cronograma de Execução (12 semanas)
-- **Semanas 1-2:** [ações]
-- **Semanas 3-4:** [ações]
-- **Semanas 5-8:** [ações]
-- **Semanas 9-12:** [ações]
+## 5. Cronograma de Execução (12 Semanas)
+- **Semanas 1-2** *(Responsável: [nome/papel])*: [ações específicas com entregável]
+- **Semanas 3-4** *(Responsável: [nome/papel])*: [ações específicas com entregável]
+- **Semanas 5-8** *(Responsável: [nome/papel])*: [ações específicas com entregável]
+- **Semanas 9-12** *(Responsável: [nome/papel])*: [ações específicas com entregável]
+- **Marco 30 dias:** [entregável concreto]
+- **Marco 60 dias:** [entregável concreto]
+- **Marco 90 dias:** [entregável concreto]
 
-### ## 6. KPIs e Métricas de Sucesso
-| Métrica | Meta | Frequência |
-|---------|------|------------|
-| [KPI 1] | [valor] | [semanal/mensal] |
-| [KPI 2] | [valor] | [semanal/mensal] |
-| [KPI 3] | [valor] | [semanal/mensal] |
+## 6. KPIs e Métricas de Sucesso
+| Métrica | Meta 30 dias | Meta 90 dias | Frequência |
+|---------|-------------|-------------|------------|
+| [KPI 1 — ex: MRR] | R$ [valor] | R$ [valor] | Mensal |
+| [KPI 2 — ex: CAC] | R$ [valor] | R$ [valor] | Mensal |
+| [KPI 3 — ex: Churn] | [%] | [%] | Mensal |
+| [KPI 4 — ex: NPS] | [valor] | [valor] | Trimestral |
+| [KPI 5 — ex: Conversion Rate] | [%] | [%] | Semanal |
 
-### ## 7. Riscos e Planos de Mitigação
-| Risco | Probabilidade | Impacto | Mitigação |
-|-------|---------------|---------|-----------|
-| [risco] | [alta/média/baixa] | [alto/médio/baixo] | [ação] |
+## 7. Riscos e Planos de Contingência
+| Risco | Probabilidade | Impacto | Mitigação | Contingência |
+|-------|---------------|---------|-----------|-------------|
+| [risco 1] | Alta/Média/Baixa | Alto/Médio/Baixo | [ação preventiva] | [plano B se acontecer] |
+| [risco 2] | Alta/Média/Baixa | Alto/Médio/Baixo | [ação preventiva] | [plano B se acontecer] |
+| [risco 3] | Alta/Média/Baixa | Alto/Médio/Baixo | [ação preventiva] | [plano B se acontecer] |
 
-### ## 8. Checklist de Ações Imediatas (Esta Semana)
-- [ ] [Ação 1 - responsável e prazo]
-- [ ] [Ação 2 - responsável e prazo]
-- [ ] [Ação 3 - responsável e prazo]
-- [ ] [Ação 4 - responsável e prazo]
-- [ ] [Ação 5 - responsável e prazo]
+## 8. Checklist de Ações Imediatas (Esta Semana)
+- [ ] [Ação 1] — Responsável: [quem] — Prazo: [data ou "até sexta"]
+- [ ] [Ação 2] — Responsável: [quem] — Prazo: [data ou "até sexta"]
+- [ ] [Ação 3] — Responsável: [quem] — Prazo: [data ou "até sexta"]
+- [ ] [Ação 4] — Responsável: [quem] — Prazo: [data ou "até sexta"]
+- [ ] [Ação 5] — Responsável: [quem] — Prazo: [data ou "até sexta"]
 
-### ## 9. Recursos Necessários
-- **Pessoas:** [equipe necessária]
-- **Ferramentas:** [softwares/apps]
-- **Orçamento Adicional:** R$ [valor]
-
-### ## 10. Próximos Passos
-1. [Ação prioritária]
-2. [Ação prioritária]
-3. [Ação prioritária]
+---
+**Nota do Marco:** [mensagem personalizada e motivacional para o usuário, referenciando detalhes específicos da sessão]
 
 ---
 Use números concretos e valores realistas para o mercado brasileiro.
-Inclua datas de deadline quando possível.
-Considere a realidade fiscal e trabalhista do Brasil.
+Considere a realidade fiscal, trabalhista e de mercado do Brasil atual.
+Seja PROFUNDO: cada especialista contribuiu com análises valiosas — sintetize-as com maestria.
 
 TRANSCRIÇÃO DA SESSÃO:
 {transcript}
 """
 
 
-async def generate_execution_plan(
-    transcript: str,
-    project_name: str,
-    user_name: str = "Usuário",
-    additional_context: str = ""
-) -> dict:
-    """
-    Gera o plano de execução usando Gemini 2.5 Flash.
-    
-    Args:
-        transcript: Transcrição completa da sessão
-        project_name: Nome do projeto
-        user_name: Nome do usuário
-        additional_context: Contexto adicional para personalização
-    
-    Returns:
-        dict com 'markdown' (conteúdo) e 'pdf_bytes' (arquivo PDF)
-    """
-    
-    # Gerar conteúdo com Gemini 2.5 Flash
-    model = genai.GenerativeModel("gemini-2.5-flash")
-    
-    # Incluir contexto adicional se disponível
-    full_context = transcript
-    if additional_context:
-        full_context = f"{transcript}\n\nCONTEXTO ADICIONAL:\n{additional_context}"
-    
-    response = await asyncio.to_thread(
-        model.generate_content,
-        SUMMARIZATION_PROMPT.format(transcript=full_context),
-        generation_config=genai.GenerationConfig(
-            temperature=0.4,
-            max_output_tokens=8192,
-        ),
+# ─── Canvas hooks: cabeçalho e rodapé em todas as páginas ─────────────────────
+
+def _draw_header_footer(canvas, doc, project_name: str, user_name: str):
+    """Desenha cabeçalho Gold e rodapé discreto em cada página."""
+    canvas.saveState()
+
+    # ── Fundo do cabeçalho ──────────────────────────────────────────────────
+    canvas.setFillColor(DARK_BG)
+    canvas.rect(0, PAGE_H - 18 * mm, PAGE_W, 18 * mm, fill=1, stroke=0)
+
+    # Linha dourada no cabeçalho
+    canvas.setStrokeColor(GOLD)
+    canvas.setLineWidth(1.5)
+    canvas.line(MARGIN_X, PAGE_H - 18 * mm, PAGE_W - MARGIN_X, PAGE_H - 18 * mm)
+
+    # Logo text "HIVE MIND"
+    canvas.setFillColor(GOLD)
+    canvas.setFont("Helvetica-Bold", 10)
+    canvas.drawString(MARGIN_X, PAGE_H - 12 * mm, "HIVE MIND")
+
+    # Subtítulo direita
+    canvas.setFillColor(MUTED_TXT)
+    canvas.setFont("Helvetica", 8)
+    canvas.drawRightString(
+        PAGE_W - MARGIN_X, PAGE_H - 12 * mm,
+        f"Plano de Execução · {project_name}"
     )
-    
-    markdown_content = response.text
-    logger.info(f"Plano de execução gerado ({len(markdown_content)} chars)")
-    
-    # Gerar PDF
-    pdf_bytes = generate_pdf(markdown_content, project_name, user_name)
-    
-    return {
-        "markdown": markdown_content,
-        "pdf_bytes": pdf_bytes,
-        "project_name": project_name,
-        "user_name": user_name,
-        "generated_at": datetime.now().isoformat(),
-    }
+
+    # ── Rodapé ──────────────────────────────────────────────────────────────
+    canvas.setStrokeColor(GOLD_DIM)
+    canvas.setLineWidth(0.5)
+    canvas.line(MARGIN_X, 14 * mm, PAGE_W - MARGIN_X, 14 * mm)
+
+    canvas.setFillColor(MUTED_TXT)
+    canvas.setFont("Helvetica", 7)
+    canvas.drawString(MARGIN_X, 9 * mm, f"Gerado pelo Hive Mind · {user_name} · {datetime.now().strftime('%d/%m/%Y')}")
+    canvas.drawRightString(PAGE_W - MARGIN_X, 9 * mm, f"Página {doc.page}")
+
+    canvas.restoreState()
 
 
 def generate_pdf(markdown_content: str, project_name: str, user_name: str = "Usuário") -> bytes:
-    """Converte o conteúdo Markdown em um PDF profissional."""
-    
+    """Converte o conteúdo Markdown em um PDF profissional com identidade Hive Mind."""
+
     buffer = BytesIO()
+
+    def on_page(canvas, doc):
+        _draw_header_footer(canvas, doc, project_name, user_name)
+
     doc = SimpleDocTemplate(
         buffer,
         pagesize=A4,
-        rightMargin=20 * mm,
-        leftMargin=20 * mm,
-        topMargin=25 * mm,
-        bottomMargin=20 * mm,
+        rightMargin=MARGIN_X,
+        leftMargin=MARGIN_X,
+        topMargin=MARGIN_T,
+        bottomMargin=MARGIN_B,
+        title=f"Plano de Execução — {project_name}",
+        author="Hive Mind",
     )
-    
-    # Estilos
+
+    # ─── Estilos ──────────────────────────────────────────────────────────────
     styles = getSampleStyleSheet()
-    
+
     title_style = ParagraphStyle(
-        "CustomTitle",
+        "HiveTitle",
         parent=styles["Title"],
-        fontSize=24,
-        textColor=colors.HexColor("#6366f1"),
-        spaceAfter=10,
+        fontSize=22,
+        textColor=GOLD,
+        spaceAfter=6,
         alignment=TA_CENTER,
+        fontName="Helvetica-Bold",
     )
-    
+
     subtitle_style = ParagraphStyle(
-        "CustomSubtitle",
+        "HiveSubtitle",
         parent=styles["Normal"],
-        fontSize=12,
-        textColor=colors.HexColor("#6b7280"),
-        spaceAfter=30,
+        fontSize=11,
+        textColor=MUTED_TXT,
+        spaceAfter=20,
         alignment=TA_CENTER,
     )
-    
-    heading_style = ParagraphStyle(
-        "CustomHeading",
+
+    heading1_style = ParagraphStyle(
+        "HiveH1",
         parent=styles["Heading1"],
-        fontSize=18,
-        textColor=colors.HexColor("#1f2937"),
-        spaceBefore=20,
-        spaceAfter=12,
+        fontSize=16,
+        textColor=GOLD,
+        spaceBefore=18,
+        spaceAfter=10,
+        fontName="Helvetica-Bold",
+        borderPad=4,
     )
-    
-    subheading_style = ParagraphStyle(
-        "CustomSubheading",
+
+    heading2_style = ParagraphStyle(
+        "HiveH2",
         parent=styles["Heading2"],
-        fontSize=14,
-        textColor=colors.HexColor("#4f46e5"),
-        spaceBefore=15,
-        spaceAfter=8,
+        fontSize=13,
+        textColor=GOLD_DIM,
+        spaceBefore=14,
+        spaceAfter=7,
+        fontName="Helvetica-Bold",
     )
-    
-    subsection_style = ParagraphStyle(
-        "CustomSubsection",
+
+    heading3_style = ParagraphStyle(
+        "HiveH3",
         parent=styles["Heading3"],
         fontSize=11,
-        textColor=colors.HexColor("#6366f1"),
+        textColor=LIGHT_TXT,
         spaceBefore=10,
-        spaceAfter=5,
+        spaceAfter=4,
+        fontName="Helvetica-Bold",
     )
-    
+
     body_style = ParagraphStyle(
-        "CustomBody",
+        "HiveBody",
         parent=styles["Normal"],
-        fontSize=10,
-        textColor=colors.HexColor("#374151"),
-        spaceAfter=6,
+        fontSize=9.5,
+        textColor=LIGHT_TXT,
+        spaceAfter=5,
         leading=14,
     )
-    
-    checklist_style = ParagraphStyle(
-        "Checklist",
+
+    bullet_style = ParagraphStyle(
+        "HiveBullet",
         parent=styles["Normal"],
-        fontSize=10,
-        textColor=colors.HexColor("#059669"),
+        fontSize=9.5,
+        textColor=LIGHT_TXT,
         spaceAfter=4,
         leading=14,
-        leftIndent=10,
+        leftIndent=12,
     )
-    
-    table_header_style = ParagraphStyle(
-        "TableHeader",
+
+    checklist_style = ParagraphStyle(
+        "HiveChecklist",
+        parent=styles["Normal"],
+        fontSize=9.5,
+        textColor=GREEN,
+        spaceAfter=4,
+        leading=14,
+        leftIndent=12,
+    )
+
+    note_style = ParagraphStyle(
+        "HiveNote",
         parent=styles["Normal"],
         fontSize=9,
-        textColor=colors.white,
+        textColor=MUTED_TXT,
+        spaceAfter=4,
+        leading=13,
+        leftIndent=8,
+        fontName="Helvetica-Oblique",
     )
-    
+
     elements = []
-    
-    # Capa
-    elements.append(Spacer(1, 40))
-    elements.append(Paragraph("MENTORIA AI", title_style))
-    elements.append(Paragraph("Plano de Execução Estratégico", subtitle_style))
-    elements.append(Spacer(1, 15))
-    
+
+    # ─── Capa ─────────────────────────────────────────────────────────────────
+    elements.append(Spacer(1, 20))
+    elements.append(Paragraph("PLANO DE EXECUÇÃO ESTRATÉGICO", title_style))
+    elements.append(Paragraph("Hive Mind · Consultoria Multi-Agentes", subtitle_style))
+    elements.append(Spacer(1, 10))
+
     # Info box
     info_data = [
         ["Projeto", project_name],
-        ["Cliente", user_name],
-        ["Data", datetime.now().strftime("%d/%m/%Y")],
-        ["Versão", "1.0"],
+        ["Consultor(a)", user_name],
+        ["Data de Geração", datetime.now().strftime("%d/%m/%Y")],
+        ["Versão", "2.0"],
     ]
-    info_table = Table(info_data, colWidths=[80, 90])
+    info_table = Table(info_data, colWidths=[50 * mm, 110 * mm])
     info_table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#f3f4f6")),
-        ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, -1), 10),
-        ("TEXTCOLOR", (0, 0), (-1, -1), colors.HexColor("#374151")),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#d1d5db")),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("TOPPADDING", (0, 0), (-1, -1), 6),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("BACKGROUND", (0, 0), (0, -1), DARK_MID),
+        ("BACKGROUND", (1, 0), (1, -1), DARK_CARD),
+        ("FONTNAME",   (0, 0), (0, -1), "Helvetica-Bold"),
+        ("FONTSIZE",   (0, 0), (-1, -1), 9),
+        ("TEXTCOLOR",  (0, 0), (0, -1), GOLD),
+        ("TEXTCOLOR",  (1, 0), (1, -1), LIGHT_TXT),
+        ("GRID",       (0, 0), (-1, -1), 0.5, GOLD_DIM),
+        ("VALIGN",     (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING", (0, 0), (-1, -1), 7),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+        ("LEFTPADDING",   (0, 0), (-1, -1), 10),
     ]))
     elements.append(info_table)
-    elements.append(Spacer(1, 20))
-    
-    # Linha divisória
-    line_table = Table([[""]], colWidths=[170 * mm])
+    elements.append(Spacer(1, 12))
+
+    # Linha dourada divisória
+    line_table = Table([[""]], colWidths=[CONTENT_WIDTH])
     line_table.setStyle(TableStyle([
-        ("LINEBELOW", (0, 0), (-1, -1), 2, colors.HexColor("#6366f1")),
+        ("LINEBELOW", (0, 0), (-1, -1), 2, GOLD),
     ]))
     elements.append(line_table)
-    elements.append(Spacer(1, 25))
-    
-    # Converter Markdown para elementos PDF
+    elements.append(Spacer(1, 16))
+
+    # ─── Converter Markdown → elementos PDF ───────────────────────────────────
     lines = markdown_content.split("\n")
     i = 0
     while i < len(lines):
-        line = lines[i].strip()
-        
-        if not line:
-            elements.append(Spacer(1, 4))
+        line = lines[i].rstrip()
+        stripped = line.strip()
+
+        if not stripped:
+            elements.append(Spacer(1, 3))
             i += 1
             continue
-        
-        # Heading 1: # Título
-        if line.startswith("# ") and not line.startswith("## "):
-            text = line[2:].replace("**", "")
-            elements.append(Paragraph(text, heading_style))
-        
-        # Heading 2: ## Título
-        elif line.startswith("## "):
-            text = line[3:].replace("**", "")
-            elements.append(Paragraph(text, subheading_style))
-        
-        # Heading 3: ### Título
-        elif line.startswith("### "):
-            text = line[4:].replace("**", "")
-            elements.append(Paragraph(text, subsection_style))
-        
-        # Checklist item: - [ ]
-        elif "[ ]" in line or "☐" in line:
-            text = line.replace("- [ ]", "☐").replace("* [ ]", "☐")
-            text = text.replace("**", "<b>", 1).replace("**", "</b>", 1) if "**" in line else text
+
+        # Headings
+        if stripped.startswith("# ") and not stripped.startswith("## "):
+            text = _md_inline(stripped[2:])
+            elements.append(Paragraph(text, heading1_style))
+
+        elif stripped.startswith("## "):
+            text = _md_inline(stripped[3:])
+            elements.append(Paragraph(text, heading2_style))
+
+        elif stripped.startswith("### "):
+            text = _md_inline(stripped[4:])
+            elements.append(Paragraph(text, heading3_style))
+
+        # Checklist
+        elif "[ ]" in stripped or "☐" in stripped:
+            text = stripped.replace("- [ ]", "☐").replace("* [ ]", "☐").replace("[x]", "☑").replace("[X]", "☑")
+            text = _md_inline(text)
             elements.append(Paragraph(text, checklist_style))
-        
-        # Bullet point
-        elif line.startswith("- ") or line.startswith("* "):
-            text = line[2:].replace("**", "<b>", 1).replace("**", "</b>", 1)
-            elements.append(Paragraph(f"• {text}", body_style))
-        
-        # Numbered list
-        elif line[0].isdigit() and ". " in line[:5]:
-            text = line[line.index(". ")+2:]
-            text = text.replace("**", "<b>", 1).replace("**", "</b>", 1)
-            elements.append(Paragraph(text, body_style))
-        
-        # Table header (pipe-separated)
-        elif line.startswith("|") and i + 1 < len(lines) and lines[i + 1].strip().startswith("|---"):
-            # Extract headers
-            headers = [h.strip() for h in line.split("|") if h.strip()]
-            table_data = [headers]
-            
-            # Skip separator line
-            i += 1
-            
-            # Extract data rows
-            while i + 1 < len(lines) and lines[i + 1].strip().startswith("|"):
-                i += 1
+
+        # Bullet / lista
+        elif stripped.startswith("- ") or stripped.startswith("* "):
+            text = _md_inline(stripped[2:])
+            elements.append(Paragraph(f"• {text}", bullet_style))
+
+        # Lista numerada
+        elif len(stripped) > 2 and stripped[0].isdigit() and stripped[1] in (". ", ")"):
+            rest = stripped[stripped.index(" ") + 1:]
+            text = _md_inline(rest)
+            elements.append(Paragraph(f"{stripped[0]}. {text}", bullet_style))
+
+        # Sub-bullet (dois espaços antes de -)
+        elif line.startswith("  ") and (stripped.startswith("- ") or stripped.startswith("* ")):
+            text = _md_inline(stripped[2:])
+            sub_style = ParagraphStyle(
+                "HiveSub",
+                parent=bullet_style,
+                leftIndent=24,
+                fontSize=9,
+                textColor=MUTED_TXT,
+            )
+            elements.append(Paragraph(f"◦ {text}", sub_style))
+
+        # Tabela Markdown
+        elif stripped.startswith("|") and i + 1 < len(lines) and lines[i + 1].strip().startswith("|---"):
+            headers = [h.strip() for h in stripped.split("|") if h.strip()]
+            table_data = [[Paragraph(h, ParagraphStyle("TH", parent=styles["Normal"], fontSize=8, textColor=WHITE, fontName="Helvetica-Bold")) for h in headers]]
+            i += 2  # pula separador
+
+            while i < len(lines) and lines[i].strip().startswith("|"):
                 row = lines[i].strip()
                 cells = [c.strip() for c in row.split("|") if c.strip()]
-                if cells:
-                    table_data.append(cells)
-            
-            # Ensure all rows have same column count
+                # normaliza colunas
+                while len(cells) < len(headers):
+                    cells.append("")
+                cells = cells[:len(headers)]
+                table_data.append([Paragraph(_md_inline(c), body_style) for c in cells])
+                i += 1
+
             col_count = len(headers)
-            for j, row in enumerate(table_data[1:]):
-                while len(row) < col_count:
-                    row.append("")
-                table_data[j + 1] = row[:col_count]
-            
-            if table_data:
-                t = Table(table_data, colWidths=[170 * mm / col_count] * col_count)
-                t.setStyle(TableStyle([
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#6366f1")),
-                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                    ("FONTSIZE", (0, 1), (-1, -1), 9),
-                    ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#e5e7eb")),
-                    ("BACKGROUND", (0, 1), (-1, -1), colors.white),
-                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f9fafb")]),
-                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                    ("TOPPADDING", (0, 0), (-1, -1), 5),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-                ]))
-                elements.append(t)
-                elements.append(Spacer(1, 10))
-        
-        # Horizontal rule
-        elif line.startswith("---"):
-            elements.append(Spacer(1, 10))
-            hr_table = Table([[""]], colWidths=[170 * mm])
-            hr_table.setStyle(TableStyle([
-                ("LINEBELOW", (0, 0), (-1, -1), 0.5, colors.HexColor("#d1d5db")),
+            col_w = CONTENT_WIDTH / col_count
+            t = Table(table_data, colWidths=[col_w] * col_count, repeatRows=1)
+            t.setStyle(TableStyle([
+                ("BACKGROUND",    (0, 0), (-1, 0), DARK_MID),
+                ("BACKGROUND",    (0, 1), (-1, -1), DARK_CARD),
+                ("ROWBACKGROUNDS",(0, 1), (-1, -1), [DARK_CARD, colors.HexColor("#22263a")]),
+                ("GRID",          (0, 0), (-1, -1), 0.4, GOLD_DIM),
+                ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
+                ("TOPPADDING",    (0, 0), (-1, -1), 5),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                ("LEFTPADDING",   (0, 0), (-1, -1), 6),
             ]))
-            elements.append(hr_table)
-            elements.append(Spacer(1, 10))
-        
-        # Regular paragraph
+            elements.append(t)
+            elements.append(Spacer(1, 8))
+            continue  # já avançamos i dentro do loop da tabela
+
+        # Linha horizontal
+        elif stripped.startswith("---") or stripped.startswith("==="):
+            elements.append(Spacer(1, 6))
+            hr = Table([[""]], colWidths=[CONTENT_WIDTH])
+            hr.setStyle(TableStyle([
+                ("LINEBELOW", (0, 0), (-1, -1), 0.8, GOLD_DIM),
+            ]))
+            elements.append(hr)
+            elements.append(Spacer(1, 6))
+
+        # Citação / nota
+        elif stripped.startswith(">"):
+            text = _md_inline(stripped.lstrip("> "))
+            elements.append(Paragraph(f"» {text}", note_style))
+
+        # Parágrafo normal
         else:
-            text = line.replace("**", "<b>", 1).replace("**", "</b>", 1)
-            elements.append(Paragraph(text, body_style))
-        
+            text = _md_inline(stripped)
+            if text:
+                elements.append(Paragraph(text, body_style))
+
         i += 1
-    
-    # Rodapé
-    elements.append(Spacer(1, 30))
-    footer_line = Table([[""]], colWidths=[170 * mm])
-    footer_line.setStyle(TableStyle([
-        ("LINEBELOW", (0, 0), (-1, -1), 1, colors.HexColor("#e5e7eb")),
+
+    # ─── Rodapé final ─────────────────────────────────────────────────────────
+    elements.append(Spacer(1, 20))
+    final_hr = Table([[""]], colWidths=[CONTENT_WIDTH])
+    final_hr.setStyle(TableStyle([
+        ("LINEBELOW", (0, 0), (-1, -1), 1, GOLD),
     ]))
-    elements.append(footer_line)
-    elements.append(Spacer(1, 10))
-    
-    footer_style = ParagraphStyle(
-        "Footer",
-        parent=styles["Normal"],
-        fontSize=8,
-        textColor=colors.HexColor("#9ca3af"),
-        alignment=TA_CENTER,
-    )
-    elements.append(
-        Paragraph(
-            f"Gerado automaticamente pelo Mentoria AI • {datetime.now().strftime('%d/%m/%Y')}",
-            footer_style,
-        )
-    )
-    
-    doc.build(elements)
-    
+    elements.append(final_hr)
+    elements.append(Spacer(1, 8))
+    elements.append(Paragraph(
+        "Documento gerado com exclusividade pelo <b>Hive Mind</b> · Plataforma de Mentoria Empresarial Multi-Agentes.",
+        ParagraphStyle("FinaleNote", parent=styles["Normal"], fontSize=8, textColor=MUTED_TXT, alignment=TA_CENTER)
+    ))
+
+    # Build com canvas hook em todas as páginas
+    doc.build(elements, onFirstPage=on_page, onLaterPages=on_page)
+
     pdf_bytes = buffer.getvalue()
     buffer.close()
-    
-    logger.info(f"PDF gerado com sucesso ({len(pdf_bytes)} bytes)")
+
+    logger.info(f"PDF Hive Mind gerado com sucesso ({len(pdf_bytes)} bytes)")
     return pdf_bytes
+
+
+# ─── Helpers inline Markdown ───────────────────────────────────────────────────
+
+def _md_inline(text: str) -> str:
+    """Converte bold/italic/code básico de Markdown para tags ReportLab."""
+    import re
+    # Bold **texto** ou __texto__
+    text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', text)
+    text = re.sub(r'__(.+?)__', r'<b>\1</b>', text)
+    # Italic *texto* ou _texto_
+    text = re.sub(r'\*(.+?)\*', r'<i>\1</i>', text)
+    text = re.sub(r'_([^_]+?)_', r'<i>\1</i>', text)
+    # Code `texto`
+    text = re.sub(r'`(.+?)`', r'<font face="Courier">\1</font>', text)
+    # Escapar & que não faça parte de entidade
+    text = re.sub(r'&(?!amp;|lt;|gt;|quot;|apos;|#)', '&amp;', text)
+    # Remove < e > soltos que não são tags
+    text = re.sub(r'<(?!/?(?:b|i|u|font|br))', '&lt;', text)
+    return text
