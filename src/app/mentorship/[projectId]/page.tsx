@@ -19,7 +19,13 @@ import {
   Paperclip,
   UploadCloud,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  UserPlus,
+  VolumeX,
+  Volume2,
+  Link,
+  Copy,
+  Check
 } from "lucide-react";
 import {
   useState,
@@ -255,6 +261,13 @@ export default function MentorshipRoomPage() {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [docs, setDocs] = useState<{id: string, fileName: string, createdAt: string}[]>([]);
+
+  // F7: Convite de Equipe (Guest)
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteLinkCopied, setInviteLinkCopied] = useState(false);
+
+  // F8: Pausar IA (mute da sala para debates humanos)
+  const [aiPaused, setAiPaused] = useState(false);
 
   // F5: Status individual dos agentes conectados
   const [connectedAgents, setConnectedAgents] = useState<Set<string>>(new Set());
@@ -930,6 +943,24 @@ export default function MentorshipRoomPage() {
                   setAgentTurnStatus((prev) => ({ ...prev, [agentId]: "cancelled" }));
                   scheduleTurnStatus(agentId, "idle", 5000);
                 }
+              } else if (data.type === "agent_transferred") {
+                // Transferência lateral entre especialistas
+                const sourceAgentId = data.agent_id as string;
+                const targetAgentId = data.target_agent_id as string;
+                const fromName = data.from_name as string || "";
+                const targetName = targetAgentId ? (AGENTS_MAP[targetAgentId]?.name || targetAgentId) : "";
+                if (sourceAgentId) {
+                  clearTurnTimer(sourceAgentId);
+                  setAgentTurnStatus((prev) => ({ ...prev, [sourceAgentId]: "completed" }));
+                  scheduleTurnStatus(sourceAgentId, "idle", 4000);
+                }
+                if (targetAgentId) {
+                  setAgentTurnStatus((prev) => ({ ...prev, [targetAgentId]: "activated" }));
+                  scheduleTurnStatus(targetAgentId, "running", 1200);
+                }
+                if (fromName && targetName) {
+                  addTranscriptMessage("Sistema", `${fromName} passou a palavra para ${targetName}.`);
+                }
               }
             } catch {
               // ignorar
@@ -1423,6 +1454,47 @@ export default function MentorshipRoomPage() {
           )}
         </motion.button>
 
+        {/* Botão Convidar Equipe */}
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setShowInviteModal(true)}
+          className="w-12 h-12 rounded-full bg-white/10 border border-white/10 text-white hover:bg-[#d4af37]/20 hover:border-[#d4af37]/30 hover:text-[#d4af37] flex items-center justify-center transition-all"
+          title="Convidar equipe"
+        >
+          <UserPlus className="w-5 h-5" />
+        </motion.button>
+
+        {/* Botão Pausar IA */}
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={() => {
+            const newVal = !aiPaused;
+            setAiPaused(newVal);
+            if (roomRef.current) {
+              const enc = new TextEncoder();
+              roomRef.current.localParticipant.publishData(
+                enc.encode(JSON.stringify({
+                  version: DATA_PACKET_SCHEMA_VERSION,
+                  type: newVal ? "pause_ai" : "resume_ai",
+                })),
+                { reliable: true }
+              );
+            }
+            addTranscriptMessage("Sistema", newVal
+              ? "IA pausada — os agentes estão em silêncio durante o debate."
+              : "IA ativa novamente — os agentes podem participar."
+            );
+          }}
+          className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+            aiPaused
+              ? "bg-amber-500/20 border border-amber-500/50 text-amber-400"
+              : "bg-white/10 border border-white/10 text-white hover:bg-white/20"
+          }`}
+          title={aiPaused ? "Reativar IA" : "Pausar IA (modo debate)"}
+        >
+          {aiPaused ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+        </motion.button>
+
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => setShowEndConfirm(true)}
@@ -1432,6 +1504,69 @@ export default function MentorshipRoomPage() {
           <PhoneOff className="w-5 h-5" />
         </motion.button>
       </div>
+
+      {/* Modal de Convite */}
+      <AnimatePresence>
+        {showInviteModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-gray-900 border border-white/10 rounded-2xl p-8 max-w-md w-full text-center shadow-2xl"
+            >
+              <div className="w-16 h-16 rounded-full bg-[#d4af37]/10 border border-[#d4af37]/20 flex items-center justify-center mx-auto mb-4">
+                <UserPlus className="w-8 h-8 text-[#d4af37]" />
+              </div>
+              <h2 className="text-xl font-bold text-white mb-2">
+                Convidar Equipe
+              </h2>
+              <p className="text-sm text-gray-400 mb-6">
+                Compartilhe o link abaixo para que até 3 membros da sua equipe participem da mentoria como convidados.
+              </p>
+
+              <div className="flex items-center gap-2 bg-black/40 border border-white/10 rounded-xl px-4 py-3 mb-4">
+                <Link className="w-4 h-4 text-gray-500 shrink-0" />
+                <input
+                  readOnly
+                  value={typeof window !== "undefined" ? `${window.location.origin}/join/${projectId}` : ""}
+                  className="flex-1 bg-transparent text-sm text-gray-300 outline-none truncate font-mono"
+                />
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/join/${projectId}`);
+                    setInviteLinkCopied(true);
+                    setTimeout(() => setInviteLinkCopied(false), 2000);
+                  }}
+                  className="shrink-0 px-3 py-1.5 rounded-lg bg-[#d4af37]/20 border border-[#d4af37]/30 text-[#d4af37] text-xs font-semibold hover:bg-[#d4af37]/30 transition-colors flex items-center gap-1.5"
+                >
+                  {inviteLinkCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  {inviteLinkCopied ? "Copiado!" : "Copiar"}
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/5 border border-amber-500/20 mb-6">
+                <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <p className="text-[11px] text-amber-400/80 text-left">
+                  Convidados podem ouvir e falar, mas não possuem controle administrativo da sessão.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setShowInviteModal(false)}
+                className="px-6 py-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 transition-colors text-sm"
+              >
+                Fechar
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* End Confirmation Modal */}
       <AnimatePresence>

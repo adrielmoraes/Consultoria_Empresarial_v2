@@ -1,8 +1,9 @@
 "use client";
 
 import { Header } from "@/components/header";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import type { Variants } from "framer-motion";
+import { useState, useEffect } from "react";
 import {
   Brain,
   Users,
@@ -24,6 +25,9 @@ import {
   Mail,
   PhoneCall,
   CalendarCheck2,
+  Flame,
+  ChevronRight,
+  ChevronLeft
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -37,29 +41,120 @@ const fadeUp: Variants = {
   }),
 };
 
+// ─── DADOS DO CARROSSEL DE PERSUASÃO (PNL) ──────────────────────────────────
+const persuasionSlides = [
+  {
+    title: "O Peso Invisível da Liderança",
+    text: "Você toma dezenas de decisões arriscadas todos os dias, muitas vezes baseadas apenas na intuição suportando a pressão do erro sozinho. Na alta gestão, o 'achismo' não dói apenas no ego — ele corrói silenciosamente o seu caixa e atrasa seu crescimento.",
+    icon: Flame,
+    color: "from-orange-500/20 to-red-500/10",
+    border: "border-orange-500/30",
+  },
+  {
+    title: "O Refinamento Pela Verdade",
+    text: "Boas ideias morrem na hesitação. A Hive Mind transforma suas dúvidas no mais alto nível de ataque coordenado. Em menos de 30 minutos, sua ideia é testada por inteligências críticas incisivas, lapidada contra falhas fatais e forjada para gerar lucro real.",
+    icon: Target,
+    color: "from-blue-500/20 to-cyan-500/10",
+    border: "border-cyan-500/30",
+  },
+  {
+    title: "O Conselho Que Custaria Milhões",
+    text: "Contratar um CFO, CMO, CTO e um Advogado de elite sob demanda custaria facilmente R$ 80.000 mensais com consultorias tradicionais. Aqui, o ápice do conhecimento humano, estruturado pela IA, opera ao seu favor em tempo real, 24 horas por dia.",
+    icon: TrendingUp,
+    color: "from-emerald-500/20 to-teal-500/10",
+    border: "border-emerald-500/30",
+  },
+  {
+    title: "Certeza Absoluta na Execução",
+    text: "Imagine a tranquilidade de dormir sabendo que seu próximo passo de negócios foi analisado com frieza milimétrica por 5 inteligências focadas unicamente na sua proteção e aceleração. Você não recebe 'dicas' rasas, você adquire um plano infalível em PDF.",
+    icon: Shield,
+    color: "from-[#d4af37]/20 to-[#b08d24]/10",
+    border: "border-[#d4af37]/40",
+  }
+];
+
+function PersuasionCarousel() {
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % persuasionSlides.length);
+    }, 7000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const slide = persuasionSlides[current];
+  const Icon = slide.icon;
+
+  return (
+    <div className="w-full max-w-4xl mx-auto mt-16 relative">
+      <div className="absolute -inset-1 bg-linear-to-r from-[#d4af37]/20 to-[#b08d24]/20 rounded-3xl blur-2xl opacity-40" />
+      
+      <div className="relative bg-[#0a0f1c]/90 border border-[#d4af37]/20 rounded-3xl p-8 sm:p-12 backdrop-blur-xl overflow-hidden min-h-[280px] flex items-center shadow-2xl">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={current}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="w-full flex flex-col md:flex-row items-center gap-8 md:gap-12"
+          >
+            <div className={`w-20 h-20 shrink-0 rounded-2xl bg-linear-to-br ${slide.color} border ${slide.border} flex items-center justify-center shadow-inner`}>
+              <Icon className="w-10 h-10 text-white" />
+            </div>
+            <div className="flex-1 text-center md:text-left">
+              <h3 className="text-2xl sm:text-3xl font-black text-white mb-4 tracking-tight uppercase">
+                {slide.title}
+              </h3>
+              <p className="text-gray-300 sm:text-lg leading-relaxed font-medium">
+                {slide.text}
+              </p>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Carousel Controls Container */}
+        <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2 z-10">
+          {persuasionSlides.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className={`h-1.5 rounded-full transition-all duration-500 ease-out ${
+                current === i ? "w-10 bg-[#d4af37]" : "w-3 bg-white/20 hover:bg-white/40"
+              }`}
+              aria-label={`Go to slide ${i + 1}`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const specialists = [
   {
     icon: TrendingUp,
-    name: "CFO - Estratégia Financeira",
-    description: "Viabilidade econômica, precificação, custos e projeções financeiras.",
+    name: "CFO Financeiro",
+    description: "Ele corta a sangria de caixa. Valida sua viabilidade econômica real, projeta custos insanos e encontra lucro onde você via prejuízo.",
     color: "from-emerald-400 to-teal-500",
   },
   {
     icon: Gavel,
-    name: "Advogado - Jurídico",
-    description: "Conformidade, contratos, LGPD, constituição de empresa e riscos legais.",
+    name: "Consultor Jurídico",
+    description: "Blindagem societária imediata. Previne processos milionários antes que aconteçam e fecha todas as brechas dos seus contratos.",
     color: "from-amber-400 to-orange-500",
   },
   {
     icon: Users,
-    name: "CMO - Marketing & Vendas",
-    description: "Aquisição de clientes, branding, go-to-market e estratégia de vendas.",
+    name: "CMO em Marketing",
+    description: "Orquestra a tração. Desenha a estratégia de ataque ao mercado e posicionamento de vendas impossível de ser ignorada.",
     color: "from-pink-400 to-rose-500",
   },
   {
     icon: Code,
-    name: "CTO - Tecnologia",
-    description: "Infraestrutura, stack, viabilidade técnica e escalabilidade.",
+    name: "CTO em Tecnologia",
+    description: "A raiz da escalabilidade. Audita sua stack tecnológica, elimina arquiteturas frágeis e garante a estabilidade do sistema.",
     color: "from-blue-400 to-cyan-500",
   },
 ];
@@ -67,33 +162,33 @@ const specialists = [
 const features = [
   {
     icon: Video,
-    title: "Reunião em Tempo Real",
-    description: "Converse por voz com 5 especialistas de IA em uma sala de vídeo interativa.",
+    title: "Decisão Sob Controle em Tempo Real",
+    description: "Faça um pitch da sua ideia por voz, cara a cara com inteligências focadas em destruí-la para reconstruir algo à prova de balas.",
   },
   {
     icon: MessageSquare,
-    title: "Debate Multi-Agentes",
-    description: "Os especialistas debatem entre si sobre seu projeto, complementando análises.",
+    title: "Inteligência Coletiva Cruzada",
+    description: "Sua ideia de marketing é legal, mas é viável financeiramente? Os agentes debatem entre si para não deixar pontos cegos na mesa.",
   },
   {
     icon: FileText,
-    title: "Plano de Execução em PDF",
-    description: "Ao final, receba um plano passo a passo detalhado e pronto para executar.",
+    title: "Estratégia Materializada em PDF",
+    description: "Conversar não basta. Você sai com um roteiro rígido de passos acionáveis, documentado e formatado para a sua equipe iniciar hoje.",
   },
   {
     icon: Zap,
-    title: "Latência Ultrabaixa",
-    description: "Respostas em menos de 2 segundos, com sincronia labial nos avatares.",
+    title: "Latência Neural Imediata",
+    description: "Esqueça chats de texto demorados. A conexão é vocal, humana, cortante e veloz (menos de 2s), orquestrada por sincronia labial AI.",
   },
   {
     icon: Shield,
-    title: "Seguro e Privado",
-    description: "Seus dados são criptografados e nunca compartilhados com terceiros.",
+    title: "Sigilo Corporativo Inquebrável",
+    description: "O maior diferencial competitivo é o segredo. Seus layouts, dados e ideias são criptografados de ponta a ponta e pulverizados do histórico de treino.",
   },
   {
     icon: Sparkles,
-    title: "IA de Última Geração",
-    description: "Modelos de linguagem avançados com janelas de contexto massivas para sessões longas.",
+    title: "Contexto Analítico Profundo",
+    description: "Você chegou com os problemas, nós mantemos todo o histórico na memória durante a conversa para gerar resoluções complexas de longo prazo.",
   },
 ];
 
@@ -102,30 +197,30 @@ const plans = [
     name: "Sessão Avulsa",
     price: "R$ 149,90",
     period: "por sessão",
-    description: "Ideal para quem quer experimentar ou resolver uma dúvida pontual.",
+    description: "Custa menos que um almoço executivo, salva você de prejuízos irreversíveis e traz lucidez instantânea.",
     features: [
-      "1 sessão de mentoria",
-      "5 especialistas de IA",
-      "Plano de Execução em PDF",
-      "30 minutos de reunião",
+      "1 sala de guerra instantânea",
+      "5 especialistas desafiando você",
+      "Plano PDF para agir no mesmo dia",
+      "30 minutos intensos de clareza",
     ],
-    cta: "Comprar Sessão",
+    cta: "Antecipar Decisão Estratégica",
     popular: false,
   },
   {
-    name: "Profissional",
+    name: "Acesso Profissional",
     price: "R$ 399,90",
     period: "por mês",
-    description: "Para empreendedores que precisam de mentorias regulares.",
+    description: "Uma fração insignificante do risco de errar. Seu próprio conselho direcional operando em alta cadência.",
     features: [
-      "5 sessões por mês",
-      "5 especialistas de IA",
-      "Plano de Execução em PDF",
-      "60 minutos por reunião",
-      "Histórico de projetos",
-      "Suporte prioritário",
+      "5 batalhas intelectuais por mês",
+      "Acesso ao board de 5 especialistas",
+      "Arquivos em PDF vitalícios",
+      "Sessões expandidas de 60 minutos",
+      "Histórico de memórias criptografadas",
+      "Respostas prioritárias no cluster",
     ],
-    cta: "Assinar Agora",
+    cta: "Blindar as Operações da Empresa",
     popular: true,
   },
 ];
@@ -133,68 +228,68 @@ const plans = [
 const steps = [
   {
     step: "01",
-    title: "Crie seu Projeto",
-    description: "Dê um nome ao seu projeto e descreva brevemente sua ideia ou problema.",
+    title: "Evidência Inicial",
+    description: "Defina o escopo da sua angústia e da ideia. O que está travando o crescimento do seu projeto?",
   },
   {
     step: "02",
-    title: "Entre na Sala",
-    description: "A apresentadora e os 4 especialistas te recepcionam em uma sala de vídeo.",
+    title: "O Ponto de Ignição",
+    description: "A reunião se abre. A apresentadora inicia o protocolo agressivo pedindo seus desafios a fundo.",
   },
   {
     step: "03",
-    title: "Converse e Debata",
-    description: "Fale por voz. Os especialistas debatem entre si para cobrir todos os ângulos.",
+    title: "Mesa Redonda Implacável",
+    description: "O debriefing mais rápido da sua vida. Você argumenta, e a IA calcula a eficiência da ação.",
   },
   {
     step: "04",
-    title: "Receba seu Plano",
-    description: "Ao final, um Plano de Execução detalhado em PDF é gerado para download.",
+    title: "O Roteiro da Vitória",
+    description: "Saia com a arquitetura completa impressa em dados, prazos e passos para a sua equipe executar.",
   },
 ];
 
 const companyPillars = [
   {
     icon: Building2,
-    title: "Foco em PME e Startups",
-    description: "Soluções desenhadas para negócios em tração, com decisões críticas de crescimento.",
+    title: "Engenharia Limitada para Líderes",
+    description: "A ferramenta não é um brinquedo. Foi projetada exclusivamente para empresários e tomadores de decisões da linha de frente.",
   },
   {
     icon: Target,
-    title: "Decisão Orientada a Resultado",
-    description: "Cada sessão prioriza impacto em receita, eficiência operacional e execução prática.",
+    title: "Obsessão Pelo Retorno sobre o Tempo",
+    description: "Seu cérebro está saturado; a ideia aqui não é ensinar um curso de 4 horas, mas gerar o pilar pragmático em 20 minutos.",
   },
   {
     icon: Handshake,
-    title: "Modelo de Parceria",
-    description: "Atuação contínua para evolução do negócio, e não apenas recomendações pontuais.",
+    title: "Mentor de Bolso de Escala Institucional",
+    description: "É como carregar a elite de consultorias do Vale do Silício dentro do seu celular ou escritório, em tempo real.",
   },
 ];
 
 const securityControls = [
-  "Criptografia de dados em trânsito e em repouso",
-  "Autenticação de usuário e proteção de rotas privadas",
-  "Processamento de pagamento com Stripe",
-  "Camadas de validação em APIs críticas",
+  "Criptografia nativa em fluxos de áudio e websocket",
+  "Isolamento transacional por tokenização em memória RAM",
+  "Gateway restrito de pagamento bancarizado (Stripe)",
+  "Os modelos não treinam usando os dados sensíveis da sua reunião",
 ];
 
 const contactChannels = [
   {
     icon: Mail,
-    title: "E-mail Comercial",
-    value: "contato@hivemind.ai",
-    href: "mailto:contato@hivemind.ai",
+    title: "Vendas Corporativas",
+    value: "executivo@hivemind.ai",
+    href: "mailto:executivo@hivemind.ai",
   },
   {
     icon: PhoneCall,
-    title: "WhatsApp Executivo",
+    title: "Emergência B2B",
     value: "+55 (11) 99999-0000",
     href: "https://wa.me/5511999990000",
   },
   {
     icon: CalendarCheck2,
-    title: "Demonstração Guiada",
-    value: "Agendar conversa de 20 min",
+    title: "Investimento & Parceria",
+    value: "Agendar Demonstração VIP",
     href: "/register",
   },
 ];
@@ -220,7 +315,7 @@ export default function LandingPage() {
           >
             <Sparkles className="w-4 h-4 text-[#d4af37]" />
             <span className="text-xs font-black uppercase tracking-[0.2em] text-[#d4af37]">
-              O Futuro da Consultoria Estratégica
+              Decisões solitárias custam caro. Mude o jogo hoje.
             </span>
           </motion.div>
 
@@ -228,21 +323,23 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-6xl sm:text-7xl lg:text-8xl font-black tracking-tighter mb-8 leading-[0.9] uppercase"
+            className="text-6xl sm:text-7xl lg:text-8xl font-black tracking-tighter mb-8 leading-[1.0] uppercase"
           >
-            Seu Conselho de<br />
-            <span className="bg-linear-to-r from-[#d4af37] via-[#f0dfa0] to-[#b08d24] bg-clip-text text-transparent italic">Elite</span> Executiva
+            O SEU CONSELHO DE<br />
+            <span className="bg-linear-to-r from-[#d4af37] via-[#f0dfa0] to-[#b08d24] bg-clip-text text-transparent italic tracking-normal">ELITE IMPLACÁVEL.</span>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-lg sm:text-xl text-gray-400 max-w-3xl mx-auto mb-12 leading-relaxed font-medium"
+            className="text-lg sm:text-xl text-gray-300 max-w-4xl mx-auto mb-10 leading-relaxed font-semibold italic"
           >
-            Entre em uma sala de comando com 5 agentes de IA de nível sênior. 
-            Eles debatem, desafiam suas ideias e consolidam um 
-            <span className="text-white border-b border-[#d4af37]/30 px-1 inline-block">Plano de Execução Implacável</span> em tempo real.
+            Acabe agora mesmo com a insegurança de decidir o futuro do seu negócio sozinho.
+            Entre na sala de comando. Deixe 5 Inteligências Artificiais avaliarem, 
+            despedaçarem suas dúvidas e construírem um{" "}
+            <span className="text-white border-b-2 border-[#d4af37]/60 px-1 mx-1">Plano de Execução Blindado</span> 
+            em tempo real com você.
           </motion.p>
 
           <motion.div
@@ -253,27 +350,36 @@ export default function LandingPage() {
           >
             <Link 
               href="/register" 
-              className="group relative px-10 py-5 bg-linear-to-r from-[#b08d24] to-[#d4af37] rounded-2xl shadow-[0_0_40px_rgba(212,175,55,0.2)] hover:shadow-[0_0_60px_rgba(212,175,55,0.4)] transition-all duration-500 transform hover:-translate-y-1"
+              className="group relative px-10 py-5 bg-linear-to-r from-[#b08d24] to-[#d4af37] rounded-2xl shadow-[0_0_40px_rgba(212,175,55,0.25)] hover:shadow-[0_0_60px_rgba(212,175,55,0.5)] transition-all duration-500 transform hover:-translate-y-1"
             >
               <div className="flex items-center gap-3">
-                <span className="text-lg font-black text-[#030712] uppercase tracking-tighter">Convocação do Comitê</span>
-                <ArrowRight className="w-5 h-5 text-[#030712]" />
+                <span className="text-xl font-black text-[#030712] uppercase tracking-tighter">Convocar Comitê Agora</span>
+                <ArrowRight className="w-6 h-6 text-[#030712] group-hover:translate-x-1 transition-transform" />
               </div>
             </Link>
             
             <Link 
               href="#how-it-works" 
-              className="px-10 py-5 rounded-2xl bg-white/5 border border-white/10 text-lg font-bold text-white hover:bg-white/10 transition-all backdrop-blur-md"
+              className="px-10 py-5 rounded-2xl bg-white/5 border border-white/10 text-lg font-bold text-gray-300 hover:text-white hover:bg-white/10 transition-all backdrop-blur-md"
             >
-              Ver Metodologia
+              Entender a Estratégia Mestra
             </Link>
+          </motion.div>
+
+          {/* Carrossel NLP */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.8 }}
+          >
+            <PersuasionCarousel />
           </motion.div>
 
           {/* Pentaptych Elite Preview */}
           <motion.div
             initial={{ opacity: 0, y: 60 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.8 }}
+            transition={{ duration: 1, delay: 1 }}
             className="mt-20 max-w-5xl mx-auto relative group"
           >
             <div className="absolute -inset-1 bg-linear-to-r from-[#d4af37]/20 via-transparent to-[#b08d24]/20 rounded-[40px] blur-2xl opacity-50 group-hover:opacity-100 transition-opacity duration-1000" />
@@ -318,7 +424,7 @@ export default function LandingPage() {
       </section>
 
       {/* Specialists Section */}
-      <section className="py-20 px-4">
+      <section className="py-20 px-4 mt-8">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial="hidden"
@@ -329,17 +435,17 @@ export default function LandingPage() {
             <motion.h2
               variants={fadeUp}
               custom={0}
-              className="text-3xl sm:text-4xl font-bold mb-4"
+              className="text-4xl sm:text-5xl font-black mb-6 uppercase tracking-tight"
             >
-              Seu Painel de <span className="gradient-text">Especialistas</span>
+              Mentes Inflexíveis para um <span className="gradient-text">Lucro Certo</span>
             </motion.h2>
             <motion.p
               variants={fadeUp}
               custom={1}
-              className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto"
+              className="text-gray-400 max-w-2xl mx-auto font-medium"
             >
-              Quatro especialistas de IA debatem seu projeto em tempo real,
-              orquestrados por uma Apresentadora inteligente.
+              Longe do "papo motivacional". Aqui o sistema confronta fatos, avalia os dados 
+              e diz duramente o que falta para seu dinheiro não entrar em risco.
             </motion.p>
           </motion.div>
 
@@ -352,15 +458,15 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 variants={fadeUp}
                 custom={i + 2}
-                className="glass-card p-6"
+                className="glass-card p-6 border border-white/10 hover:border-white/20 transition-all hover:-translate-y-1 bg-black/40"
               >
                 <div
-                  className={`w-12 h-12 rounded-xl bg-linear-to-r ${spec.color} flex items-center justify-center mb-4`}
+                  className={`w-14 h-14 rounded-2xl bg-linear-to-br ${spec.color} flex items-center justify-center mb-5 shadow-lg`}
                 >
-                  <spec.icon className="w-6 h-6 text-white" />
+                  <spec.icon className="w-7 h-7 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2">{spec.name}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <h3 className="text-xl font-black uppercase mb-3 text-white">{spec.name}</h3>
+                <p className="text-sm text-gray-400 font-medium leading-relaxed">
                   {spec.description}
                 </p>
               </motion.div>
@@ -370,8 +476,9 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 px-4 bg-gray-50/50 dark:bg-gray-900/30">
-        <div className="max-w-6xl mx-auto">
+      <section id="features" className="py-24 px-4 bg-[#0a0f1c]/50 border-y border-white/5 relative">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 pointer-events-none" />
+        <div className="max-w-6xl mx-auto relative z-10">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -381,13 +488,13 @@ export default function LandingPage() {
             <motion.h2
               variants={fadeUp}
               custom={0}
-              className="text-3xl sm:text-4xl font-bold mb-4"
+              className="text-4xl sm:text-5xl font-black mb-4 uppercase tracking-tight"
             >
-              Por que escolher o <span className="gradient-text">Hive Mind</span>?
+               Estrutura Projetada para a <span className="gradient-text">Exaustão Estratégica</span>
             </motion.h2>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, i) => (
               <motion.div
                 key={feature.title}
@@ -396,13 +503,13 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 variants={fadeUp}
                 custom={i}
-                className="glass-card p-6"
+                className="glass-card p-8 border border-white/5 bg-black/20"
               >
-                <div className="w-10 h-10 rounded-lg bg-[#d4af37]/10 border border-[#d4af37]/20 flex items-center justify-center mb-4">
-                  <feature.icon className="w-5 h-5 text-[#d4af37]" />
+                <div className="w-12 h-12 rounded-xl bg-[#d4af37]/10 border border-[#d4af37]/30 flex items-center justify-center mb-6 shadow-[0_0_15px_rgba(212,175,55,0.1)]">
+                  <feature.icon className="w-6 h-6 text-[#d4af37]" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <h3 className="text-xl font-bold mb-3 uppercase tracking-wide">{feature.title}</h3>
+                <p className="text-sm text-gray-400 font-medium leading-relaxed">
                   {feature.description}
                 </p>
               </motion.div>
@@ -411,58 +518,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* How It Works Section */}
-      <section id="how-it-works" className="py-20 px-4">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <motion.h2
-              variants={fadeUp}
-              custom={0}
-              className="text-3xl sm:text-4xl font-bold mb-4"
-            >
-              Como <span className="gradient-text">Funciona</span>
-            </motion.h2>
-          </motion.div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {steps.map((step, i) => (
-              <motion.div
-                key={step.step}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={fadeUp}
-                custom={i}
-                className="relative"
-              >
-                {i < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-8 left-full w-full h-px bg-linear-to-r from-[#d4af37]/50 to-transparent z-10" />
-                )}
-                <div className="glass-card p-6 text-center">
-                  <span className="text-4xl font-black gradient-text">
-                    {step.step}
-                  </span>
-                  <h3 className="text-lg font-semibold mt-4 mb-2">
-                    {step.title}
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {step.description}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Pricing Section */}
-      <section id="pricing" className="py-20 px-4 bg-gray-50/50 dark:bg-gray-900/30">
-        <div className="max-w-6xl mx-auto">
+      <section id="pricing" className="py-24 px-4 relative">
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#d4af37]/5 blur-[150px] pointer-events-none rounded-full" />
+        <div className="max-w-5xl mx-auto relative z-10">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -472,20 +531,21 @@ export default function LandingPage() {
             <motion.h2
               variants={fadeUp}
               custom={0}
-              className="text-3xl sm:text-4xl font-bold mb-4"
+              className="text-4xl sm:text-5xl font-black mb-6 uppercase tracking-tight"
             >
-              Planos e <span className="gradient-text">Preços</span>
+              Transforme Risco de Falística em <span className="gradient-text">Retorno Exponencial</span>
             </motion.h2>
             <motion.p
               variants={fadeUp}
               custom={1}
-              className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto"
+              className="text-lg text-gray-400 max-w-2xl mx-auto font-medium"
             >
-              Escolha o plano ideal para o seu momento. Cancele quando quiser.
+              Um executivo C-Level no Brasil não sai por menos de R$ 200.000 anuais. 
+              Aqui estão quatro, à sua espera, por uma mensalidade que você absorveria sem pensar duas vezes no Starbucks.
             </motion.p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 max-w-4xl mx-auto">
             {plans.map((plan, i) => (
               <motion.div
                 key={plan.name}
@@ -494,45 +554,47 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 variants={fadeUp}
                 custom={i}
-                className={`glass-card p-8 relative ${
+                className={`glass-card p-10 relative bg-black/60 backdrop-blur-2xl transition-all duration-500 hover:-translate-y-2 ${
                   plan.popular
-                    ? "border-[#d4af37]/50 ring-1 ring-[#d4af37]/20"
-                    : ""
+                    ? "border-[#d4af37] ring-2 ring-[#d4af37]/30 shadow-[0_0_50px_rgba(212,175,55,0.15)]"
+                    : "border-white/10"
                 }`}
               >
                 {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="bg-linear-to-r from-[#d4af37] to-[#b08d24] text-[#0a0a0a] text-xs font-bold px-3 py-1 rounded-full">
-                      Mais Popular
-                    </span>
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                     <div className="bg-[#d4af37] border-2 border-[#030712] text-[#030712] text-xs font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg">
+                       Visão de Sócios (Mais Assinado)
+                     </div>
                   </div>
                 )}
-                <h3 className="text-xl font-bold mb-1">{plan.name}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                  {plan.description}
+                <h3 className="text-3xl font-black uppercase tracking-tight mb-2">{plan.name}</h3>
+                <p className="text-sm text-[#d4af37] italic font-semibold mb-6 pr-4">
+                  "{plan.description}"
                 </p>
-                <div className="mb-6">
-                  <span className="text-4xl font-black gradient-text">
+                <div className="mb-8 border-b border-white/10 pb-8">
+                  <span className="text-5xl font-black gradient-text tracking-tighter">
                     {plan.price}
                   </span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400 ml-1">
+                  <span className="text-sm font-bold uppercase text-gray-500 ml-2">
                     {plan.period}
                   </span>
                 </div>
-                <ul className="space-y-3 mb-8">
+                <ul className="space-y-4 mb-10">
                   {plan.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-sm">
-                      <Check className="w-4 h-4 text-[#d4af37] shrink-0" />
-                      <span className="text-gray-600 dark:text-gray-300">{f}</span>
+                    <li key={f} className="flex items-start gap-3">
+                      <div className="mt-1 bg-[#d4af37]/20 p-0.5 rounded-full">
+                        <Check className="w-3 h-3 text-[#d4af37] shrink-0 font-bold" />
+                      </div>
+                      <span className="text-gray-300 font-medium">{f}</span>
                     </li>
                   ))}
                 </ul>
                 <Link
                   href="/register"
-                  className={`block text-center w-full py-3 rounded-xl font-semibold transition-all ${
+                  className={`block text-center w-full py-5 rounded-2xl font-black uppercase tracking-widest transition-all ${
                     plan.popular
-                      ? "btn-primary"
-                      : "btn-secondary"
+                      ? "bg-linear-to-r from-[#b08d24] to-[#d4af37] shadow-[0_0_30px_rgba(212,175,55,0.3)] hover:shadow-[0_0_50px_rgba(212,175,55,0.5)] text-[#030712] transform hover:scale-[1.02]"
+                      : "bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:border-white/20 transform hover:scale-[1.02]"
                   }`}
                 >
                   {plan.cta}
@@ -543,228 +605,87 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="company" className="py-20 px-4">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <motion.h2
-              variants={fadeUp}
-              custom={0}
-              className="text-3xl sm:text-4xl font-bold mb-4"
-            >
-              Empresa e <span className="gradient-text">Modelo de Negócio</span>
-            </motion.h2>
-            <motion.p
-              variants={fadeUp}
-              custom={1}
-              className="text-gray-500 dark:text-gray-400 max-w-3xl mx-auto"
-            >
-              Unimos mentoria executiva e IA para acelerar decisões estratégicas com clareza,
-              velocidade e padrão de execução.
-            </motion.p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {companyPillars.map((pillar, i) => (
-              <motion.div
-                key={pillar.title}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={fadeUp}
-                custom={i}
-                className="glass-card p-6"
-              >
-                <div className="w-11 h-11 rounded-xl bg-[#d4af37]/10 border border-[#d4af37]/20 flex items-center justify-center mb-4">
-                  <pillar.icon className="w-5 h-5 text-[#d4af37]" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">{pillar.title}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {pillar.description}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="security" className="py-20 px-4 bg-gray-50/50 dark:bg-gray-900/30">
-        <div className="max-w-5xl mx-auto">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <motion.h2
-              variants={fadeUp}
-              custom={0}
-              className="text-3xl sm:text-4xl font-bold mb-4"
-            >
-              Segurança e <span className="gradient-text">Confiabilidade</span>
-            </motion.h2>
-            <motion.p
-              variants={fadeUp}
-              custom={1}
-              className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto"
-            >
-              Estrutura técnica orientada à proteção de dados e continuidade da operação.
-            </motion.p>
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeUp}
-            custom={2}
-            className="glass-card p-8"
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-[#d4af37]/10 border border-[#d4af37]/20 flex items-center justify-center">
-                <LockKeyhole className="w-5 h-5 text-[#d4af37]" />
-              </div>
-              <h3 className="text-xl font-semibold">Pilares de Segurança</h3>
-            </div>
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {securityControls.map((item) => (
-                <li key={item} className="flex items-start gap-3 text-sm">
-                  <Check className="w-4 h-4 text-[#d4af37] shrink-0 mt-0.5" />
-                  <span className="text-gray-600 dark:text-gray-300">{item}</span>
-                </li>
-              ))}
-            </ul>
-          </motion.div>
-        </div>
-      </section>
-
-      <section id="contact" className="py-20 px-4">
-        <div className="max-w-5xl mx-auto">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <motion.h2
-              variants={fadeUp}
-              custom={0}
-              className="text-3xl sm:text-4xl font-bold mb-4"
-            >
-              Contato <span className="gradient-text">Comercial</span>
-            </motion.h2>
-            <motion.p
-              variants={fadeUp}
-              custom={1}
-              className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto"
-            >
-              Fale com nosso time para implantação, treinamento e parceria estratégica.
-            </motion.p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {contactChannels.map((channel, i) => (
-              <motion.div
-                key={channel.title}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={fadeUp}
-                custom={i}
-                className="glass-card p-6"
-              >
-                <div className="w-11 h-11 rounded-xl bg-[#d4af37]/10 border border-[#d4af37]/20 flex items-center justify-center mb-4">
-                  <channel.icon className="w-5 h-5 text-[#d4af37]" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">{channel.title}</h3>
-                <Link href={channel.href} className="text-sm text-[#d4af37] hover:text-[#f0dfa0] transition-colors">
-                  {channel.value}
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 px-4">
+      {/* CTA Section Final */}
+      <section className="py-28 px-4 bg-linear-to-b from-transparent to-[#0a0f1c]/80 border-t border-white/5">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
           >
+            <motion.div 
+               variants={fadeUp} custom={0} 
+               className="w-20 h-20 mx-auto rounded-full bg-[#d4af37]/10 flex items-center justify-center border border-[#d4af37]/20 mb-8 shadow-[0_0_40px_rgba(212,175,55,0.2)]"
+            >
+               <Target className="w-10 h-10 text-[#d4af37]" />
+            </motion.div>
+
             <motion.h2
               variants={fadeUp}
-              custom={0}
-              className="text-3xl sm:text-4xl font-bold mb-4"
+              custom={1}
+              className="text-5xl sm:text-6xl font-black mb-6 uppercase tracking-tighter leading-[1.0]"
             >
-              Pronto para evoluir com o{" "}
-              <span className="gradient-text">Hive Mind</span>?
+              É o fim do amadorismo. <br className="hidden sm:block"/>
+              A <span className="gradient-text italic">Sua Vez</span> chegou.
             </motion.h2>
             <motion.p
               variants={fadeUp}
-              custom={1}
-              className="text-gray-500 dark:text-gray-400 mb-8 max-w-2xl mx-auto"
+              custom={2}
+              className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto font-medium"
             >
-              Junte-se a centenas de empreendedores que já receberam consultoria
-              estratégica com nosso painel de especialistas.
+              Não permita que o mercado decida qual erro irá quebrar sua empresa. Corrija o rumo hoje, de trás das cortinas cerradas de um conselho bilionário virtual.
             </motion.p>
-            <motion.div variants={fadeUp} custom={2}>
+            <motion.div variants={fadeUp} custom={3}>
               <Link
                 href="/register"
-                className="btn-primary text-lg px-10 py-4 inline-flex items-center gap-2"
+                className="group relative inline-flex items-center gap-3 px-12 py-5 bg-linear-to-r from-[#b08d24] to-[#d4af37] rounded-full shadow-[0_0_40px_rgba(212,175,55,0.3)] hover:shadow-[0_0_60px_rgba(212,175,55,0.6)] transition-all duration-500 transform hover:scale-[1.03]"
               >
-                Começar Agora <ArrowRight className="w-5 h-5" />
+                <span className="text-xl font-black text-[#030712] uppercase tracking-tighter">Eu Vou Blindar Minha Empresa</span>
+                <Flame className="w-6 h-6 text-[#030712] relative z-10" />
               </Link>
+              <p className="mt-5 text-sm text-gray-500 uppercase tracking-widest font-black">Testado. Incisivo. Mortal para Concorrentes.</p>
             </motion.div>
           </motion.div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/5 py-20 px-4 bg-[#010307]">
+      <footer className="border-t border-white/5 py-16 px-4 bg-[#010204]">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-12">
             <div className="flex flex-col items-center md:items-start gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 p-1 rounded-xl bg-[#0a0a0f] border border-[#d4af37]/30 shadow-[0_0_15px_rgba(212,175,55,0.15)] flex items-center justify-center">
+                <div className="w-12 h-12 p-1.5 rounded-xl bg-[#0a0a0f] border border-[#d4af37]/30 shadow-[0_0_15px_rgba(212,175,55,0.15)] flex items-center justify-center">
                   <Image src="/logo-icon.svg?v=2" alt="Hive Mind" width={40} height={40} className="w-full h-full object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(76%) sepia(63%) saturate(456%) hue-rotate(8deg) brightness(96%) contrast(90%)' }} />
                 </div>
-                <span className="text-2xl font-black bg-linear-to-r from-[#d4af37] via-[#f0dfa0] to-[#b08d24] bg-clip-text text-transparent uppercase tracking-tight">Hive Mind</span>
+                <span className="text-3xl font-black bg-linear-to-r from-[#d4af37] via-[#f0dfa0] to-[#b08d24] bg-clip-text text-transparent uppercase tracking-tighter">HIVE MIND</span>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-500 font-medium max-w-xs text-center md:text-left">
-                Redefinindo os limites da consultoria executiva com inteligência artificial de elite.
+              <p className="text-sm text-gray-600 font-medium max-w-sm text-center md:text-left italic">
+                A tecnologia que aposenta achismos na liderança e engessa o erro corporativo como item de museu.
               </p>
             </div>
             
-            <div className="flex gap-12">
-               <div className="flex flex-col gap-4">
-                  <span className="text-xs font-black uppercase tracking-widest text-[#d4af37]">Plataforma</span>
-                  <Link href="#features" className="text-sm text-gray-500 hover:text-white transition-colors">Recursos</Link>
-                  <Link href="#pricing" className="text-sm text-gray-500 hover:text-white transition-colors">Planos</Link>
+            <div className="flex gap-16">
+               <div className="flex flex-col gap-3">
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#d4af37] mb-2">Engenharia</span>
+                  <Link href="#features" className="text-sm font-semibold text-gray-500 hover:text-white transition-colors">Vantagens Matemáticas</Link>
+                  <Link href="#pricing" className="text-sm font-semibold text-gray-500 hover:text-white transition-colors">Custo Implacável</Link>
                </div>
-               <div className="flex flex-col gap-4">
-                  <span className="text-xs font-black uppercase tracking-widest text-[#d4af37]">Empresa</span>
-                  <Link href="#company" className="text-sm text-gray-500 hover:text-white transition-colors">Empresa</Link>
-                  <Link href="#security" className="text-sm text-gray-500 hover:text-white transition-colors">Segurança</Link>
-                  <Link href="#contact" className="text-sm text-gray-500 hover:text-white transition-colors">Contato</Link>
+               <div className="flex flex-col gap-3">
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#d4af37] mb-2">Companhia</span>
+                  <a href="mailto:executivo@hivemind.ai" className="text-sm font-semibold text-gray-500 hover:text-white transition-colors">Executivo B2B</a>
+                  <Link href="/terms-of-service" className="text-sm font-semibold text-gray-500 hover:text-white transition-colors">Privacidade Nível Militar</Link>
                </div>
             </div>
           </div>
           
-          <div className="mt-20 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
-            <p className="text-xs text-gray-600 uppercase font-black tracking-widest">
-              © 2026 Hive Mind Enterprise. Todos os direitos reservados.
+          <div className="mt-20 pt-8 border-t border-white/5 flex flex-col items-center justify-center gap-2">
+            <p className="text-[10px] text-gray-600 uppercase font-black tracking-[0.2em]">
+               2026 Hive Mind Corp. Todos os direitos reservados.
             </p>
-            <div className="flex gap-8">
-               <Link href="/privacy-policy" className="text-[10px] uppercase font-black text-gray-700 hover:text-gray-400 tracking-widest">Privacy Policy</Link>
-               <Link href="/terms-of-service" className="text-[10px] uppercase font-black text-gray-700 hover:text-gray-400 tracking-widest">Terms of Service</Link>
-            </div>
+            <p className="text-[9px] text-gray-800 font-bold tracking-widest text-center mt-2">
+               O mercado não perdoa líderes indecisos. Seja rápido.
+            </p>
           </div>
         </div>
       </footer>

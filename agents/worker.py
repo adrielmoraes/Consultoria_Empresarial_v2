@@ -179,7 +179,7 @@ REGRAS DE ORQUESTRAÇÃO:
 1. Comece sempre perguntando o nome do usuário se ainda não souber.
 2. SEMPRE chame o usuário pelo nome após descobri-lo.
 3. Faça perguntas abertas para entender o negócio: setor, estágio (ideia/MVP/crescimento), principal dor.
-4. Seja a "regente" da sessão: após cada especialista falar, faça uma transição natural de volta ao usuário.
+4. Seja a "regente" da sessão.
 5. Mantenha suas falas curtas e diretas (máximo 3 frases por turno).
 6. NUNCA responda por um especialista — sempre acione-os via função.
 7. Quando o tema for financeiro → use acionar_carlos_cfo.
@@ -191,7 +191,16 @@ REGRAS DE ORQUESTRAÇÃO:
 13. RETOMADA: Se você perceber que há histórico de conversa anterior, comece dizendo que está retomando.
 14. TURNO DE FALA: Quando você acionar um especialista via função, PARE DE FALAR imediatamente. NÃO adicione comentários após a chamada.
 15. NUNCA fale ao mesmo tempo que um especialista. Dê espaço total para ele responder.
-16. Após o especialista terminar, retome com 1-2 frases de transição antes de continuar.
+16. Após o especialista terminar (devolver a palavra a você), retome com 1-2 frases de transição antes de continuar.
+17. HANDOVER: Quando você aciona um especialista, ele assumirá a conversa diretamente com o usuário por múltiplos turnos. Você ficará em SILÊNCIO ABSOLUTO esperando ele devolver a palavra. NÃO interrompa.
+
+MODO OUVINTE (SALA COM MÚLTIPLOS HUMANOS):
+- A sala pode ter convidados (sócios, diretores) além do usuário principal.
+- Se os humanos estiverem debatendo ideias livremente entre si, assuma postura de OUVINTE SILENCIOSA.
+- NÃO interrompa debates humanos. Fale SOMENTE quando:
+  a) Alguém se dirigir diretamente a você ou à equipe ("Nathália...", "Pessoal...", "O que vocês acham?").
+  b) Houver um silêncio prolongado indicando que esperam sua intervenção.
+  c) Um especialista devolver a palavra para você.
 
 TOM E ESTILO:
 - Português do Brasil, informal mas profissional.
@@ -209,8 +218,15 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "- AGUARDE em silêncio total. Só fale quando Nathália te acionar explicitamente.\n"
         "- Ao ser acionado, NÃO cumprimente longamente — vá direto ao ponto.\n"
         "- Use SEMPRE o nome do usuário se souber (veja o contexto da sessão).\n"
-        "- Máximo 4 frases objetivas por resposta.\n"
+        "- Responda de forma objetiva e profissional.\n"
         "- Sempre termine com uma pergunta ou insight que aprofunde a análise.\n"
+        "- VOCÊ PODE conversar LIVREMENTE com o usuário por múltiplos turnos. Não precisa se limitar a 1 resposta.\n"
+        "\nHANDOVER — REGRAS DE DEVOLUÇÃO:\n"
+        "- Quando o assunto financeiro for esgotado ou o usuário quiser mudar de tema, use a ferramenta `devolver_para_nathalia`. Esta é a PRIORIDADE.\n"
+        "- EXCEÇÃO: Se o usuário fizer uma pergunta que pertence CLARAMENTE à área de outro especialista "
+        "(ex: jurídico, marketing, tecnologia), você pode usar `transferir_para_especialista` passando o ID do colega e o contexto da pergunta. "
+        "Antes de transferir, FALE EM VOZ ALTA que vai repassar (ex: 'Vou repassar essa questão jurídica ao Daniel.').\n"
+        "- IDs dos colegas: daniel_advogado (jurídico), rodrigo_cmo (marketing), ana_cto (tecnologia).\n"
         "\nÁREAS DE DOMÍNIO: estrutura de custos, precificação (cost-plus, value-based, freemium), "
         "projeções de receita (MRR, ARR, LTV, CAC), ponto de equilíbrio, fontes de capital "
         "(bootstrapping, angel, venture, crédito), unit economics, fluxo de caixa e burn rate.\n"
@@ -223,8 +239,15 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "- AGUARDE em silêncio total. Só fale quando Nathália te acionar explicitamente.\n"
         "- Ao ser acionado, seja direto — explique o tema jurídico de forma simples e prática.\n"
         "- Use SEMPRE o nome do usuário se souber (veja o contexto da sessão).\n"
-        "- Máximo 4 frases por resposta. Nunca use juridiquês desnecessário.\n"
+        "- Nunca use juridiquês desnecessário.\n"
         "- Sempre sinalize os riscos e como mitigá-los.\n"
+        "- VOCÊ PODE conversar LIVREMENTE com o usuário por múltiplos turnos. Não precisa se limitar a 1 resposta.\n"
+        "\nHANDOVER — REGRAS DE DEVOLUÇÃO:\n"
+        "- Quando o assunto jurídico for esgotado ou o usuário quiser mudar de tema, use a ferramenta `devolver_para_nathalia`. Esta é a PRIORIDADE.\n"
+        "- EXCEÇÃO: Se o usuário fizer uma pergunta que pertence CLARAMENTE à área de outro especialista "
+        "(ex: finanças, marketing, tecnologia), você pode usar `transferir_para_especialista` passando o ID do colega e o contexto da pergunta. "
+        "Antes de transferir, FALE EM VOZ ALTA que vai repassar (ex: 'Essa questão financeira é com o Carlos, vou passar pra ele.').\n"
+        "- IDs dos colegas: carlos_cfo (finanças), rodrigo_cmo (marketing), ana_cto (tecnologia).\n"
         "\nÁREAS DE DOMÍNIO: tipos societários (MEI, EIRELI, LTDA, SA), vesting e acordos de sócios, "
         "contratos de prestação de serviço, LGPD e tratamento de dados, propriedade intelectual e registro de marca, "
         "compliance fiscal e trabalhista, termos de uso e políticas de privacidade.\n"
@@ -237,8 +260,15 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "- AGUARDE em silêncio total. Só fale quando Nathália te acionar explicitamente.\n"
         "- Ao ser acionado, seja prático e inspirador — fale em estratégias concretas.\n"
         "- Use SEMPRE o nome do usuário se souber (veja o contexto da sessão).\n"
-        "- Máximo 4 frases por resposta. Use exemplos reais quando possível.\n"
+        "- Use exemplos reais quando possível.\n"
         "- Termine com um insight acionável que o usuário possa aplicar imediatamente.\n"
+        "- VOCÊ PODE conversar LIVREMENTE com o usuário por múltiplos turnos. Não precisa se limitar a 1 resposta.\n"
+        "\nHANDOVER — REGRAS DE DEVOLUÇÃO:\n"
+        "- Quando o assunto de marketing/crescimento for esgotado ou o usuário quiser mudar de tema, use a ferramenta `devolver_para_nathalia`. Esta é a PRIORIDADE.\n"
+        "- EXCEÇÃO: Se o usuário fizer uma pergunta que pertence CLARAMENTE à área de outro especialista "
+        "(ex: finanças, jurídico, tecnologia), você pode usar `transferir_para_especialista` passando o ID do colega e o contexto da pergunta. "
+        "Antes de transferir, FALE EM VOZ ALTA que vai repassar (ex: 'Essa parte tecnológica é com a Ana, vou passar pra ela.').\n"
+        "- IDs dos colegas: carlos_cfo (finanças), daniel_advogado (jurídico), ana_cto (tecnologia).\n"
         "\nÁREAS DE DOMÍNIO: posicionamento e proposta de valor, ICP (Ideal Customer Profile), "
         "funil de aquisição (topo/meio/fundo), estratégia de conteúdo, SEO e performance, "
         "growth hacking, branding e identidade visual, pricing psicológico, "
@@ -252,8 +282,15 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "- AGUARDE em silêncio total. Só fale quando Nathália te acionar explicitamente.\n"
         "- Ao ser acionada, seja objetiva — traduza técnico em estratégico.\n"
         "- Use SEMPRE o nome do usuário se souber (veja o contexto da sessão).\n"
-        "- Máximo 4 frases por resposta. Evite siglas sem explicar.\n"
+        "- Evite siglas sem explicar.\n"
         "- Sempre avalie custo-benefício de cada decisão tecnológica.\n"
+        "- VOCÊ PODE conversar LIVREMENTE com o usuário por múltiplos turnos. Não precisa se limitar a 1 resposta.\n"
+        "\nHANDOVER — REGRAS DE DEVOLUÇÃO:\n"
+        "- Quando o assunto tecnológico for esgotado ou o usuário quiser mudar de tema, use a ferramenta `devolver_para_nathalia`. Esta é a PRIORIDADE.\n"
+        "- EXCEÇÃO: Se o usuário fizer uma pergunta que pertence CLARAMENTE à área de outro especialista "
+        "(ex: finanças, jurídico, marketing), você pode usar `transferir_para_especialista` passando o ID do colega e o contexto da pergunta. "
+        "Antes de transferir, FALE EM VOZ ALTA que vai repassar (ex: 'Essa questão de custos é com o Carlos, vou passar pra ele.').\n"
+        "- IDs dos colegas: carlos_cfo (finanças), daniel_advogado (jurídico), rodrigo_cmo (marketing).\n"
         "\nÁREAS DE DOMÍNIO: escolha de stack tecnológico (web, mobile, backend), "
         "arquitetura de produto (monolito vs microsserviços, serverless), "
         "planejamento de MVP (mínimo viável e iterável), infraestrutura cloud (AWS, GCP, Azure), "
@@ -434,10 +471,24 @@ async def _query_documents_with_llm(pergunta: str, documentos: list[str]) -> str
         return "Erro técnico ao tentar ler os documentos da empresa."
 
 # ============================================================
+# Mapeamento de IDs amigáveis para spec_ids internos (Lateral Transfer)
+LATERAL_TRANSFER_MAP: dict[str, str] = {
+    "carlos_cfo": "cfo",
+    "daniel_advogado": "legal",
+    "rodrigo_cmo": "cmo",
+    "ana_cto": "cto",
+}
+
 class SpecialistAgent(Agent):
     """
     Cada especialista é um Agent independente com RealtimeModel nativo.
     Ele entra no mesmo room com identidade separada e aguarda ser ativado.
+
+    Handover Peer-to-Peer:
+    - O especialista conversa livremente com o usuário por múltiplos turnos.
+    - Quando o tema se esgota, ele usa `devolver_para_nathalia` para retornar o controle.
+    - Opcionalmente, pode usar `transferir_para_especialista` para passar direto a outro colega.
+    - Um asyncio.Event (_handover_event) sinaliza o fim do turno para o loop de ativação.
     """
 
     def __init__(self, spec_id: str, blackboard: Blackboard) -> None:
@@ -475,6 +526,10 @@ class SpecialistAgent(Agent):
         self._spec_id = spec_id
         self._name = name
         self._blackboard = blackboard
+        # Handover: evento para sinalizar fim do turno livre
+        self._handover_event: asyncio.Event = asyncio.Event()
+        # Resultado do handover: "nathalia" ou {"target": spec_id, "context": str}
+        self._handover_result: Optional[dict] = None
 
     @function_tool
     async def consultar_documento_empresa(
@@ -489,6 +544,57 @@ class SpecialistAgent(Agent):
         """
         logger.info(f"[{self._name}] Consultando documentos: {pergunta}")
         return await _query_documents_with_llm(pergunta, self._blackboard.documentos_disponiveis)
+
+    @function_tool
+    async def devolver_para_nathalia(
+        self,
+        context: RunContext,
+    ) -> str:
+        """
+        Devolve a palavra à Nathália (apresentadora) para que ela retome a condução da sessão.
+        Use esta ferramenta quando:
+        - A dúvida da sua área de especialidade foi completamente respondida.
+        - O usuário indicou que quer mudar de assunto.
+        - Você sente que é hora de a Nathália continuar mediando.
+        PRIORIDADE: Esta é a forma PADRÃO de encerrar seu turno.
+        """
+        logger.info(f"[{self._name}] Devolvendo palavra para Nathália.")
+        self._blackboard.add_message(self._name, "Pronto, Nathália! Pode continuar.")
+        self._handover_result = {"type": "nathalia"}
+        self._handover_event.set()
+        return "Palavra devolvida à Nathália com sucesso. Aguarde em silêncio."
+
+    @function_tool
+    async def transferir_para_especialista(
+        self,
+        context: RunContext,
+        colega_id: str,
+        contexto_pergunta: str,
+    ) -> str:
+        """
+        Transfere a palavra diretamente para outro especialista da equipe SEM passar pela Nathália.
+        Use SOMENTE quando o usuário fizer uma pergunta que pertence CLARAMENTE à área de outro colega.
+        ANTES de usar esta ferramenta, FALE em voz alta para o usuário que vai repassar.
+
+        Parâmetros:
+        - colega_id: ID do colega destino. Valores válidos: carlos_cfo, daniel_advogado, rodrigo_cmo, ana_cto
+        - contexto_pergunta: a pergunta ou contexto que deve ser repassado ao colega (para ele já iniciar respondendo)
+        """
+        target_spec_id = LATERAL_TRANSFER_MAP.get(colega_id)
+        if not target_spec_id:
+            return f"ID de colega inválido: {colega_id}. Use carlos_cfo, daniel_advogado, rodrigo_cmo ou ana_cto."
+
+        target_name = SPECIALIST_NAMES.get(target_spec_id, colega_id)
+        logger.info(f"[{self._name}] Transferindo palavra para {target_name} com contexto: {contexto_pergunta[:100]}")
+        self._blackboard.add_message("Sistema", f"{self._name} transferiu a palavra para {target_name}.")
+        self._handover_result = {
+            "type": "transfer",
+            "target": target_spec_id,
+            "context": contexto_pergunta,
+            "from_name": self._name,
+        }
+        self._handover_event.set()
+        return f"Transferência para {target_name} registrada. Aguarde em silêncio."
 
 class HostAgent(Agent):
     """
@@ -583,7 +689,7 @@ class HostAgent(Agent):
     # Método auxiliar: publica um data packet para ativar um especialista
     # ------------------------------------------------------------------
 
-    async def _activate_specialist(self, spec_id: str, context: str) -> str:
+    async def _activate_specialist(self, spec_id: str, context: str, _lateral_from_name: str = "") -> str:
         async with self._turn_lock:
             now = monotonic()
             last_activation = self._last_activation_at.get(spec_id, 0.0)
@@ -606,17 +712,23 @@ class HostAgent(Agent):
             self._turn_status.pop(turn_id, None)
             self._blackboard.orchestration_metrics["activations_total"] += 1
             self._blackboard.active_agent = spec_id
-            self._blackboard.add_message("Sistema", f"Acionando {SPECIALIST_NAMES[spec_id]}: {context}")
+            if _lateral_from_name:
+                self._blackboard.add_message("Sistema", f"{_lateral_from_name} transferiu a palavra para {SPECIALIST_NAMES[spec_id]}: {context}")
+            else:
+                self._blackboard.add_message("Sistema", f"Acionando {SPECIALIST_NAMES[spec_id]}: {context}")
 
-            await self._publish_packet({
+            packet = {
                 "type": "activate_agent",
                 "agent_id": spec_id,
                 "turn_id": turn_id,
                 "context": context,
                 "transcript_summary": self._blackboard.get_context_summary(),
                 "context_state": self._blackboard.get_structured_context(),
-            })
-            logger.info(f"[Host] Acionando especialista: {spec_id} | turno={turn_id} | contexto: {context}")
+            }
+            if _lateral_from_name:
+                packet["from_name"] = _lateral_from_name
+            await self._publish_packet(packet)
+            logger.info(f"[Host] Acionando especialista: {spec_id} | turno={turn_id} | contexto: {context} | lateral_from={_lateral_from_name or 'Nathália'}")
 
             try:
                 await asyncio.wait_for(
@@ -1280,10 +1392,14 @@ async def _start_specialist_in_room(
             )
 
         # C5: Handler assíncrono para ativação de especialista.
-        # Extraído do callback síncrono para garantir await correto
-        # em session.generate_reply() e agent.update_instructions().
+        # REFATORADO PARA HANDOVER PEER-TO-PEER:
+        # O especialista gera a resposta inicial e mantém o áudio aberto,
+        # conversando livremente com o usuário. O turno só encerra quando
+        # a IA aciona devolver_para_nathalia ou transferir_para_especialista.
+        HANDOVER_TIMEOUT_SECONDS = 300.0  # 5 minutos máximo por turno livre
+
         async def _handle_activation(msg: dict) -> None:
-            """Processa ativação deste especialista de forma assíncrona."""
+            """Processa ativação deste especialista de forma assíncrona (Peer-to-Peer)."""
             turn_id = msg.get("turn_id")
             started_at = monotonic()
 
@@ -1324,16 +1440,68 @@ async def _start_specialist_in_room(
                 await _emit("agent_activated", {"activated_in_ms": int((monotonic() - started_at) * 1000)})
                 _subscribe_user_audio()
 
-                prompt = (
-                    f"Nathália acabou de te acionar. O contexto é: {context_text}. "
-                    f"Responda de forma objetiva e profissional."
-                )
+                # Determina o prompt baseado no tipo de ativação
+                from_agent = msg.get("from_name")
+                if from_agent:
+                    # Transferência lateral: outro especialista repassou
+                    prompt = (
+                        f"{from_agent} acabou de transferir a palavra para você. "
+                        f"O contexto da pergunta do usuário é: {context_text}. "
+                        f"Inicie sua fala reconhecendo o colega e respondendo diretamente à pergunta do usuário. "
+                        f"Exemplo: 'Obrigado {from_agent.split(' ')[0]}. Sobre essa questão...'"
+                    )
+                else:
+                    # Ativação normal pela Nathália
+                    prompt = (
+                        f"Nathália acabou de te acionar. O contexto é: {context_text}. "
+                        f"Responda de forma objetiva e profissional. "
+                        f"Continue conversando livremente com o usuário. "
+                        f"Quando o assunto da sua área estiver esgotado, use a ferramenta devolver_para_nathalia."
+                    )
+
+                # Gera resposta inicial
                 await asyncio.wait_for(
                     session.generate_reply(instructions=prompt),
                     timeout=SPECIALIST_GENERATION_TIMEOUT_SECONDS,
                 )
-                await _emit("agent_done", {"elapsed_ms": int((monotonic() - started_at) * 1000)})
-                logger.info(f"[{name}] ATIVADO via data packet — áudio ON + reply gerado.")
+                logger.info(f"[{name}] Resposta inicial gerada. Entrando em modo conversa livre (Peer-to-Peer).")
+
+                # HANDOVER PEER-TO-PEER: Aguarda o agente decidir encerrar via ferramenta
+                # O agente continua escutando o áudio do usuário e respondendo livremente
+                # até acionar devolver_para_nathalia ou transferir_para_especialista.
+                # Reset do evento de handover para este turno
+                agent._handover_event.clear()
+                agent._handover_result = None
+
+                try:
+                    await asyncio.wait_for(
+                        agent._handover_event.wait(),
+                        timeout=HANDOVER_TIMEOUT_SECONDS,
+                    )
+                except asyncio.TimeoutError:
+                    logger.warning(f"[{name}] Timeout do turno livre ({HANDOVER_TIMEOUT_SECONDS}s). Devolvendo para Nathália automaticamente.")
+                    agent._handover_result = {"type": "nathalia"}
+
+                # Processar resultado do handover
+                handover = agent._handover_result or {"type": "nathalia"}
+
+                if handover.get("type") == "transfer":
+                    # Transferência lateral para outro especialista
+                    target_id = handover["target"]
+                    transfer_context = handover.get("context", context_text)
+                    from_name = handover.get("from_name", name)
+                    await _emit("agent_transferred", {
+                        "elapsed_ms": int((monotonic() - started_at) * 1000),
+                        "target_agent_id": target_id,
+                        "transfer_context": transfer_context,
+                        "from_name": from_name,
+                    })
+                    logger.info(f"[{name}] TRANSFERÊNCIA LATERAL para {target_id}. Contexto: {transfer_context[:80]}.")
+                else:
+                    # Devolução padrão para Nathália
+                    await _emit("agent_done", {"elapsed_ms": int((monotonic() - started_at) * 1000)})
+                    logger.info(f"[{name}] Turno encerrado. Palavra devolvida à Nathália.")
+
             except asyncio.CancelledError:
                 asyncio.create_task(_emit("agent_cancelled", {"elapsed_ms": int((monotonic() - started_at) * 1000)}))
                 logger.info(f"[{name}] Geração INTERROMPIDA (turno de outro agente).")
@@ -1425,18 +1593,18 @@ async def _run_entrypoint(ctx: JobContext) -> None:
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
     logger.info(f"Worker conectado ao room: {ctx.room.name} [Host AUDIO_ONLY]")
 
-    # Garante a subscrição manual APENAS no áudio do usuário principal
+    # Garante a subscrição manual no áudio do usuário principal e convidados
     for p in ctx.room.remote_participants.values():
-        if p.identity.startswith("user-"):
+        if p.identity.startswith("user-") or p.identity.startswith("guest-"):
             for pub in p.track_publications.values():
                 if pub.kind == rtc.TrackKind.KIND_AUDIO:
                     pub.set_subscribed(True)
                     logger.info(f"[Host] Áudio de {p.identity} subscrito (init).")
 
-    # Monitora novas tracks publicadas para caso o usuário entre depois do agente
+    # Monitora novas tracks publicadas para caso o usuário ou convidado entre depois do agente
     @ctx.room.on("track_published")
     def on_track_published(pub: rtc.RemoteTrackPublication, participant: rtc.RemoteParticipant):
-        if participant.identity.startswith("user-") and pub.kind == rtc.TrackKind.KIND_AUDIO:
+        if (participant.identity.startswith("user-") or participant.identity.startswith("guest-")) and pub.kind == rtc.TrackKind.KIND_AUDIO:
             pub.set_subscribed(True)
             logger.info(f"[Host] Áudio de {participant.identity} subscrito dinamicamente.")
 
@@ -1560,6 +1728,9 @@ async def _run_entrypoint(ctx: JobContext) -> None:
             logger.info(f"[Room] Usuário principal {participant.identity} desconectou. Disparando shutdown para liberar a sala.")
             # Quando a aba é fechada ou reiniciada, garante que a sala sai do cache do worker
             shutdown_event.set()
+        elif participant.identity.startswith("guest-"):
+            # Convidados podem sair sem afetar a sessão
+            logger.info(f"[Room] Convidado {participant.identity} saiu da sala. Sessão continua normalmente.")
 
     # ------------------------------------------------------------------
     # Captura transcrição do usuário → Blackboard + frontend
@@ -1907,6 +2078,24 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                 host_agent.handle_specialist_signal(msg)
                 return
 
+            if msg_type == "agent_transferred":
+                # Transferência lateral: um especialista transferiu para outro
+                host_agent.handle_specialist_signal({**msg, "type": "agent_done"})
+                target_id = msg.get("target_agent_id")
+                transfer_context = msg.get("transfer_context", "")
+                from_name = msg.get("from_name", "")
+                if target_id:
+                    logger.info(f"[Room] Transferência lateral de {msg.get('agent_id')} para {target_id}.")
+                    # Acionar o especialista destino diretamente via HostAgent
+                    async def _lateral_activate():
+                        await host_agent._activate_specialist(
+                            target_id,
+                            transfer_context,
+                            _lateral_from_name=from_name,
+                        )
+                    asyncio.create_task(_lateral_activate())
+                return
+
             if msg_type == "end_session":
                 logger.info("[Room] Pedido de encerramento recebido do frontend.")
                 asyncio.create_task(
@@ -1930,6 +2119,28 @@ async def _run_entrypoint(ctx: JobContext) -> None:
             elif msg_type == "set_user_name":
                 blackboard.user_name = msg.get("name", "")
                 logger.info(f"[Room] Nome do usuário definido: {blackboard.user_name}")
+
+            elif msg_type == "pause_ai":
+                logger.info("[Room] IA pausada pelo anfitrião — modo debate humano.")
+                try:
+                    result = host_agent.update_instructions(
+                        HOST_PROMPT + "\n\n## MODO SILÊNCIO ATIVADO\n"
+                        "O anfitrião ativou o modo debate. Você DEVE ficar em SILÊNCIO ABSOLUTO. "
+                        "NÃO fale sob nenhuma circunstância até receber a instrução de retomar."
+                    )
+                    if asyncio.iscoroutine(result):
+                        await result
+                except Exception as e:
+                    logger.warning(f"[Room] Erro ao pausar IA: {e}")
+
+            elif msg_type == "resume_ai":
+                logger.info("[Room] IA reativada pelo anfitrião — modo normal.")
+                try:
+                    result = host_agent.update_instructions(HOST_PROMPT)
+                    if asyncio.iscoroutine(result):
+                        await result
+                except Exception as e:
+                    logger.warning(f"[Room] Erro ao reativar IA: {e}")
 
         except Exception as e:
             logger.warning(f"[Room] Erro ao processar data packet do frontend: {e}")
