@@ -110,7 +110,7 @@ export default function DashboardPage() {
 
   const handleLogout = async () => {
     setLoggingOut(true);
-    await signOut({ callbackUrl: "/login" });
+    await signOut({ callbackUrl: "/" });
   };
 
   // Loading state

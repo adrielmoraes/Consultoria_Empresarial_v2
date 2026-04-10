@@ -157,7 +157,7 @@ export default function SubscriptionPage() {
 
   const handleLogout = async () => {
     setLoggingOut(true);
-    await signOut({ callbackUrl: "/login" });
+    await signOut({ callbackUrl: "/" });
   };
 
   if (status === "loading" || (status === "authenticated" && loading)) {

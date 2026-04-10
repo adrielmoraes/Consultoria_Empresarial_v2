@@ -69,7 +69,7 @@ export default function PlansPage() {
 
   const handleLogout = async () => {
     setLoggingOut(true);
-    await signOut({ callbackUrl: "/login" });
+    await signOut({ callbackUrl: "/" });
   };
 
   if (status === "loading" || (status === "authenticated" && loading)) {
@@ -211,28 +211,14 @@ export default function PlansPage() {
                       </span>
                     </div>
                   </div>
-                  {plan.pdfUrl && (
-                    <a
-                      href={`/api/execution-plan/${plan.sessionId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-primary text-xs px-4 py-2 flex items-center gap-1.5 flex-shrink-0"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      Baixar PDF
-                    </a>
-                  )}
-                  {!plan.pdfUrl && plan.hasMarkdown && (
-                    <a
-                      href={`/api/execution-plan/${plan.sessionId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs px-3 py-1.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 flex-shrink-0 hover:bg-blue-500/20 transition-colors"
+                  {(plan.pdfUrl || plan.hasMarkdown) ? (
+                    <Link
+                      href={`/dashboard/plans/${plan.sessionId}`}
+                      className="text-xs px-3 py-1.5 rounded-full bg-[#d4af37]/10 text-[#d4af37] border border-[#d4af37]/20 flex-shrink-0 hover:bg-[#d4af37]/20 transition-colors"
                     >
                       Abrir Plano
-                    </a>
-                  )}
-                  {!plan.pdfUrl && !plan.hasMarkdown && (
+                    </Link>
+                  ) : (
                     <span className="text-xs px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 flex-shrink-0">
                       Em processamento
                     </span>
