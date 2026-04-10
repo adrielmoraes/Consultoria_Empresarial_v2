@@ -24,6 +24,8 @@ export async function POST(request: NextRequest) {
 
     const isSubscription = resolvedPriceId !== STRIPE_PRICES.SESSION;
 
+    const origin = request.headers.get("origin") || request.nextUrl.origin || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
     const session = await stripe.checkout.sessions.create({
       mode: isSubscription ? "subscription" : "payment",
       payment_method_types: ["card"],
@@ -38,8 +40,8 @@ export async function POST(request: NextRequest) {
         userId,
         priceId: resolvedPriceId,
       },
-      success_url: `${process.env.NEXTAUTH_URL}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXTAUTH_URL}/dashboard?canceled=true`,
+      success_url: `${origin}/dashboard/subscription?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/dashboard/subscription?canceled=true`,
     });
 
     return NextResponse.json({ url: session.url });
