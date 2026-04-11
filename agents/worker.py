@@ -33,6 +33,7 @@ from dataclasses import dataclass, field
 from time import monotonic
 from typing import Optional
 
+from duckduckgo_search import AsyncDDGS
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -918,13 +919,48 @@ class HostAgent(Agent):
 
         full_transcript = self._blackboard.get_full_transcript()
 
+        # ── PESQUISA DE MERCADO VIA DUCKDUCKGO ───────────────────────────────
+        logger.info("[Marco] Obtendo query de pesquisa de mercado para DDGS...")
+        client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY", ""))
+        
+        web_context = ""
+        try:
+            # 1. Obter termo de pesquisa adequado
+            query_prompt = f"Com base no projeto '{project_name}' e nesta transcrição recente:\n{full_transcript[-1500:]}\nGere APENAS UMA QUERY muito curta (ex: 'mercado de tech no brasil tendências') para pesquisarmos no Google. NADA DE TEXTO ADICIONAL."
+            
+            def _call_query():
+                return client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=query_prompt,
+                    config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=30)
+                )
+                
+            loop = asyncio.get_running_loop()
+            query_resp = await loop.run_in_executor(None, _call_query)
+            search_query = query_resp.text.strip().replace("\"", "").replace("'", "")
+            logger.info(f"[Marco] Query gerada para web search: {search_query}")
+            
+            # 2. Pesquisar de forma assíncrona
+            logger.info("[Marco] Consultando DuckDuckGo...")
+            resultados_ddgs = []
+            async with AsyncDDGS() as ddgs:
+                async for res in ddgs.text(search_query, max_results=3, region="br-pt"):
+                    resultados_ddgs.append(f"Título: {res.get('title')}\nTrecho: {res.get('body')}")
+            
+            if resultados_ddgs:
+                web_context = "\n\n--- DADOS PESQUISADOS NA WEB EM TEMPO REAL ---\n" + "\n\n".join(resultados_ddgs)
+                logger.info(f"[Marco] Encontrados {len(resultados_ddgs)} resultados na internet com DDGS.")
+        except Exception as e:
+            logger.warning(f"[Marco] Erro na pesquisa web via DDGS: {e}. Prosseguindo sem dados da internet.")
+            
         # ── ETAPA 1: Geração do Draft ──────────────────────────────────────────
-        logger.info("[Marco] ETAPA 1 — Gerando Draft com Gemini 2.5 Pro + Google Search...")
+        logger.info("[Marco] ETAPA 1 — Gerando Draft com Gemini 3.1 flash-lite-preview + Google Search...")
 
         draft_prompt = SUMMARIZATION_PROMPT.format(
             transcript=(
                 f"Usuário: {user_name}\n"
-                f"Projeto: {project_name}\n\n"
+                f"Projeto: {project_name}\n"
+                f"{web_context}\n\n"
                 f"{full_transcript}"
             )
         )
@@ -935,12 +971,12 @@ class HostAgent(Agent):
 
             def _call_draft():
                 return client.models.generate_content(
-                    model="gemini-2.5-pro",
+                    model="gemini-3.1-flash-lite-preview",
                     contents=draft_prompt,
                     config=types.GenerateContentConfig(
                         temperature=0.65,
-                        max_output_tokens=36000,
-                        tools=[{"google_search": {}}],
+                        max_output_tokens=66000,
+                        # tools=[{"google_search": {}}],  # Removido em favor do DDGS customizado
                     ),
                 )
 
@@ -998,11 +1034,11 @@ class HostAgent(Agent):
         try:
             def _call_review():
                 return client.models.generate_content(
-                    model="gemini-2.5-flash",
+                    model="gemini-3.1-flash-lite-preview",
                     contents=review_prompt,
                     config=types.GenerateContentConfig(
-                        temperature=0.3,
-                        max_output_tokens=36000,
+                        temperature=0.5,
+                        max_output_tokens=66000,
                     ),
                 )
 
