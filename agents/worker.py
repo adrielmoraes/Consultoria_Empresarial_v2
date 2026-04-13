@@ -2165,7 +2165,7 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                         "NÃO fale sob nenhuma circunstância até receber a instrução de retomar."
                     )
                     if asyncio.iscoroutine(result):
-                        await result
+                        asyncio.create_task(result)
                 except Exception as e:
                     logger.warning(f"[Room] Erro ao pausar IA: {e}")
 
@@ -2174,7 +2174,7 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                 try:
                     result = host_agent.update_instructions(HOST_PROMPT)
                     if asyncio.iscoroutine(result):
-                        await result
+                        asyncio.create_task(result)
                 except Exception as e:
                     logger.warning(f"[Room] Erro ao reativar IA: {e}")
 
