@@ -33,7 +33,15 @@ from dataclasses import dataclass, field
 from time import monotonic
 from typing import Optional
 
-from duckduckgo_search import AsyncDDGS
+try:
+    from duckduckgo_search import AsyncDDGS
+except ImportError:
+    AsyncDDGS = None  # type: ignore
+    import logging as _tmp_log
+    _tmp_log.getLogger(__name__).warning(
+        "[worker] duckduckgo_search não encontrado — ferramenta de busca na internet desativada."
+    )
+
 from dotenv import load_dotenv
 
 load_dotenv()
