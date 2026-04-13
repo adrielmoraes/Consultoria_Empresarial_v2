@@ -35,10 +35,10 @@ export default function RegisterPage() {
       }
 
       setSuccess(true);
-      // Opcional: Redirecionar para login após 3 segundos
+      // Redirecionar para dashboard imediatamente
       setTimeout(() => {
-        window.location.href = "/login";
-      }, 3000);
+        window.location.href = "/dashboard";
+      }, 1500);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Falha ao criar conta.");
     } finally {

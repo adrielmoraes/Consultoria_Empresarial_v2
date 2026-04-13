@@ -674,7 +674,8 @@ export default function LandingPage() {
                <div className="flex flex-col gap-3">
                   <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#d4af37] mb-2">Companhia</span>
                   <a href="mailto:executivo@hivemind.ai" className="text-sm font-semibold text-gray-500 hover:text-white transition-colors">Executivo B2B</a>
-                  <Link href="/terms-of-service" className="text-sm font-semibold text-gray-500 hover:text-white transition-colors">Privacidade Nível Militar</Link>
+                  <Link href="/terms-of-service" className="text-sm font-semibold text-gray-500 hover:text-white transition-colors">Termos de Serviço</Link>
+                  <Link href="/privacy-policy" className="text-sm font-semibold text-gray-500 hover:text-white transition-colors">Privacidade Nível Militar</Link>
                </div>
             </div>
           </div>

@@ -394,7 +394,7 @@ export default function DashboardPage() {
               </motion.div>
             ) : (
               <div className="space-y-3">
-                {projects.map((project, i) => (
+                {(dashData?.projects || []).map((project: any, i: number) => (
                   <motion.div
                     key={project.id}
                     initial={{ opacity: 0, x: -20 }}

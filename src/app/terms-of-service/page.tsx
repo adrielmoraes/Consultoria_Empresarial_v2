@@ -10,7 +10,7 @@ export default function TermsOfServicePage() {
           </Link>
         </div>
 
-        <h1 className="text-4xl sm:text-5xl font-black tracking-tight mb-4">Terms of Service</h1>
+        <h1 className="text-4xl sm:text-5xl font-black tracking-tight mb-4">Termos de Serviço</h1>
         <p className="text-sm text-gray-400 mb-12">Última atualização: 06 de abril de 2026</p>
 
         <div className="space-y-10">
