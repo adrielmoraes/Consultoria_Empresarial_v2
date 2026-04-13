@@ -2158,25 +2158,29 @@ async def _run_entrypoint(ctx: JobContext) -> None:
 
             elif msg_type == "pause_ai":
                 logger.info("[Room] IA pausada pelo anfitrião — modo debate humano.")
-                try:
-                    result = host_agent.update_instructions(
-                        HOST_PROMPT + "\n\n## MODO SILÊNCIO ATIVADO\n"
-                        "O anfitrião ativou o modo debate. Você DEVE ficar em SILÊNCIO ABSOLUTO. "
-                        "NÃO fale sob nenhuma circunstância até receber a instrução de retomar."
-                    )
-                    if asyncio.iscoroutine(result):
-                        await result
-                except Exception as e:
-                    logger.warning(f"[Room] Erro ao pausar IA: {e}")
+                async def _pause_ai():
+                    try:
+                        result = host_agent.update_instructions(
+                            HOST_PROMPT + "\n\n## MODO SILÊNCIO ATIVADO\n"
+                            "O anfitrião ativou o modo debate. Você DEVE ficar em SILÊNCIO ABSOLUTO. "
+                            "NÃO fale sob nenhuma circunstância até receber a instrução de retomar."
+                        )
+                        if asyncio.iscoroutine(result):
+                            await result
+                    except Exception as e:
+                        logger.warning(f"[Room] Erro ao pausar IA: {e}")
+                asyncio.create_task(_pause_ai())
 
             elif msg_type == "resume_ai":
                 logger.info("[Room] IA reativada pelo anfitrião — modo normal.")
-                try:
-                    result = host_agent.update_instructions(HOST_PROMPT)
-                    if asyncio.iscoroutine(result):
-                        await result
-                except Exception as e:
-                    logger.warning(f"[Room] Erro ao reativar IA: {e}")
+                async def _resume_ai():
+                    try:
+                        result = host_agent.update_instructions(HOST_PROMPT)
+                        if asyncio.iscoroutine(result):
+                            await result
+                    except Exception as e:
+                        logger.warning(f"[Room] Erro ao reativar IA: {e}")
+                asyncio.create_task(_resume_ai())
 
         except Exception as e:
             logger.warning(f"[Room] Erro ao processar data packet do frontend: {e}")
