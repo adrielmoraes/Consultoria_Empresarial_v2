@@ -2105,7 +2105,7 @@ async def _run_entrypoint(ctx: JobContext) -> None:
     # Escuta mensagens de dados do frontend
     # ------------------------------------------------------------------
     @ctx.room.on("data_received")
-    def _on_data_received(dp: rtc.DataPacket) -> None:
+    async def _on_data_received(dp: rtc.DataPacket) -> None:
         try:
             msg = json.loads(dp.data.decode())
             msg_type = msg.get("type")
