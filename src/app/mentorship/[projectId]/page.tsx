@@ -889,6 +889,37 @@ export default function MentorshipRoomPage() {
                     ? "Plano de Execução gerado! PDF disponível para download."
                     : "Plano de Execução gerado!"
                 );
+              } else if (data.type === "document_ready") {
+                // Novos documentos do Marco (SWOT, Canvas, Pitch, Contrato, etc.)
+                const docTitle = (data.doc_title as string) || "Documento";
+                const docType = (data.doc_type as string) || "custom";
+                setExecutionPlan(data.plan ?? data.text ?? "");
+                if (data.pdf_base64 && typeof data.pdf_base64 === "string") {
+                  setPdfBase64(data.pdf_base64);
+                }
+                setShowPlan(true);
+                // Atualiza o nome do botão de download com o tipo do documento
+                if (typeof window !== "undefined") {
+                  const downloadBtn = document.querySelector<HTMLAnchorElement>("[data-marco-download]");
+                  if (downloadBtn) {
+                    downloadBtn.download = `${docTitle.replace(/\s+/g, "_")}_HiveMind.pdf`;
+                    downloadBtn.setAttribute("data-doc-title", docTitle);
+                  }
+                }
+                addTranscriptMessage(
+                  "Marco",
+                  data.pdf_base64
+                    ? `✅ ${docTitle} pronto! PDF disponível para download.`
+                    : `✅ ${docTitle} preparado!`
+                );
+              } else if (data.type === "marco_working") {
+                // Progresso em tempo real do Marco trabalhando nos bastidores
+                const status = (data.status as string) || "Marco está trabalhando...";
+                const progress = typeof data.progress === "number" ? data.progress : 0;
+                if (progress < 100) {
+                  addTranscriptMessage("Marco (bastidores)", `⚙️ ${status}`);
+                }
+
               } else if (data.type === "session_end") {
                 void handleSessionCompletedRef.current?.(data.transcript);
               } else if (data.type === "agent_ready") {
@@ -1238,9 +1269,10 @@ export default function MentorshipRoomPage() {
             {pdfBase64 && (
               <a
                 href={`data:application/pdf;base64,${pdfBase64}`}
-                download="Plano_Execucao_HiveMind.pdf"
+                download="Documento_Estrategico_HiveMind.pdf"
+                data-marco-download="true"
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all bg-[#d4af37]/15 text-[#d4af37] hover:bg-[#d4af37]/25 border border-[#d4af37]/30 hover:border-[#d4af37]/60 shadow-[0_0_20px_rgba(212,175,55,0.1)] hover:shadow-[0_0_30px_rgba(212,175,55,0.2)]"
-                title="Baixar PDF do Plano de Execução"
+                title="Baixar PDF"
               >
                 <Star className="w-3.5 h-3.5" />
                 <span className="uppercase tracking-tighter hidden sm:inline">PDF</span>

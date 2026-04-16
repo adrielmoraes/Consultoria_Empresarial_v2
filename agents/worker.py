@@ -196,12 +196,19 @@ REGRAS DE ORQUESTRAÇÃO:
 9. Quando o tema for marketing/vendas/clientes → use acionar_rodrigo_cmo.
 10. Quando o tema for tecnologia/produto → use acionar_ana_cto.
 11. Quando o usuário pedir encerramento, resumo ou plano → use gerar_plano_execucao.
-12. Se precisar cobrir múltiplos temas em sequência, acione cada especialista separadamente.
-13. RETOMADA: Se você perceber que há histórico de conversa anterior, comece dizendo que está retomando.
-14. TURNO DE FALA: Quando você acionar um especialista via função, PARE DE FALAR imediatamente. NÃO adicione comentários após a chamada.
-15. NUNCA fale ao mesmo tempo que um especialista. Dê espaço total para ele responder.
-16. Após o especialista terminar (devolver a palavra a você), retome com 1-2 frases de transição antes de continuar.
-17. HANDOVER: Quando você aciona um especialista, ele assumirá a conversa diretamente com o usuário por múltiplos turnos. Você ficará em SILÊNCIO ABSOLUTO esperando ele devolver a palavra. NÃO interrompa.
+12. Quando o usuário pedir análise SWOT, Canvas, pitch, proposta ou contrato → use gerar_documento_personalizado.
+13. Quando o usuário quiser dados do mercado, concorrência ou tendências → use pesquisar_mercado_setor.
+14. Quando o usuário quiser abrir empresa, regularizar, emitir nota fiscal → use gerar_checklist_abertura_empresa.
+15. Quando o usuário perguntar sobre INPI, CNPJ, LGPD, BNDES, NFS-e, tributos → use gerar_orientacao_orgao_publico.
+16. Quando o usuário precisar de um contrato de prestação de serviços, parceria, etc. → use gerar_modelo_contrato.
+17. Quando o usuário quiser apresentar o negocio para investidores ou parceiros → use gerar_pitch_deck.
+18. Se precisar cobrir múltiplos temas em sequencia, acione cada especialista separadamente.
+19. RETOMADA: Se você perceber que há histórico de conversa anterior, comece dizendo que está retomando.
+20. TURNO DE FALA: Quando você acionar um especialista via função, PARE DE FALAR imediatamente. NÃO adicione comentários após a chamada.
+21. NUNCA fale ao mesmo tempo que um especialista. Dê espaço total para ele responder.
+22. Após o especialista terminar (devolver a palavra a você), retome com 1-2 frases de transição antes de continuar.
+23. HANDOVER: Quando você aciona um especialista, ele assumirá a conversa diretamente com o usuário por múltiplos turnos. Você ficará em SILÊNCIO ABSOLUTO esperando ele devolver a palavra. NÃO interrompa.
+24. MARCO NOS BASTIDORES: Quando acionar o Marco via qualquer ferramenta gerar_*, avise ao usuário que o Marco está preparando o documento nos bastidores e que chegará em instantes. Exemplo: "Vou pedir ao Marco para preparar isso agora nos bastidores!"
 
 MODO OUVINTE (SALA COM MÚLTIPLOS HUMANOS):
 - A sala pode ter convidados (sócios, diretores) além do usuário principal.
@@ -314,18 +321,25 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "\n\nSEU PAPEL:\n"
         "- Você escuta TODA a conversa entre os especialistas e o usuário.\n"
         "- Você documenta, pesquisa e formaliza tudo o que foi discutido.\n"
-        "- Você gera o Plano de Execução Final em formato Markdown estruturado.\n"
+        "- Você gera QUALQUER tipo de documento empresarial que o usuário precisar.\n"
         "- Você faz pesquisas adicionais para enriquecer as recomendações.\n"
-        "\n\nAO GERAR O PLANO DE EXECUÇÃO, cubra estes pontos:\n"
-        "1. RESUMO EXECUTIVO: O que o usuário quer construir e o potencial do negócio.\n"
-        "2. DIAGNÓSTICO POR ÁREA: Principais pontos levantados por cada especialista.\n"
-        "3. PESQUISA DE MERCADO: Dados e insights pesquisados sobre o setor do usuário.\n"
-        "4. PRIORIDADES CRÍTICAS: Os 3-5 itens mais importantes para executar primeiro.\n"
-        "5. CRONOGRAMA: Linha do tempo realista com marcos (30, 60, 90 dias, 6 meses, 1 ano).\n"
-        "6. RISCOS E MITIGAÇÕES: 3 principais riscos do projeto e como endereçá-los.\n"
-        "7. PRÓXIMOS PASSOS IMEDIATOS: Ações concretas para começar esta semana.\n"
-        "8. RECURSOS E REFERÊNCIAS: Links, ferramentas e materiais úteis pesquisados.\n"
-        "9. MENSAGEM FINAL: Uma frase motivacional personalizada para o usuário.\n"
+        "- Para processos em órgãos públicos, você ORIENTA e EXPLICA — não gera documentos oficiais.\n"
+        "\n\nDOCUMENTOS QUE VOCÊ PODE GERAR:\n"
+        "1. Plano de Execução Estratégico completo (8 seções, KPIs, riscos, cronograma)\n"
+        "2. Análise SWOT (forças, fraquezas, oportunidades, ameaças + cruzamentos estratégicos)\n"
+        "3. Business Model Canvas (9 blocos completos com análise de viabilidade)\n"
+        "4. Pitch Deck (12 slides estruturados para investidores/parceiros)\n"
+        "5. Proposta Comercial (profissional, persuasiva, com SLA e garantias)\n"
+        "6. Modelo de Contrato (prestacâo de servicos, parceria, confidencialidade etc.)\n"
+        "7. Pesquisa de Mercado (TAM/SAM/SOM, PESTEL, competidores, ICP)\n"
+        "8. Guias de Processos Públicos (CNPJ, INPI, LGPD, NFS-e, BNDES, Simples Nacional)\n"
+        "\n\nPROCESSOS EM ÓRGÃOS PÚBLICOS (guias explicativos):\n"
+        "- Abertura de empresa: CNPJ, Junta Comercial, Alvará, MEI/LTDA/SA\n"
+        "- Registro de marca: INPI, classes NCL, prazos, custos\n"
+        "- Enquadramento tributário: Simples Nacional, Lucro Presumido, MEI\n"
+        "- Adequação LGPD: ANPD, encarregado, ROPA, base legal\n"
+        "- Nota Fiscal: NFS-e, NF-e, regras por município\n"
+        "- Crédito público: BNDES, Pronampe, Finep, Inova Simples\n"
         "\nFale em português do Brasil. Seja profundo, detalhado e inspirador."
     ),
 }
@@ -907,6 +921,591 @@ class HostAgent(Agent):
             f"O documento já foi enviado para a tela do usuário. "
             f"Informe ao usuário que o plano está pronto e disponível para download."
         )
+
+    # ------------------------------------------------------------------
+    # NOVAS FERRAMENTAS DO MARCO — Documentador Completo
+    # ------------------------------------------------------------------
+
+    @function_tool
+    async def gerar_documento_personalizado(
+        self,
+        context: RunContext,
+        tipo_documento: str,
+        descricao_contexto: str,
+    ) -> str:
+        """
+        Aciona o Marco (bastidores) para gerar um documento empresarial personalizado.
+        Use quando o usuário solicitar qualquer um destes documentos:
+        - 'swot': Análise SWOT estratégica completa
+        - 'canvas': Business Model Canvas (9 blocos)
+        - 'proposta_comercial': Proposta comercial profissional
+        - 'pesquisa_mercado': Relatório de pesquisa de mercado
+
+        Parâmetros:
+        - tipo_documento: Tipo do documento. Valores: swot, canvas, proposta_comercial, pesquisa_mercado
+        - descricao_contexto: Contexto adicional sobre o que o usuário quer no documento
+        """
+        user_name = self._blackboard.user_name or "empreendedor"
+        project_name = self._blackboard.project_name or "seu projeto"
+        tipo_lower = tipo_documento.lower().strip().replace(" ", "_")
+
+        tipo_map = {
+            "swot": "swot",
+            "analise_swot": "swot",
+            "canvas": "canvas",
+            "business_model_canvas": "canvas",
+            "proposta": "proposta_comercial",
+            "proposta_comercial": "proposta_comercial",
+            "pesquisa": "pesquisa_mercado",
+            "pesquisa_mercado": "pesquisa_mercado",
+        }
+        doc_type = tipo_map.get(tipo_lower, tipo_lower)
+
+        titulos = {
+            "swot": "Análise SWOT Estratégica",
+            "canvas": "Business Model Canvas",
+            "proposta_comercial": "Proposta Comercial",
+            "pesquisa_mercado": "Pesquisa de Mercado",
+        }
+        doc_title = titulos.get(doc_type, tipo_documento.replace("_", " ").title())
+
+        logger.info(f"[Marco] Gerando documento '{doc_type}' para {user_name}...")
+        self._blackboard.add_message("Sistema", f"Marco iniciou geração de {doc_title} para {user_name}...")
+
+        markdown_doc = await self._generate_custom_document(
+            doc_type=doc_type,
+            doc_title=doc_title,
+            user_name=user_name,
+            project_name=project_name,
+            extra_context=descricao_contexto,
+        )
+
+        await self._publish_document_packet(
+            doc_type=doc_type,
+            doc_title=doc_title,
+            markdown_content=markdown_doc,
+            user_name=user_name,
+            project_name=project_name,
+        )
+
+        return (
+            f"Marco concluiu a {doc_title} para {user_name} nos bastidores. "
+            f"O documento já foi enviado para a tela. "
+            f"Informe ao usuário que o documento está disponível para download."
+        )
+
+    @function_tool
+    async def pesquisar_mercado_setor(
+        self,
+        context: RunContext,
+        setor: str,
+        pergunta_especifica: str,
+    ) -> str:
+        """
+        Aciona o Marco para pesquisar dados de mercado em tempo real sobre um setor específico.
+        Use quando o usuário quiser entender o mercado, concorrentes, tendências ou oportunidades.
+
+        Parâmetros:
+        - setor: Setor ou segmento de mercado a pesquisar (ex: 'SaaS B2B', 'e-commerce moda', 'healthtech')
+        - pergunta_especifica: A dúvida ou foco da pesquisa (ex: 'principais players e market share')
+        """
+        user_name = self._blackboard.user_name or "empreendedor"
+        project_name = self._blackboard.project_name or "seu projeto"
+
+        logger.info(f"[Marco] Pesquisando mercado: {setor} | {pergunta_especifica}")
+        self._blackboard.add_message("Sistema", f"Marco iniciou pesquisa de mercado sobre '{setor}'...")
+
+        extra_context = f"Setor pesquisado: {setor}\nFoco da pesquisa: {pergunta_especifica}"
+        markdown_doc = await self._generate_custom_document(
+            doc_type="pesquisa_mercado",
+            doc_title="Pesquisa de Mercado",
+            user_name=user_name,
+            project_name=project_name,
+            extra_context=extra_context,
+        )
+
+        await self._publish_document_packet(
+            doc_type="pesquisa_mercado",
+            doc_title=f"Pesquisa de Mercado — {setor}",
+            markdown_content=markdown_doc,
+            user_name=user_name,
+            project_name=project_name,
+        )
+
+        return (
+            f"Marco concluiu a Pesquisa de Mercado sobre '{setor}' para {user_name}. "
+            f"O relatório completo já está disponível na tela do usuário. "
+        )
+
+    @function_tool
+    async def gerar_checklist_abertura_empresa(
+        self,
+        context: RunContext,
+        tipo_empresa: str,
+    ) -> str:
+        """
+        Aciona o Marco para gerar um guia completo de abertura de empresa no Brasil.
+        Use quando o usuário quiser formalizar seu negócio, abrir CNPJ ou escolher o tipo societário.
+
+        Parâmetros:
+        - tipo_empresa: Tipo de empresa desejado (ex: 'MEI', 'LTDA', 'SA', 'ainda não sei')
+        """
+        user_name = self._blackboard.user_name or "empreendedor"
+        project_name = self._blackboard.project_name or "seu projeto"
+
+        orgao_processo = f"Abertura de Empresa ({tipo_empresa})"
+        logger.info(f"[Marco] Gerando guia de abertura de empresa: {tipo_empresa}")
+        self._blackboard.add_message("Sistema", f"Marco iniciou guia de abertura de empresa ({tipo_empresa})...")
+
+        markdown_doc = await self._generate_public_agency_guidance(
+            orgao_processo=orgao_processo,
+            contexto=f"Tipo de empresa: {tipo_empresa}. Contexto do negócio: {self._blackboard.get_context_summary()[:800]}",
+            user_name=user_name,
+            project_name=project_name,
+        )
+
+        await self._publish_document_packet(
+            doc_type="orientacao_orgao",
+            doc_title=f"Guia: Abertura de Empresa — {tipo_empresa}",
+            markdown_content=markdown_doc,
+            user_name=user_name,
+            project_name=project_name,
+        )
+
+        return (
+            f"Marco preparou o Guia de Abertura de Empresa ({tipo_empresa}) para {user_name}. "
+            f"O documento explica passo a passo, custos, links e prazos. "
+            f"Já está disponível na tela para download. "
+            f"IMPORTANTE: Informe ao usuário que este é um guia orientativo — o CNPJ deve ser solicitado nos portais governamentais."
+        )
+
+    @function_tool
+    async def gerar_orientacao_orgao_publico(
+        self,
+        context: RunContext,
+        orgao_processo: str,
+        contexto_adicional: str,
+    ) -> str:
+        """
+        Aciona o Marco para gerar um guia PRÁTICO sobre qualquer processo em órgão público brasileiro.
+        Use quando o usuário perguntar sobre:
+        - Registro de marca no INPI
+        - Enquadramento tributário (Simples Nacional, MEI, Lucro Presumido)
+        - Adequação à LGPD / ANPD
+        - Emissão de Nota Fiscal (NFS-e, NF-e)
+        - Acesso a crédito público (BNDES, Pronampe, Finep)
+        - Outros processos burocráticos empresariais
+
+        IMPORTANTE: O Marco NÃO gera o documento oficial. Ele explica como o usuário deve fazer.
+
+        Parâmetros:
+        - orgao_processo: Descrição do processo ou órgão (ex: 'Registro de marca no INPI', 'Simples Nacional')
+        - contexto_adicional: Contexto específico do usuário para personalizar o guia
+        """
+        user_name = self._blackboard.user_name or "empreendedor"
+        project_name = self._blackboard.project_name or "seu projeto"
+
+        logger.info(f"[Marco] Gerando orientação sobre: {orgao_processo}")
+        self._blackboard.add_message("Sistema", f"Marco preparando guia sobre '{orgao_processo}'...")
+
+        markdown_doc = await self._generate_public_agency_guidance(
+            orgao_processo=orgao_processo,
+            contexto=contexto_adicional,
+            user_name=user_name,
+            project_name=project_name,
+        )
+
+        await self._publish_document_packet(
+            doc_type="orientacao_orgao",
+            doc_title=f"Guia: {orgao_processo}",
+            markdown_content=markdown_doc,
+            user_name=user_name,
+            project_name=project_name,
+        )
+
+        return (
+            f"Marco concluiu o Guia sobre '{orgao_processo}' para {user_name}. "
+            f"O documento já está disponível na tela com passo a passo, custos e links oficiais. "
+            f"IMPORTANTE: Reforce ao usuário que este é um guia orientativo. "
+            f"O processo oficial deve ser realizado diretamente nos portais governamentais indicados."
+        )
+
+    @function_tool
+    async def gerar_modelo_contrato(
+        self,
+        context: RunContext,
+        tipo_contrato: str,
+        partes_envolvidas: str,
+    ) -> str:
+        """
+        Aciona o Marco para gerar um modelo de contrato profissional adaptado ao contexto.
+        Use quando o usuário precisar de um contrato base para revisar com seu advogado.
+        Tipos comuns: prestação de serviços, parceria, confidencialidade (NDA), compra e venda,
+        distribuição, locação, influencer/marketing, SaaS/licença de software.
+
+        IMPORTANTE: Sempre reforce que o modelo deve ser revisado por advogado antes de assinar.
+
+        Parâmetros:
+        - tipo_contrato: Tipo do contrato (ex: 'prestação de serviços', 'parceria comercial', 'NDA')
+        - partes_envolvidas: Quem são as partes (ex: 'empresa contratante e freelancer PJ')
+        """
+        user_name = self._blackboard.user_name or "empreendedor"
+        project_name = self._blackboard.project_name or "seu projeto"
+
+        logger.info(f"[Marco] Gerando modelo de contrato: {tipo_contrato} | partes: {partes_envolvidas}")
+        self._blackboard.add_message("Sistema", f"Marco preparando modelo de contrato de {tipo_contrato}...")
+
+        extra_context = (
+            f"Tipo de contrato: {tipo_contrato}\n"
+            f"Partes envolvidas: {partes_envolvidas}\n"
+            f"Contexto do negócio: {self._blackboard.get_context_summary()[:600]}"
+        )
+
+        markdown_doc = await self._generate_custom_document(
+            doc_type="modelo_contrato",
+            doc_title=f"Modelo de Contrato — {tipo_contrato.title()}",
+            user_name=user_name,
+            project_name=project_name,
+            extra_context=extra_context,
+            extra_vars={
+                "tipo_contrato": tipo_contrato,
+                "tipo_contrato_upper": tipo_contrato.upper(),
+                "partes": partes_envolvidas,
+            },
+        )
+
+        await self._publish_document_packet(
+            doc_type="modelo_contrato",
+            doc_title=f"Modelo de Contrato — {tipo_contrato.title()}",
+            markdown_content=markdown_doc,
+            user_name=user_name,
+            project_name=project_name,
+        )
+
+        return (
+            f"Marco concluiu o Modelo de Contrato de {tipo_contrato.title()} para {user_name}. "
+            f"O documento já está disponível na tela. "
+            f"FUNDAMENTAL: Informe ao usuário que este é um modelo base e DEVE ser revisado "
+            f"por um advogado especializado antes de ser assinado."
+        )
+
+    @function_tool
+    async def gerar_pitch_deck(
+        self,
+        context: RunContext,
+        publico_alvo: str,
+    ) -> str:
+        """
+        Aciona o Marco para criar um Pitch Deck profissional de 12 slides em formato documento.
+        Use quando o usuário quiser apresentar seu negócio para investidores, parceiros ou clientes.
+
+        Parâmetros:
+        - publico_alvo: Para quem será apresentado (ex: 'investidores angel', 'parceiros estratégicos', 'clientes enterprise')
+        """
+        user_name = self._blackboard.user_name or "empreendedor"
+        project_name = self._blackboard.project_name or "seu projeto"
+
+        logger.info(f"[Marco] Gerando Pitch Deck para {publico_alvo}...")
+        self._blackboard.add_message("Sistema", f"Marco preparando Pitch Deck para {publico_alvo}...")
+
+        extra_context = f"Público-alvo da apresentação: {publico_alvo}"
+        markdown_doc = await self._generate_custom_document(
+            doc_type="pitch_deck",
+            doc_title="Pitch Deck",
+            user_name=user_name,
+            project_name=project_name,
+            extra_context=extra_context,
+            extra_vars={"publico": publico_alvo},
+        )
+
+        await self._publish_document_packet(
+            doc_type="pitch_deck",
+            doc_title=f"Pitch Deck — {project_name}",
+            markdown_content=markdown_doc,
+            user_name=user_name,
+            project_name=project_name,
+        )
+
+        return (
+            f"Marco criou o Pitch Deck de {project_name} para {user_name}! "
+            f"O documento com os 12 slides já está disponível na tela para download. "
+            f"Sugira ao usuário revisar os dados financeiros e personalizar com informações reais antes de apresentar."
+        )
+
+    # ------------------------------------------------------------------
+    # MÉTODOS INTERNOS DO MARCO — Geração de documentos nos bastidores
+    # ------------------------------------------------------------------
+
+    async def _emit_marco_working(self, status: str, progress: int) -> None:
+        """Publica um data packet de progresso para o frontend exibir feedback visual."""
+        try:
+            await self._publish_packet({
+                "type": "marco_working",
+                "status": status,
+                "progress": max(0, min(100, progress)),
+            })
+        except Exception as e:
+            logger.debug(f"[Marco] Erro ao emitir progresso: {e}")
+
+    async def _run_web_search(self, query: str) -> str:
+        """Executa pesquisa no DuckDuckGo e retorna os resultados como texto."""
+        if AsyncDDGS is None:
+            return ""
+        try:
+            resultados = []
+            async with AsyncDDGS() as ddgs:
+                async for res in ddgs.text(query, max_results=4, region="br-pt"):
+                    resultados.append(f"Título: {res.get('title')}\nTrecho: {res.get('body')}")
+            if resultados:
+                return "\n\n--- DADOS PESQUISADOS NA WEB ---\n" + "\n\n".join(resultados)
+        except Exception as e:
+            logger.warning(f"[Marco] Erro na pesquisa web: {e}")
+        return ""
+
+    async def _generate_custom_document(
+        self,
+        doc_type: str,
+        doc_title: str,
+        user_name: str,
+        project_name: str,
+        extra_context: str = "",
+        extra_vars: Optional[dict] = None,
+    ) -> str:
+        """
+        Gerador polimórfico: recebe o tipo de documento, monta o prompt correto,
+        faz pesquisa web e chama o Gemini para gerar o Markdown.
+        """
+        from google import genai
+        from google.genai import types
+        from pdf_generator import DOCUMENT_PROMPTS
+
+        await self._emit_marco_working(f"Marco está pesquisando sobre {doc_title}...", 10)
+
+        # Pesquisa web contextual
+        full_transcript = self._blackboard.get_full_transcript()
+        search_query_prompt = (
+            f"Projeto '{project_name}', documento '{doc_title}'. "
+            f"Contexto adicional: {extra_context[:300]}. "
+            f"Gere APENAS UMA QUERY curta para busca no Google sobre este mercado/tema. SEM TEXTO ADICIONAL."
+        )
+        web_context = ""
+        try:
+            client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY", ""))
+            loop = asyncio.get_running_loop()
+
+            def _get_query():
+                return client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=search_query_prompt,
+                    config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=30),
+                )
+            q_resp = await loop.run_in_executor(None, _get_query)
+            search_q = q_resp.text.strip().replace('"', "").replace("'", "")[:100]
+            logger.info(f"[Marco] Web search query para {doc_type}: {search_q}")
+            web_context = await self._run_web_search(search_q)
+        except Exception as e:
+            logger.warning(f"[Marco] Erro ao gerar query de pesquisa: {e}")
+
+        await self._emit_marco_working(f"Gerando {doc_title}...", 40)
+
+        # Monta o transcript enriquecido
+        transcript_enriched = (
+            f"Usuário: {user_name}\n"
+            f"Projeto: {project_name}\n"
+            f"Informação adicional: {extra_context}\n"
+            f"{web_context}\n\n"
+            f"{full_transcript}"
+        )
+
+        # Recupera o prompt base para este tipo de documento
+        prompt_template, _ = DOCUMENT_PROMPTS.get(doc_type, (None, None))
+        if prompt_template is None:
+            logger.warning(f"[Marco] Tipo de documento desconhecido: {doc_type}. Usando execution_plan.")
+            prompt_template, _ = DOCUMENT_PROMPTS["execution_plan"]
+
+        # Preenche variáveis do template
+        fmt_vars = {
+            "transcript": transcript_enriched,
+            "projeto": project_name,
+            "user_name": user_name,
+            "setor": extra_context[:80] if extra_context else project_name,
+            "publico": extra_vars.get("publico", "investidores") if extra_vars else "investidores",
+            "tipo_contrato": extra_vars.get("tipo_contrato", "prestação de serviços") if extra_vars else "prestação de serviços",
+            "tipo_contrato_upper": extra_vars.get("tipo_contrato_upper", "PRESTAÇÃO DE SERVIÇOS") if extra_vars else "PRESTAÇÃO DE SERVIÇOS",
+            "partes": extra_vars.get("partes", "as partes envolvidas") if extra_vars else "as partes envolvidas",
+            "orgao_processo": extra_context[:120] if extra_context else "processos empresariais",
+        }
+        try:
+            prompt = prompt_template.format(**fmt_vars)
+        except KeyError as ke:
+            logger.warning(f"[Marco] Chave ausente no template {doc_type}: {ke}. Usando formato parcial.")
+            prompt = prompt_template.replace("{transcript}", transcript_enriched)
+
+        await self._emit_marco_working(f"Redigindo {doc_title} com IA...", 65)
+
+        # Geração com Gemini
+        markdown_result = ""
+        try:
+            client_gen = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY", ""))
+            loop = asyncio.get_running_loop()
+
+            def _call_llm():
+                return client_gen.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        temperature=0.65,
+                        max_output_tokens=32000,
+                    ),
+                )
+            resp = await loop.run_in_executor(None, _call_llm)
+            markdown_result = resp.text.strip()
+            # Remove wrapper de código se o LLM adicionar
+            for prefix in ("```markdown", "```"):
+                if markdown_result.startswith(prefix):
+                    markdown_result = markdown_result[len(prefix):]
+            if markdown_result.endswith("```"):
+                markdown_result = markdown_result[:-3]
+            markdown_result = markdown_result.strip()
+            logger.info(f"[Marco] {doc_title} gerado: {len(markdown_result)} chars.")
+        except Exception as e:
+            logger.error(f"[Marco] Erro ao gerar {doc_title}: {e}")
+            markdown_result = f"# {doc_title}\n\nErro ao gerar documento. Por favor, tente novamente.\n\nContexto: {project_name} — {user_name}"
+
+        await self._emit_marco_working(f"Convertendo {doc_title} para PDF...", 85)
+        return markdown_result
+
+    async def _generate_public_agency_guidance(
+        self,
+        orgao_processo: str,
+        contexto: str,
+        user_name: str,
+        project_name: str,
+    ) -> str:
+        """
+        Gerador especializado para guias de órgãos públicos.
+        Usa o ORIENTACAO_ORGAO_PROMPT com pesquisa web intensiva.
+        """
+        from google import genai
+        from google.genai import types
+        from pdf_generator import ORIENTACAO_ORGAO_PROMPT
+
+        await self._emit_marco_working(f"Marco pesquisando sobre {orgao_processo}...", 15)
+
+        # Pesquisa web direcionada ao processo público
+        web_context = await self._run_web_search(f"{orgao_processo} Brasil 2024 passo a passo")
+        web_context += await self._run_web_search(f"{orgao_processo} custos taxas portais oficiais")
+
+        await self._emit_marco_working(f"Elaborando guia detalhado: {orgao_processo}...", 50)
+
+        full_transcript = self._blackboard.get_full_transcript()
+        transcript_enriched = (
+            f"Usuário: {user_name}\n"
+            f"Projeto: {project_name}\n"
+            f"Processo solicitado: {orgao_processo}\n"
+            f"Contexto adicional: {contexto}\n"
+            f"{web_context}\n\n"
+            f"{full_transcript[:3000]}"
+        )
+
+        fmt_vars = {
+            "transcript": transcript_enriched,
+            "orgao_processo": orgao_processo,
+            "projeto": project_name,
+            "user_name": user_name,
+        }
+        try:
+            prompt = ORIENTACAO_ORGAO_PROMPT.format(**fmt_vars)
+        except KeyError as ke:
+            logger.warning(f"[Marco] Chave ausente em ORIENTACAO_ORGAO_PROMPT: {ke}")
+            prompt = ORIENTACAO_ORGAO_PROMPT.replace("{transcript}", transcript_enriched)
+
+        markdown_result = ""
+        try:
+            client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY", ""))
+            loop = asyncio.get_running_loop()
+
+            def _call_llm():
+                return client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        temperature=0.5,
+                        max_output_tokens=24000,
+                    ),
+                )
+            resp = await loop.run_in_executor(None, _call_llm)
+            markdown_result = resp.text.strip()
+            for prefix in ("```markdown", "```"):
+                if markdown_result.startswith(prefix):
+                    markdown_result = markdown_result[len(prefix):]
+            if markdown_result.endswith("```"):
+                markdown_result = markdown_result[:-3]
+            markdown_result = markdown_result.strip()
+            logger.info(f"[Marco] Guia '{orgao_processo}' gerado: {len(markdown_result)} chars.")
+        except Exception as e:
+            logger.error(f"[Marco] Erro ao gerar guia '{orgao_processo}': {e}")
+            markdown_result = (
+                f"# Guia: {orgao_processo}\n\n"
+                f"Não foi possível gerar o guia completo neste momento. "
+                f"Por favor, consulte o portal gov.br para informações oficiais sobre {orgao_processo}.\n\n"
+                f"**Link:** https://www.gov.br"
+            )
+
+        await self._emit_marco_working(f"Finalizando guia...", 85)
+        return markdown_result
+
+    async def _publish_document_packet(
+        self,
+        doc_type: str,
+        doc_title: str,
+        markdown_content: str,
+        user_name: str,
+        project_name: str,
+    ) -> None:
+        """
+        Converte o Markdown em PDF e publica o data packet 'document_ready'
+        que o frontend usa para exibir o botão de download.
+        """
+        pdf_base64: Optional[str] = None
+        try:
+            from pdf_generator import generate_pdf
+            loop = asyncio.get_running_loop()
+            pdf_bytes = await loop.run_in_executor(
+                None,
+                lambda: generate_pdf(
+                    markdown_content,
+                    project_name,
+                    user_name,
+                    doc_type=doc_type,
+                    doc_title=doc_title,
+                ),
+            )
+            pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
+            logger.info(f"[Marco] PDF '{doc_title}' gerado: {len(pdf_bytes)} bytes.")
+        except Exception as e:
+            logger.warning(f"[Marco] Falha ao gerar PDF para '{doc_title}': {e}")
+
+        try:
+            packet: dict = {
+                "type": "document_ready",
+                "doc_type": doc_type,
+                "doc_title": doc_title,
+                "plan": markdown_content,
+                "text": markdown_content,
+            }
+            # Retrocompatibilidade: se for plano de execução, mantém o type antigo também
+            if doc_type == "execution_plan":
+                packet["type"] = "execution_plan"
+
+            if pdf_base64:
+                packet["pdf_base64"] = pdf_base64
+
+            await self._publish_packet(packet)
+            await self._emit_marco_working(f"{doc_title} pronto! ✅", 100)
+            logger.info(f"[Marco] Data packet 'document_ready' publicado para '{doc_title}'.")
+        except Exception as e:
+            logger.warning(f"[Marco] Erro ao publicar document_ready para '{doc_title}': {e}")
 
     async def _generate_markdown_plan_with_agent(self, user_name: str, project_name: str) -> str:
         """
