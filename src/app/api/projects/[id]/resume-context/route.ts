@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { and, desc, eq, isNotNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { mentoringSessions, projects, users } from "@/lib/db/schema";
+import { mentoringSessions, projects, users, executionPlans } from "@/lib/db/schema";
 
 export async function GET(
   _request: NextRequest,
@@ -44,9 +44,27 @@ export async function GET(
       .orderBy(desc(mentoringSessions.startedAt))
       .limit(1);
 
+    // Buscar TODOS os documentos gerados pelo Marco nas sessões deste projeto
+    const projectSessions = await db.select({ id: mentoringSessions.id }).from(mentoringSessions).where(eq(mentoringSessions.projectId, id));
+    const sessionIds = projectSessions.map(s => s.id);
+    
+    let generatedDocs: any[] = [];
+    if (sessionIds.length > 0) {
+      generatedDocs = await db.select({
+        docType: executionPlans.docType,
+        title: executionPlans.title,
+        markdownContent: executionPlans.markdownContent,
+        generatedAt: executionPlans.generatedAt
+      })
+      .from(executionPlans)
+      .where(inArray(executionPlans.sessionId, sessionIds))
+      .orderBy(desc(executionPlans.generatedAt));
+    }
+
     return NextResponse.json({
       project,
       lastSession: lastSessionWithTranscript ?? null,
+      generatedDocs,
     });
   } catch (error) {
     console.error("Erro ao buscar contexto de retomada:", error);

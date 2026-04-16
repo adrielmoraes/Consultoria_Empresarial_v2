@@ -81,6 +81,8 @@ export const mentoringSessions = pgTable("mentoring_sessions", {
 export const executionPlans = pgTable("execution_plans", {
   id: uuid("id").defaultRandom().primaryKey(),
   sessionId: uuid("session_id").notNull().references(() => mentoringSessions.id, { onDelete: "cascade" }),
+  docType: text("doc_type").default("plano_execucao"),
+  title: text("title").default("Plano de Execução"),
   pdfUrl: text("pdf_url"),
   markdownContent: text("markdown_content"),
   generatedAt: timestamp("generated_at", { mode: "date" }).defaultNow().notNull(),

@@ -250,8 +250,8 @@ export default function MentorshipRoomPage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [executionPlan, setExecutionPlan] = useState<string | null>(null);
   const [pdfBase64, setPdfBase64] = useState<string | null>(null);
+  const [sessionDocuments, setSessionDocuments] = useState<Array<{ docType: string, title: string, content: string, pdfUrl: string | null }>>([]);
   const [showPlan, setShowPlan] = useState<boolean | "content" | "checklist">(false);
-
   // F4: Timeout de connecting
   const [connectingTooLong, setConnectingTooLong] = useState(false);
   const [connectingTimedOut, setConnectingTimedOut] = useState(false);
@@ -882,6 +882,12 @@ export default function MentorshipRoomPage() {
                 if (data.pdf_base64 && typeof data.pdf_base64 === "string") {
                   setPdfBase64(data.pdf_base64);
                 }
+                setSessionDocuments(prev => [...prev, {
+                  docType: "plano_execucao",
+                  title: "Plano de Execução",
+                  content: data.plan ?? data.text ?? "",
+                  pdfUrl: data.pdf_base64 || null
+                }]);
                 setShowPlan(true);
                 addTranscriptMessage(
                   "Marco",
@@ -897,6 +903,12 @@ export default function MentorshipRoomPage() {
                 if (data.pdf_base64 && typeof data.pdf_base64 === "string") {
                   setPdfBase64(data.pdf_base64);
                 }
+                setSessionDocuments(prev => [...prev, {
+                  docType: docType,
+                  title: docTitle,
+                  content: data.plan ?? data.text ?? "",
+                  pdfUrl: data.pdf_base64 || null
+                }]);
                 setShowPlan(true);
                 // Atualiza o nome do botão de download com o tipo do documento
                 if (typeof window !== "undefined") {
@@ -1108,8 +1120,7 @@ export default function MentorshipRoomPage() {
             body: JSON.stringify({
               sessionId,
               transcript: fullTranscript,
-              markdownContent: executionPlan ?? null,
-              ...(pdfBase64 ? { pdfUrl: `data:application/pdf;base64,${pdfBase64}` } : {}),
+              documents: sessionDocuments,
             }),
           });
         } catch (err) {
@@ -1140,8 +1151,7 @@ export default function MentorshipRoomPage() {
             body: JSON.stringify({
               sessionId,
               transcript: text,
-              markdownContent: executionPlan ?? null,
-              ...(pdfBase64 ? { pdfUrl: `data:application/pdf;base64,${pdfBase64}` } : {}),
+              documents: sessionDocuments,
             }),
           });
         } catch (err) {

@@ -2315,6 +2315,14 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                         blackboard.user_query = content
                 logger.info(f"[Resume] Contexto de retomada carregado com {len(blackboard.transcript)} mensagens.")
 
+        generated_docs = payload.get("generatedDocs") or []
+        if generated_docs:
+            for d in generated_docs:
+                if d.get("markdownContent"):
+                    doc_text = f"DOCUMENTO ANTERIOR GERADO: {d.get('title', 'Plano')}\n\n{d['markdownContent']}"
+                    blackboard.documentos_disponiveis.append(doc_text)
+            logger.info(f"[Resume] Carregados {len(generated_docs)} documentos gerados em sessoes anteriores.")
+
     # Carregar documentos da API em background
     async def fetch_docs():
         import urllib.request

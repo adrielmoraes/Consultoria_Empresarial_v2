@@ -5,7 +5,8 @@ import { eq } from "drizzle-orm";
 
 export async function POST(request: NextRequest) {
   try {
-    const { sessionId, transcript, markdownContent, pdfUrl } = await request.json();
+    const payload = await request.json();
+    const { sessionId, transcript } = payload;
 
     if (!sessionId) {
       return NextResponse.json({ error: "sessionId é obrigatório" }, { status: 400 });
@@ -27,33 +28,35 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedTranscript = typeof transcript === "string" ? transcript.trim() : "";
-    const normalizedMarkdown = typeof markdownContent === "string" ? markdownContent.trim() : "";
-    const fallbackMarkdown =
-      normalizedTranscript.length > 0
-        ? `# Plano de Execução\n\n## Resumo da Sessão\n\nEste plano foi salvo automaticamente a partir da sessão finalizada.\n\n## Transcrição\n\n${normalizedTranscript}`
-        : "";
-    const finalMarkdown = normalizedMarkdown || fallbackMarkdown || null;
-    const finalPdfUrl = typeof pdfUrl === "string" && pdfUrl.trim() ? pdfUrl.trim() : null;
+    
+    // Agora o frontend envia uma array de "documents"
+    const docsToSave: Array<{ docType: string, title: string, content: string, pdfUrl: string | null }> =
+      Array.isArray(payload.documents) ? payload.documents : [];
 
-    if (finalMarkdown || finalPdfUrl) {
-      const existingPlan = await db.query.executionPlans.findFirst({
-        where: eq(executionPlans.sessionId, sessionId),
+    // Fallback retrocompatibilidade (caso venha o formato antigo)
+    const { markdownContent, pdfUrl } = payload;
+    if (docsToSave.length === 0 && (markdownContent || pdfUrl)) {
+      docsToSave.push({
+        docType: "plano_execucao",
+        title: "Plano de Execução",
+        content: markdownContent || "",
+        pdfUrl: pdfUrl || null
       });
+    }
 
-      if (existingPlan) {
-        await db
-          .update(executionPlans)
-          .set({
-            pdfUrl: finalPdfUrl,
-            markdownContent: finalMarkdown,
-            generatedAt: new Date(),
-          })
-          .where(eq(executionPlans.id, existingPlan.id));
-      } else {
+    // Inserir os documentos no banco iterativamente, sem sobrescrever
+    for (const doc of docsToSave) {
+      const finalMarkdown = doc.content.trim() || undefined; // Se não tiver não envia (na base vira NULL)
+      const finalPdfUrl = typeof doc.pdfUrl === "string" && doc.pdfUrl.trim() ? doc.pdfUrl.trim() : null;
+
+      if (finalMarkdown || finalPdfUrl) {
         await db.insert(executionPlans).values({
           sessionId,
+          docType: doc.docType || "generico",
+          title: doc.title || "Documento",
           pdfUrl: finalPdfUrl,
           markdownContent: finalMarkdown,
+          generatedAt: new Date(),
         });
       }
     }
