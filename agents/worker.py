@@ -51,6 +51,8 @@ _gemini_key = os.getenv("GEMINI_API_KEY", "")
 if _gemini_key and not os.getenv("GOOGLE_API_KEY"):
     os.environ["GOOGLE_API_KEY"] = _gemini_key
 
+# BEY_API_KEY já está no .env com o nome correto (Beyond Presence SDK lê diretamente)
+
 from livekit import rtc, api
 from livekit.agents import (
     AutoSubscribe,
@@ -65,6 +67,19 @@ from livekit.agents import (
 from livekit.agents.types import APIConnectOptions
 from livekit.plugins import google as google_plugin
 from google.genai import types as genai_types
+
+# Import condicional do plugin Beyond Presence (bey)
+# Degrada graciosamente se o pacote não estiver instalado.
+try:
+    from livekit.plugins import bey as bey_plugin  # type: ignore
+    BEY_AVAILABLE = bool(os.getenv("BEY_API_KEY", ""))
+except ImportError:
+    bey_plugin = None  # type: ignore
+    BEY_AVAILABLE = False
+    logging.getLogger(__name__).warning(
+        "[worker] livekit-plugins-bey não encontrado — avatares Beyond Presence desativados. "
+        "Instale com: pip install 'livekit-agents[bey]~=1.4'"
+    )
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("mentoria-ai")
@@ -122,6 +137,18 @@ SPECIALIST_IDENTITIES: dict[str, str] = {
     "cmo":   "agent-cmo",
     "cto":   "agent-cto",
     "plan":  "agent-plan",
+}
+
+# IDs dos avatares Beyond Presence mapeados por agente
+# Cada variável de ambiente corresponde a um personagem específico.
+# Fonte: https://docs.livekit.io/agents/models/avatar/plugins/bey/
+AVATAR_IDS: dict[str, str] = {
+    "host":  os.getenv("BEY_AVATAR_ID_HOST", ""),   # Nathália
+    "legal": os.getenv("BEY_AVATAR_ID_LEGAL", ""),  # Daniel (Advogado)
+    "cfo":   os.getenv("BEY_AVATAR_ID_CFO", ""),    # Carlos (CFO)
+    "cmo":   os.getenv("BEY_AVATAR_ID_CMO", ""),    # Rodrigo (CMO)
+    "cto":   os.getenv("BEY_AVATAR_ID_CTO", ""),    # Ana (CTO)
+    # Marco (plan) não recebe avatar — opera exclusivamente nos bastidores
 }
 
 # Frases de apresentação individual de cada specialist_id
@@ -1776,6 +1803,48 @@ Esta sessão de mentoria reuniu um time completo de especialistas para analisar 
 *Documento gerado automaticamente pela plataforma **Hive Mind** com base na sessão de mentoria realizada em {now}.*
 """
 
+# =============================================================
+# Helper: inicia uma AvatarSession da Beyond Presence para um agente
+# Fonte verificada: https://docs.livekit.io/agents/models/avatar/plugins/bey/
+# =============================================================
+async def _start_avatar_session(
+    spec_id: str,
+    agent_session: AgentSession,
+    room: rtc.Room,
+) -> Optional[object]:
+    """
+    Cria e inicia um avatar Beyond Presence sincronizado com a voz do agente.
+
+    - O avatar entra no room como participante separado (kind=Agent, lk.publish_on_behalf).
+    - Retorna o AvatarSession ou None se não disponível / ocorrer erro.
+    - Degrada graciosamente: se BEY_AVAILABLE=False, apenas loga e retorna None.
+    """
+    if not BEY_AVAILABLE:
+        return None
+
+    avatar_id = AVATAR_IDS.get(spec_id, "")
+    if not avatar_id:
+        logger.warning(
+            f"[Avatar] avatar_id não definido para '{spec_id}' — "
+            "verifique as variáveis BEY_AVATAR_ID_* no .env"
+        )
+        return None
+
+    agent_name = SPECIALIST_NAMES.get(spec_id, spec_id) if spec_id != "host" else "Nathália"
+    try:
+        # UNVERIFIED API signature confirmed at: https://docs.livekit.io/agents/models/avatar/plugins/bey/
+        avatar = bey_plugin.AvatarSession(
+            avatar_id=avatar_id,
+            avatar_participant_name=agent_name,
+            avatar_participant_identity=f"bey-{SPECIALIST_IDENTITIES.get(spec_id, spec_id)}",
+        )
+        await avatar.start(agent_session, room=room)
+        logger.info(f"[Avatar] Avatar Beyond Presence iniciado para '{agent_name}' (id={avatar_id[:8]}...).")
+        return avatar
+    except Exception as e:
+        logger.warning(f"[Avatar] Falha ao iniciar avatar para '{agent_name}': {e}")
+        return None
+
 async def _start_specialist_in_room(
     spec_id: str,
     blackboard: Blackboard,
@@ -1948,6 +2017,9 @@ async def _start_specialist_in_room(
         # Aguarda o RealtimeModel inicializar
         await asyncio.sleep(2.0)
         logger.info(f"[{name}] RealtimeModel inicializado.")
+
+        # Inicia o avatar Beyond Presence sincronizado com a voz do especialista
+        asyncio.create_task(_start_avatar_session(spec_id, session, room))
 
         # Registra a sessão no Blackboard
         blackboard.specialist_sessions[spec_id] = session
@@ -2365,6 +2437,9 @@ async def _run_entrypoint(ctx: JobContext) -> None:
     except Exception as e:
         logger.error(f"[Host] Erro crítico ao iniciar Nathália: {e}", exc_info=True)
         return
+
+    # Inicia o avatar Beyond Presence da Nathália no room principal
+    asyncio.create_task(_start_avatar_session("host", host_session, ctx.room))
 
     shutdown_event = asyncio.Event()
 

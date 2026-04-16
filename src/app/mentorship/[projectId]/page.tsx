@@ -45,6 +45,7 @@ import {
   ConnectionState,
   DisconnectReason,
   DefaultReconnectPolicy,
+  RemoteVideoTrack,
 } from "livekit-client";
 import {
   buildAudioCaptureOptions,
@@ -245,6 +246,7 @@ export default function MentorshipRoomPage() {
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [ending, setEnding] = useState(false);
   const [activeSpeakers, setActiveSpeakers] = useState<Set<string>>(new Set());
+  const [activeVideoTracks, setActiveVideoTracks] = useState<Record<string, RemoteVideoTrack>>({});
   const [transcript, setTranscript] = useState<TranscriptMessage[]>([]);
   const [showTranscript, setShowTranscript] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -800,7 +802,7 @@ export default function MentorshipRoomPage() {
           }
         });
 
-        // Track de áudio
+        // Manipulação de Tracks
         room.on(
           RoomEvent.TrackSubscribed,
           (track, _pub, participant: RemoteParticipant) => {
@@ -813,6 +815,10 @@ export default function MentorshipRoomPage() {
               el.id = `audio-${participant.identity}`;
               el.autoplay = true;
               audioContainerRef.current.appendChild(el);
+            } else if (track.kind === Track.Kind.Video && participant.identity.startsWith("bey-")) {
+              const agId = participant.identity.replace("bey-", "");
+              setActiveVideoTracks((prev) => ({ ...prev, [agId]: track as RemoteVideoTrack }));
+              console.log(`[Video] Câmera do avatar ${agId} recebida e registrada.`);
             }
           }
         );
@@ -820,10 +826,21 @@ export default function MentorshipRoomPage() {
         room.on(
           RoomEvent.TrackUnsubscribed,
           (track, _pub, participant: RemoteParticipant) => {
-            audioContainerRef.current
-              ?.querySelector(`#audio-${participant.identity}`)
-              ?.remove();
-            track.detach();
+            if (track.kind === Track.Kind.Audio) {
+               audioContainerRef.current
+                 ?.querySelector(`#audio-${participant.identity}`)
+                 ?.remove();
+               track.detach();
+            } else if (track.kind === Track.Kind.Video && participant.identity.startsWith("bey-")) {
+              const agId = participant.identity.replace("bey-", "");
+              setActiveVideoTracks((prev) => {
+                const next = { ...prev };
+                delete next[agId];
+                return next;
+              });
+              // Track visual detached no próprio React Component Unmount
+              console.log(`[Video] Câmera do avatar ${agId} removida.`);
+            }
           }
         );
 
@@ -1194,6 +1211,7 @@ export default function MentorshipRoomPage() {
     speaking: activeSpeakers.has(a.id),
     connected: connectedAgents.has(a.id),
     turnStatus: agentTurnStatus[a.id] ?? "idle",
+    videoTrack: activeVideoTracks[a.id],
   }));
 
   const connectionIcon = {
@@ -2047,13 +2065,24 @@ function AgentCard({
   agent,
   compact = false,
 }: {
-  agent: AgentInfo & { connected?: boolean; turnStatus?: AgentTurnStatus };
+  agent: AgentInfo & { connected?: boolean; turnStatus?: AgentTurnStatus; videoTrack?: RemoteVideoTrack };
   compact?: boolean;
 }) {
   const Icon = agent.icon;
   const turnStatus = agent.turnStatus ?? "idle";
   const turnLabel = getTurnStatusLabel(turnStatus);
   const turnClass = getTurnStatusClass(turnStatus);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (agent.videoTrack && videoRef.current) {
+      agent.videoTrack.attach(videoRef.current);
+      return () => {
+        agent.videoTrack?.detach();
+      };
+    }
+  }, [agent.videoTrack]);
 
   return (
     <motion.div
@@ -2108,11 +2137,31 @@ function AgentCard({
                 agent.speaking ? 'border-[#d4af37]' : 'border-white/10'
               } flex items-center justify-center relative z-10 overflow-hidden group-hover:border-[#d4af37]/50 transition-colors`}
           >
-            <div className={`absolute inset-0 bg-linear-to-br ${agent.gradient} opacity-20`} />
-            <Icon
-              className={`${compact ? "w-8 h-8" : "w-14 h-14 lg:w-20 lg:h-20"
-                } ${agent.speaking ? 'text-[#d4af37]' : 'text-gray-400 group-hover:text-gray-300'} transition-colors`}
-            />
+            <div className={`absolute inset-0 bg-linear-to-br ${agent.gradient} opacity-[0.15] z-0`} />
+            
+            {/* Feed de vídeo realista do Beyond Presence */}
+            {agent.videoTrack && (
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="absolute inset-0 w-full h-full object-cover z-10"
+              />
+            )}
+
+            {/* Ícone vetorizado clássico (Exibição Fallback) */}
+            {!agent.videoTrack && (
+              <Icon
+                className={`${compact ? "w-8 h-8" : "w-14 h-14 lg:w-20 lg:h-20"
+                  } ${agent.speaking ? 'text-[#d4af37]' : 'text-gray-400 group-hover:text-gray-300'} transition-colors relative z-20`}
+              />
+            )}
+
+            {/* Overlay sutil quando está falando por cima do vídeo */}
+            {agent.videoTrack && agent.speaking && (
+               <div className="absolute inset-0 bg-[#d4af37]/10 z-20 mix-blend-overlay pointer-events-none" />
+            )}
           </motion.div>
         </div>
       </div>
