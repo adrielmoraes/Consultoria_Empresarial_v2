@@ -1,4 +1,7 @@
 providers = ["python"]
 
+[install]
+cmd = "pip install -r agents/requirements.txt && pip install duckduckgo-search>=6.0.0"
+
 [start]
 cmd = "python -m agents.worker start"
