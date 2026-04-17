@@ -194,6 +194,20 @@ const features = [
 
 const plans = [
   {
+    name: "Acesso Gratuito",
+    price: "R$ 0,00",
+    period: "para sempre",
+    description: "Sinta o calibre mental do sistema. Teste as mecânicas antes de tomar o grande passo.",
+    features: [
+      "Acesso imediato ao Dashboard",
+      "Demonstração da interface",
+      "Comunidade de Networking",
+      "1 Sessão limitadíssima de teste",
+    ],
+    cta: "Começar de Graça",
+    popular: false,
+  },
+  {
     name: "Sessão Avulsa",
     price: "R$ 149,90",
     period: "por sessão",
@@ -219,6 +233,7 @@ const plans = [
       "Sessões expandidas de 60 minutos",
       "Histórico de memórias criptografadas",
       "Respostas prioritárias no cluster",
+      "Compartilhe a reunião ao vivo com até 3 pessoas da equipe",
     ],
     cta: "Blindar as Operações da Empresa",
     popular: true,
@@ -386,11 +401,11 @@ export default function LandingPage() {
             <div className="relative glass-card-premium p-4 sm:p-2 border-white/5 bg-black/60">
               <div className="grid grid-cols-5 gap-2 sm:gap-4 overflow-hidden rounded-[30px]">
                 {[
-                  { name: "Carlos (CFO)", color: "from-emerald-600 to-teal-700", icon: TrendingUp },
-                  { name: "Daniel (LEGAL)", color: "from-amber-600 to-orange-700", icon: Gavel },
-                  { name: "Apresentadora", color: "from-[#d4af37] to-[#b08d24]", icon: Brain },
-                  { name: "Rodrigo (CMO)", color: "from-pink-600 to-rose-700", icon: Users },
-                  { name: "Ana (CTO)", color: "from-blue-600 to-cyan-700", icon: Code }
+                  { name: "Carlos (CFO)", color: "from-emerald-600 to-teal-700", icon: TrendingUp, video: "/Carlos.mp4" },
+                  { name: "Daniel (LEGAL)", color: "from-amber-600 to-orange-700", icon: Gavel, video: "/Daniel.mp4" },
+                  { name: "Apresentadora", color: "from-[#d4af37] to-[#b08d24]", icon: Brain, video: "/Nathalia.mp4" },
+                  { name: "Rodrigo (CMO)", color: "from-pink-600 to-rose-700", icon: Users, video: "/Rodrigo.mp4" },
+                  { name: "Ana (CTO)", color: "from-blue-600 to-cyan-700", icon: Code, video: "/Ana.mp4" }
                 ].map((spec, i) => (
                   <div
                     key={spec.name}
@@ -402,17 +417,30 @@ export default function LandingPage() {
                     {i === 2 && (
                       <div className="absolute -inset-px bg-linear-to-br from-[#d4af37] via-[#f0dfa0] to-[#b08d24] rounded-sm opacity-60 animate-pulse z-0" />
                     )}
-                    <div className="absolute inset-0 bg-[#030712]/60 backdrop-blur-[2px]" />
-                    <div className="absolute inset-0 flex flex-col items-center justify-center p-2 text-center">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center bg-linear-to-br ${spec.color} shadow-2xl mb-3 ${i === 2 ? "ring-2 ring-[#d4af37]/50 ring-offset-2 ring-offset-[#030712]" : ""}`}>
-                        <spec.icon className="w-6 h-6 text-white" />
+                    <div className="absolute inset-0 bg-[#030712]/20" />
+                    
+                    <video 
+                      src={spec.video} 
+                      autoPlay 
+                      loop 
+                      muted 
+                      playsInline 
+                      className="absolute inset-0 w-full h-full object-cover bg-black pointer-events-none"
+                    />
+
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none z-10" />
+
+                    <div className="absolute inset-x-0 bottom-4 px-2 flex justify-center pointer-events-none z-20">
+                      <div className={`bg-black/50 backdrop-blur-md border border-white/20 px-3 py-2 rounded-xl flex items-center justify-center gap-2 w-fit sm:min-w-[110px] shadow-2xl transition-all ${i === 2 ? "border-[#d4af37]/60 ring-1 ring-[#d4af37]/50" : ""}`}>
+                        <spec.icon className={`w-3.5 h-3.5 shrink-0 hidden sm:block ${i === 2 ? "text-[#d4af37]" : "text-white"}`} />
+                        <p className="text-[7.5px] sm:text-[9px] font-black uppercase text-white tracking-widest truncate">{spec.name}</p>
                       </div>
-                      <p className="text-[10px] font-black uppercase text-white tracking-widest">{spec.name}</p>
                     </div>
+
                     {i === 2 && (
-                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-[#d4af37] px-2 py-0.5 rounded-full scale-[0.8]">
+                      <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-[#d4af37] px-2 py-0.5 rounded-full scale-[0.8] shadow-xl z-20 pointer-events-none">
                         <div className="w-1 h-1 bg-black rounded-full animate-pulse" />
-                        <span className="text-[8px] font-black text-black">LIVE</span>
+                        <span className="text-[8px] font-black text-black tracking-widest">LIVE</span>
                       </div>
                     )}
                   </div>
@@ -545,7 +573,7 @@ export default function LandingPage() {
             </motion.p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12 max-w-7xl mx-auto">
             {plans.map((plan, i) => (
               <motion.div
                 key={plan.name}
