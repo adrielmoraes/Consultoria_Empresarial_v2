@@ -1,0 +1,8 @@
+[providers]
+node = true
+
+[build]
+cmd = "npm install && npm run build"
+
+[start]
+cmd = "npm run start"
