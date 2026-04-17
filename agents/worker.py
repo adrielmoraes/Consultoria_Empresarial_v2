@@ -46,9 +46,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Mapeia GEMINI_API_KEY → GOOGLE_API_KEY para os plugins que leem essa variável
+# Mapeia GEMINI_API_KEY → GOOGLE_API_KEY para os plugins que leem essa variável.
+# SEMPRE faz o override — evita conflito quando o Railway define GOOGLE_API_KEY
+# com valor diferente ou desatualizado.
 _gemini_key = os.getenv("GEMINI_API_KEY", "")
-if _gemini_key and not os.getenv("GOOGLE_API_KEY"):
+if _gemini_key:
     os.environ["GOOGLE_API_KEY"] = _gemini_key
 
 # BEY_API_KEY já está no .env com o nome correto (Beyond Presence SDK lê diretamente)
