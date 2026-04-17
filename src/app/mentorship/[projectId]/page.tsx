@@ -262,7 +262,7 @@ export default function MentorshipRoomPage() {
   const [showUpload, setShowUpload] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [docs, setDocs] = useState<{id: string, fileName: string, createdAt: string}[]>([]);
+  const [docs, setDocs] = useState<{ id: string, fileName: string, createdAt: string }[]>([]);
 
   // F7: Convite de Equipe (Guest)
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -535,22 +535,22 @@ export default function MentorshipRoomPage() {
       });
       const result = await res.json();
       if (result.success && result.doc) {
-         setDocs(prev => [result.doc, ...prev]);
-         // Mensagem visual no chat
-         addTranscriptMessage("Sistema", `O documento "${file.name}" foi disponibilizado para o Marco.`);
-         // Notificar via datachannel se estivermos conectados para o Python Worker atualizar contexto sob demanda (opcional se não quiser enviar o pacote via python)
-         if (roomRef.current && connectionState === "connected") {
-            const enc = new TextEncoder();
-            const packet = JSON.stringify({ type: "DOCUMENT_UPLOADED", fileName: file.name });
-            roomRef.current.localParticipant.publishData(enc.encode(packet), { reliable: true });
-         }
+        setDocs(prev => [result.doc, ...prev]);
+        // Mensagem visual no chat
+        addTranscriptMessage("Sistema", `O documento "${file.name}" foi disponibilizado para o Marco.`);
+        // Notificar via datachannel se estivermos conectados para o Python Worker atualizar contexto sob demanda (opcional se não quiser enviar o pacote via python)
+        if (roomRef.current && connectionState === "connected") {
+          const enc = new TextEncoder();
+          const packet = JSON.stringify({ type: "DOCUMENT_UPLOADED", fileName: file.name });
+          roomRef.current.localParticipant.publishData(enc.encode(packet), { reliable: true });
+        }
       }
     } catch (error) {
-       console.error("Upload error", error);
-       alert("Erro ao enviar arquivo.");
+      console.error("Upload error", error);
+      alert("Erro ao enviar arquivo.");
     } finally {
-       setIsUploading(false);
-       if (fileInputRef.current) fileInputRef.current.value = "";
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -817,7 +817,7 @@ export default function MentorshipRoomPage() {
             } else if (track.kind === Track.Kind.Video && participant.identity.startsWith("bey-")) {
               let agId = participant.identity.replace("bey-", "");
               if (agId.startsWith("agent-")) agId = agId.replace("agent-", "");
-              
+
               setActiveVideoTracks((prev) => ({ ...prev, [agId]: track as RemoteVideoTrack }));
               console.log(`[Video] Câmera do avatar ${agId} recebida e registrada.`);
             }
@@ -828,14 +828,14 @@ export default function MentorshipRoomPage() {
           RoomEvent.TrackUnsubscribed,
           (track, _pub, participant: RemoteParticipant) => {
             if (track.kind === Track.Kind.Audio) {
-               audioContainerRef.current
-                 ?.querySelector(`#audio-${participant.identity}`)
-                 ?.remove();
-               track.detach();
+              audioContainerRef.current
+                ?.querySelector(`#audio-${participant.identity}`)
+                ?.remove();
+              track.detach();
             } else if (track.kind === Track.Kind.Video && participant.identity.startsWith("bey-")) {
               let agId = participant.identity.replace("bey-", "");
               if (agId.startsWith("agent-")) agId = agId.replace("agent-", "");
-              
+
               setActiveVideoTracks((prev) => {
                 const next = { ...prev };
                 delete next[agId];
@@ -1202,7 +1202,7 @@ export default function MentorshipRoomPage() {
   const agentsList = Object.values(AGENTS_MAP);
   const host = agentsList.find(a => a.id === "host");
   const others = agentsList.filter(a => a.id !== "host");
-  
+
   // Reordena para colocar o host no centro: 2 agentes, host, 2 agentes
   const reorderedAgents = host && others.length >= 4
     ? [others[0], others[1], host, others[2], others[3]]
@@ -1262,13 +1262,12 @@ export default function MentorshipRoomPage() {
               </span>
             </div>
           </div>
-          <div className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-wider ${
-            protocolHealth === "error"
+          <div className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-wider ${protocolHealth === "error"
               ? "bg-red-500/10 border-red-500/30 text-red-300"
               : protocolHealth === "warn"
                 ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
                 : "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-          }`}>
+            }`}>
             <span>{protocolHealth === "ok" ? "Protocolo OK" : protocolHealth === "warn" ? "Compatível" : "Incompatível"}</span>
             <span className="text-[9px] normal-case tracking-normal opacity-80">{protocolMessage}</span>
           </div>
@@ -1547,11 +1546,10 @@ export default function MentorshipRoomPage() {
               : "IA ativa novamente — os agentes podem participar."
             );
           }}
-          className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
-            aiPaused
+          className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${aiPaused
               ? "bg-amber-500/20 border border-amber-500/50 text-amber-400"
               : "bg-white/10 border border-white/10 text-white hover:bg-white/20"
-          }`}
+            }`}
           title={aiPaused ? "Reativar IA" : "Pausar IA (modo debate)"}
         >
           {aiPaused ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
@@ -1686,7 +1684,7 @@ export default function MentorshipRoomPage() {
       {/* Modal de Upload de Anexos */}
       {showUpload && (
         <div className="fixed inset-0 z-60 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="bg-gray-950 border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl"
@@ -1700,7 +1698,7 @@ export default function MentorshipRoomPage() {
                 ✕
               </button>
             </div>
-            
+
             <p className="text-sm text-gray-400 mb-6 font-mono leading-relaxed">
               O <span className="text-violet-400 font-semibold">Marco</span> pode analisar PDFs e documentos extraídos com a IA para ajudar os especialistas.
             </p>
@@ -1717,7 +1715,7 @@ export default function MentorshipRoomPage() {
               </div>
             )}
 
-            <button 
+            <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
               className="w-full relative py-6 border-2 border-dashed border-white/20 rounded-xl flex flex-col items-center justify-center gap-3 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all text-gray-400 hover:text-emerald-400 disabled:opacity-50"
@@ -1730,10 +1728,10 @@ export default function MentorshipRoomPage() {
               <span className="text-sm font-medium">{isUploading ? "Processando e validando segurança..." : "Clique para selecionar arquivos"}</span>
               <span className="text-[10px] text-gray-500">Apenas formatos puros (TXT, CSV, PDF simples, MD) (Máx. 50MB)</span>
             </button>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
               onChange={handleUploadFile}
               accept=".pdf,.txt,.csv,.md"
             />
@@ -2099,11 +2097,10 @@ function AgentCard({
     >
       {/* Background Glow */}
       <div
-        className={`absolute inset-0 bg-linear-to-br ${agent.gradient} transition-opacity duration-1000 ${
-          agent.speaking ? 'opacity-20' : 'opacity-5'
-        }`}
+        className={`absolute inset-0 bg-linear-to-br ${agent.gradient} transition-opacity duration-1000 ${agent.speaking ? 'opacity-20' : 'opacity-5'
+          }`}
       />
-      
+
       {/* Abstract Pattern Layer */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
 
@@ -2135,12 +2132,11 @@ function AgentCard({
                 : { scale: 1, boxShadow: "0 0 20px rgba(0, 0, 0, 0.5)" }
             }
             className={`${compact ? "w-16 h-16" : "w-32 h-32 lg:w-40 lg:h-40"
-              } rounded-full bg-[#030712] border-2 ${
-                agent.speaking ? 'border-[#d4af37]' : 'border-white/10'
+              } rounded-full bg-[#030712] border-2 ${agent.speaking ? 'border-[#d4af37]' : 'border-white/10'
               } flex items-center justify-center relative z-10 overflow-hidden group-hover:border-[#d4af37]/50 transition-colors`}
           >
             <div className={`absolute inset-0 bg-linear-to-br ${agent.gradient} opacity-[0.15] z-0`} />
-            
+
             {/* Feed de vídeo realista do Beyond Presence */}
             {agent.videoTrack && (
               <video
@@ -2162,7 +2158,7 @@ function AgentCard({
 
             {/* Overlay sutil quando está falando por cima do vídeo */}
             {agent.videoTrack && agent.speaking && (
-               <div className="absolute inset-0 bg-[#d4af37]/10 z-20 mix-blend-overlay pointer-events-none" />
+              <div className="absolute inset-0 bg-[#d4af37]/10 z-20 mix-blend-overlay pointer-events-none" />
             )}
           </motion.div>
         </div>

@@ -84,6 +84,11 @@ except ImportError:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("mentoria-ai")
 
+# Silenciar a telemetria interna do SDK (que a Railway confunde com erros)
+logging.getLogger("livekit").setLevel(logging.WARNING)
+logging.getLogger("root").setLevel(logging.WARNING)
+logging.getLogger("google").setLevel(logging.WARNING)
+
 # Rastreia salas que já possuem um job ativo para rejeitar dispatches duplicados.
 _active_rooms: set[str] = set()
 
