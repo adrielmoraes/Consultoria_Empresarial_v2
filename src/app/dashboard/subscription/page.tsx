@@ -36,9 +36,9 @@ const plans = [
     gradient: "from-gray-500 to-gray-600",
     borderColor: "border-gray-500/20",
     features: [
-      "1 crédito de teste",
+      "8 minutos de teste gratuito",
       "Mentoria com 5 especialistas IA",
-      "12 minutos de mentoria",
+      "Acesso completo à plataforma",
       "Plano de execução básico",
     ],
     cta: "Plano Atual",
@@ -46,35 +46,37 @@ const plans = [
   },
   {
     id: "session",
-    name: "Sessão Avulsa",
-    price: "R$ 149,90",
-    period: "/sessão",
+    name: "Executivo",
+    price: "R$ 497,90",
+    period: "/mês",
     icon: Zap,
     gradient: "from-[#d4af37] to-[#b08d24]",
     borderColor: "border-[#d4af37]/30",
     popular: true,
     features: [
-      "1 mentoria",
+      "80 minutos de mentoria por mês",
       "Mentoria com 5 especialistas IA",
+      "Avatares com vídeo em tempo real",
       "Plano de execução completo em PDF",
-      "30 minutos de reunião",
+      "Suporte prioritário por e-mail",
     ],
-    cta: "Comprar Sessão",
+    cta: "Assinar Executivo",
     disabled: false,
   },
   {
     id: "professional",
     name: "Profissional",
-    price: "R$ 399,90",
+    price: "R$ 1.197,90",
     period: "/mês",
     icon: Crown,
     gradient: "from-amber-500 to-orange-600",
     borderColor: "border-amber-500/30",
     features: [
-      "5 mentorias por mês",
+      "200 minutos de mentoria por mês",
       "Mentoria com 5 especialistas IA",
+      "Avatares com vídeo em tempo real",
       "Plano de execução completo em PDF",
-      "60 minutos por reunião",
+      "Compartilhe reuniões com até 3 pessoas",
       "Suporte prioritário por e-mail",
     ],
     cta: "Assinar Profissional",
@@ -183,18 +185,21 @@ export default function SubscriptionPage() {
   const userInitial = userName.charAt(0).toUpperCase();
   const currentStatus = userData?.subscriptionStatus || "trial";
   const currentCredits = userData?.credits ?? 0;
+  // Detecta o plano atual com base no status de assinatura e créditos
+  // "active" = qualquer assinatura paga — diferenciamos pelo priceId via subscriptionStatus
   const currentPlanId =
     currentStatus === "active"
-      ? "professional"
-      : currentCredits > 0
+      ? "professional"   // TODO: diferenciar executivo vs profissional pelo subscriptionPriceId
+      : currentStatus === "session" || (currentCredits > 8 && currentCredits <= 80)
         ? "session"
         : "free";
+
   const currentPlanName =
     currentPlanId === "professional"
-        ? "Profissional"
-        : currentPlanId === "session"
-          ? "Sessão Avulsa"
-          : "Gratuito (Trial)";
+      ? "Profissional"
+      : currentPlanId === "session"
+        ? "Executivo"
+        : "Gratuito (Trial)";
 
   const navItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -296,7 +301,7 @@ export default function SubscriptionPage() {
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Você possui <strong className="text-white">{currentCredits}</strong>{" "}
-                  crédito{currentCredits !== 1 ? "s" : ""} restante
+                  minuto{currentCredits !== 1 ? "s" : ""} restante
                   {currentCredits !== 1 ? "s" : ""}
                 </p>
               </div>
