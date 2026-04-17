@@ -35,11 +35,11 @@ from typing import Optional
 
 try:
     from duckduckgo_search import AsyncDDGS
-except ImportError:
+except Exception as e:
     AsyncDDGS = None  # type: ignore
     import logging as _tmp_log
     _tmp_log.getLogger(__name__).warning(
-        "[worker] duckduckgo_search não encontrado — ferramenta de busca na internet desativada."
+        f"[worker] O Duckduckgo_search recusou carregar. Motivo da library subjacente: {e} — ferramenta de internet desativada."
     )
 
 from dotenv import load_dotenv
