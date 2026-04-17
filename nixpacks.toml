@@ -1,4 +1,7 @@
 providers = ["python"]
 
+[install]
+cmds = ["pip install -e ."]
+
 [start]
 cmd = "python -m agents.worker start"
