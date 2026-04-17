@@ -2046,8 +2046,10 @@ async def _start_specialist_in_room(
         await asyncio.sleep(2.0)
         logger.info(f"[{name}] RealtimeModel inicializado.")
 
-        # Inicia o avatar Beyond Presence sincronizado com a voz do especialista
-        asyncio.create_task(_start_avatar_session(spec_id, session, room))
+        # ATUALIZAÇÃO: Para evitar crash e estouro do limite grátis da Beyond Presence,
+        # Nós DESATIVAMOS os avatares 3D dos especialistas (Eles viram Voice/Podcast).
+        # Apenas a Nathália receberá o vídeo 3D.
+        # asyncio.create_task(_start_avatar_session(spec_id, session, room))
 
         # Registra a sessão no Blackboard
         blackboard.specialist_sessions[spec_id] = session
