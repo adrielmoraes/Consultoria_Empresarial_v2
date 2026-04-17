@@ -16,11 +16,15 @@ export async function POST(request: NextRequest) {
     }
 
     // --- GUARDA DE SALDO: Verificar créditos (minutos) do usuário ---
-    // A identidade do participante é o userId — usamos para buscar o saldo.
+    // Extrai o userId bruto do participantIdentity (formato: user-{userId}-{timestamp})
+    // ou usa diretamente caso o frontend tenha enviado apenas o userId.
+    const userIdMatch = participantIdentity.match(/^user-(.+)-\d+$/);
+    const rawUserId = userIdMatch ? userIdMatch[1] : participantIdentity;
+
     const [user] = await db
       .select({ credits: users.credits })
       .from(users)
-      .where(eq(users.id, participantIdentity))
+      .where(eq(users.id, rawUserId))
       .limit(1);
 
     if (!user) {
