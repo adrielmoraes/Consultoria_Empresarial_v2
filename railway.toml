@@ -3,3 +3,4 @@ builder = "nixpacks"
 
 [deploy]
 startCommand = "python -m agents.worker start"
+##esse é o original.
