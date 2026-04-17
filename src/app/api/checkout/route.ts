@@ -9,9 +9,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Dados incompletos" }, { status: 400 });
     }
 
+    // Mapeamento de planId → price real da Stripe
+    // Ambos os planos são assinaturas mensais recorrentes (modelo High Ticket)
     const planToPrice: Record<string, string> = {
-      session: STRIPE_PRICES.SESSION,
-      professional: STRIPE_PRICES.PROFESSIONAL,
+      session:      STRIPE_PRICES.SESSION,      // Executivo   — R$497,90/mês
+      professional: STRIPE_PRICES.PROFESSIONAL, // Profissional — R$1.197,90/mês
     };
 
     const resolvedPriceId =
@@ -22,14 +24,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Plano inválido" }, { status: 400 });
     }
 
-    const isSubscription = resolvedPriceId !== STRIPE_PRICES.SESSION;
+    const origin =
+      request.headers.get("origin") ||
+      request.nextUrl.origin ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      "http://localhost:3000";
 
-    const origin = request.headers.get("origin") || request.nextUrl.origin || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-
+    // Ambos os planos são subscription — o modelo de pagamento avulso não existe mais
     const session = await stripe.checkout.sessions.create({
-      mode: isSubscription ? "subscription" : "payment",
+      mode: "subscription",
       payment_method_types: ["card"],
-      customer_email: userEmail,
+      customer_email: userEmail || undefined,
       line_items: [
         {
           price: resolvedPriceId,
@@ -39,6 +44,12 @@ export async function POST(request: NextRequest) {
       metadata: {
         userId,
         priceId: resolvedPriceId,
+      },
+      subscription_data: {
+        metadata: {
+          userId,
+          priceId: resolvedPriceId,
+        },
       },
       success_url: `${origin}/dashboard/subscription?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/dashboard/subscription?canceled=true`,
