@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { mentoringSessions, projects } from "@/lib/db/schema";
+import { mentoringSessions, projects, users } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { AgentDispatchClient, RoomServiceClient } from "livekit-server-sdk";
 
@@ -43,6 +43,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "projectId e userId são obrigatórios" },
         { status: 400 }
+      );
+    }
+
+    // --- GUARDA DE SALDO: Bloquear despacho do agente se o usuário não tiver minutos ---
+    const [userCredits] = await db
+      .select({ credits: users.credits })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!userCredits || (userCredits.credits ?? 0) < 1) {
+      console.warn(`[Sessions API] Usuário ${userId} bloqueado — saldo insuficiente (${userCredits?.credits ?? 0} min).`);
+      return NextResponse.json(
+        { error: "Sem minutos disponíveis. Assine um plano para continuar.", code: "NO_CREDITS" },
+        { status: 403 }
       );
     }
 

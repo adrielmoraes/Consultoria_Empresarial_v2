@@ -34,15 +34,14 @@ export async function POST(req: Request) {
     // Hash da senha
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Criar o usuário já com email verificado pra facilitar o login nesta fase
-    // 1 crédito inicial para teste (12 minutos de mentoria no plano gratuito)
+    // Criar o usuário com email verificado e crédito inicial de 8 minutos (Plano Gratuito)
     const [newUser] = await db.insert(users).values({
       name,
       email,
       passwordHash: hashedPassword,
       emailVerified: new Date(),
-      credits: 1,
-      subscriptionStatus: "trial",
+      credits: 8, // 8 minutos de teste no plano gratuito
+      subscriptionStatus: "free",
     }).returning({ id: users.id });
 
     return NextResponse.json(

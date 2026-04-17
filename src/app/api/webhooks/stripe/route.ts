@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe, PLAN_CREDITS } from "@/lib/stripe";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import Stripe from "stripe";
 
 export async function POST(request: NextRequest) {
@@ -35,24 +35,18 @@ export async function POST(request: NextRequest) {
         const creditsToAdd = PLAN_CREDITS[priceId] || 0;
 
         if (session.mode === "payment") {
-          // Pagamento avulso - adicionar créditos
-          const [user] = await db
-            .select()
-            .from(users)
+          // Pagamento avulso — soma atômica via SQL (evita race condition)
+          await db
+            .update(users)
+            .set({
+              credits: sql`COALESCE(${users.credits}, 0) + ${creditsToAdd}`,
+              stripeCustomerId: session.customer as string,
+              updatedAt: new Date(),
+            })
             .where(eq(users.id, userId));
-
-          if (user) {
-            await db
-              .update(users)
-              .set({
-                credits: (user.credits || 0) + creditsToAdd,
-                stripeCustomerId: session.customer as string,
-                updatedAt: new Date(),
-              })
-              .where(eq(users.id, userId));
-          }
+          console.log(`[Webhook] Pagamento avulso: +${creditsToAdd} min para o usuário ${userId}.`);
         } else if (session.mode === "subscription") {
-          // Assinatura - atualizar status e créditos
+          // Nova assinatura — reset para os minutos do plano
           await db
             .update(users)
             .set({
@@ -62,6 +56,7 @@ export async function POST(request: NextRequest) {
               updatedAt: new Date(),
             })
             .where(eq(users.id, userId));
+          console.log(`[Webhook] Nova assinatura: ${creditsToAdd} min para o usuário ${userId}.`);
         }
         break;
       }
@@ -85,6 +80,7 @@ export async function POST(request: NextRequest) {
               updatedAt: new Date(),
             })
             .where(eq(users.stripeCustomerId, customerId));
+          console.log(`[Webhook] Renovação mensal: ${creditsToAdd} min para o cliente ${customerId}.`);
         }
         break;
       }
@@ -102,6 +98,7 @@ export async function POST(request: NextRequest) {
             updatedAt: new Date(),
           })
           .where(eq(users.stripeCustomerId, customerId));
+        console.log(`[Webhook] Assinatura cancelada: créditos zerados para o cliente ${customerId}.`);
         break;
       }
 
@@ -117,6 +114,7 @@ export async function POST(request: NextRequest) {
             updatedAt: new Date(),
           })
           .where(eq(users.stripeCustomerId, failedCustomerId));
+        console.log(`[Webhook] Pagamento falhou: status 'past_due' para o cliente ${failedCustomerId}.`);
         break;
       }
     }

@@ -5,14 +5,21 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_dummy
   typescript: true,
 });
 
-// IDs dos preços criados no Stripe
+// IDs dos produtos e preços criados no painel da Stripe (LIVE MODE)
+// Produtos: prod_UM1wCHqJbi98bJ (Executivo) | prod_UM1zG3sYLCC9Mq (Profissional)
 export const STRIPE_PRICES = {
-  SESSION: "price_1TJOSZ3zDP3Guk8j5HK0IzSe",       // R$149,90 - Sessão Avulsa
-  PROFESSIONAL: "price_1TJOSe3zDP3Guk8jnRJ0jZvN",  // R$399,90/mês - Profissional
+  SESSION:      "price_1TNJuY3zDP3Guk8jomPvg9Ni", // R$497,90/mês  — Plano Executivo  (80 min)
+  PROFESSIONAL: "price_1TNJwv3zDP3Guk8jAI7Ap7jo",  // R$1.197,90/mês — Plano Profissional (200 min)
 } as const;
 
-// Créditos por plano
+/**
+ * Minutos totais liberados por plano após checkout bem-sucedido.
+ * O webhook do Stripe usa este mapa para creditar o usuário no banco.
+ *
+ * Plano Executivo    → 80  minutos (R$497,90/mês)
+ * Plano Profissional → 200 minutos (R$1.197,90/mês)
+ */
 export const PLAN_CREDITS: Record<string, number> = {
-  [STRIPE_PRICES.SESSION]: 1,
-  [STRIPE_PRICES.PROFESSIONAL]: 5,
+  [STRIPE_PRICES.SESSION]:      80,  // Plano Executivo: 80 minutos
+  [STRIPE_PRICES.PROFESSIONAL]: 200, // Plano Profissional: 200 minutos
 };
