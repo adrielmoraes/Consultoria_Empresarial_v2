@@ -1,5 +1,7 @@
-[build]
-builder = "nixpacks"
+providers = ["python"]
 
-[deploy]
-startCommand = "python -m agents.worker start"
+[install]
+cmd = "python -m pip install --upgrade pip && pip install ."
+
+[start]
+cmd = "python -m agents.worker start"
