@@ -34,9 +34,9 @@ from time import monotonic
 from typing import Optional
 
 try:
-    from duckduckgo_search import AsyncDDGS
+    from duckduckgo_search import DDGS
 except Exception as e:
-    AsyncDDGS = None  # type: ignore
+    DDGS = None  # type: ignore
     import logging as _tmp_log
     _tmp_log.getLogger(__name__).warning(
         f"[worker] O Duckduckgo_search recusou carregar. Motivo da library subjacente: {e} — ferramenta de internet desativada."
@@ -1291,13 +1291,19 @@ class HostAgent(Agent):
 
     async def _run_web_search(self, query: str) -> str:
         """Executa pesquisa no DuckDuckGo e retorna os resultados como texto."""
-        if AsyncDDGS is None:
+        if DDGS is None:
             return ""
         try:
+            def _sync_search():
+                return list(DDGS().text(query, max_results=4, region="br-pt"))
+                
+            loop = asyncio.get_running_loop()
+            raw_res = await loop.run_in_executor(None, _sync_search)
+            
             resultados = []
-            async with AsyncDDGS() as ddgs:
-                async for res in ddgs.text(query, max_results=4, region="br-pt"):
-                    resultados.append(f"Título: {res.get('title')}\nTrecho: {res.get('body')}")
+            for res in raw_res:
+                resultados.append(f"Título: {res.get('title')}\nTrecho: {res.get('body')}")
+                
             if resultados:
                 return "\n\n--- DADOS PESQUISADOS NA WEB ---\n" + "\n\n".join(resultados)
         except Exception as e:
