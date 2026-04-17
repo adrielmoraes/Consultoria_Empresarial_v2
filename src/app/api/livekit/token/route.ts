@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     );
 
     const url = process.env.LIVEKIT_URL || process.env.NEXT_PUBLIC_LIVEKIT_URL;
-    return NextResponse.json({ token, url });
+    return NextResponse.json({ token, url, maxDurationSeconds: ttlSeconds });
   } catch (error) {
     console.error("Erro ao gerar token LiveKit:", error);
     return NextResponse.json(

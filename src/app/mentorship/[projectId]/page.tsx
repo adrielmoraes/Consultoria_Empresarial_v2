@@ -249,6 +249,7 @@ export default function MentorshipRoomPage() {
   const [activeVideoTracks, setActiveVideoTracks] = useState<Record<string, RemoteVideoTrack>>({});
   const [transcript, setTranscript] = useState<TranscriptMessage[]>([]);
   const [showTranscript, setShowTranscript] = useState(false);
+  const [maxSessionTime, setMaxSessionTime] = useState<number | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [executionPlan, setExecutionPlan] = useState<string | null>(null);
   const [pdfBase64, setPdfBase64] = useState<string | null>(null);
@@ -489,6 +490,14 @@ export default function MentorshipRoomPage() {
     return () => clearInterval(id);
   }, []);
 
+  // F9: Forçar encerramento quando atingir tempo limite da assinatura (Billing Check)
+  useEffect(() => {
+    if (maxSessionTime && elapsedTime >= maxSessionTime && !ending) {
+      console.warn(`[Timer] Limite da assinatura atingido (${maxSessionTime}s). Encerrando compulsoriamente.`);
+      void handleEndSession();
+    }
+  }, [elapsedTime, maxSessionTime, ending]);
+
   // F4: Timeout de connecting — aviso visual após 15s, retry após 60s
   useEffect(() => {
     if (connectionState !== "connecting") {
@@ -652,7 +661,10 @@ export default function MentorshipRoomPage() {
         });
         if (!isMounted) return;
 
-        const { token, url } = await tokenRes.json();
+        const { token, url, maxDurationSeconds } = await tokenRes.json();
+        if (maxDurationSeconds) {
+          setMaxSessionTime(maxDurationSeconds);
+        }
         sessionDataRef.current = { ...sessionDataRef.current, token, url };
 
         // Configura a sala
