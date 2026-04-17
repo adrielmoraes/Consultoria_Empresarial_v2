@@ -265,7 +265,9 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "- Sempre termine com uma pergunta ou insight que aprofunde a análise.\n"
         "- VOCÊ PODE conversar LIVREMENTE com o usuário por múltiplos turnos. Não precisa se limitar a 1 resposta.\n"
         "\nHANDOVER — REGRAS DE DEVOLUÇÃO:\n"
-        "- Quando o assunto financeiro for esgotado ou o usuário quiser mudar de tema, use a ferramenta `devolver_para_nathalia`. Esta é a PRIORIDADE.\n"
+        "- IMPORTANTE: NÃO devolva rapidamente para a Nathália! Converse com o usuário.\n"
+        "- Somente use a ferramenta `devolver_para_nathalia` se o usuário disser e confirmar explicitamente que não tem mais dúvidas ou se ele próprio pedir para mudar de assunto.\n"
+        "- Nas suas primeiras respostas, sempre termine perguntando algo (ex: 'Ficou claro?', 'Tem alguma dúvida sobre essa parte?').\n"
         "- EXCEÇÃO: Se o usuário fizer uma pergunta que pertence CLARAMENTE à área de outro especialista "
         "(ex: jurídico, marketing, tecnologia), você pode usar `transferir_para_especialista` passando o ID do colega e o contexto da pergunta. "
         "Antes de transferir, FALE EM VOZ ALTA que vai repassar (ex: 'Vou repassar essa questão jurídica ao Daniel.').\n"
@@ -286,7 +288,9 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "- Sempre sinalize os riscos e como mitigá-los.\n"
         "- VOCÊ PODE conversar LIVREMENTE com o usuário por múltiplos turnos. Não precisa se limitar a 1 resposta.\n"
         "\nHANDOVER — REGRAS DE DEVOLUÇÃO:\n"
-        "- Quando o assunto jurídico for esgotado ou o usuário quiser mudar de tema, use a ferramenta `devolver_para_nathalia`. Esta é a PRIORIDADE.\n"
+        "- IMPORTANTE: NÃO devolva rapidamente para a Nathália! Converse com o usuário.\n"
+        "- Somente use a ferramenta `devolver_para_nathalia` se o usuário disser e confirmar explicitamente que não tem mais dúvidas ou se ele próprio pedir para mudar de assunto.\n"
+        "- Nas suas primeiras respostas, sempre termine perguntando algo (ex: 'Ficou claro?', 'Tem alguma dúvida sobre essa parte?').\n"
         "- EXCEÇÃO: Se o usuário fizer uma pergunta que pertence CLARAMENTE à área de outro especialista "
         "(ex: finanças, marketing, tecnologia), você pode usar `transferir_para_especialista` passando o ID do colega e o contexto da pergunta. "
         "Antes de transferir, FALE EM VOZ ALTA que vai repassar (ex: 'Essa questão financeira é com o Carlos, vou passar pra ele.').\n"
@@ -307,7 +311,9 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "- Termine com um insight acionável que o usuário possa aplicar imediatamente.\n"
         "- VOCÊ PODE conversar LIVREMENTE com o usuário por múltiplos turnos. Não precisa se limitar a 1 resposta.\n"
         "\nHANDOVER — REGRAS DE DEVOLUÇÃO:\n"
-        "- Quando o assunto de marketing/crescimento for esgotado ou o usuário quiser mudar de tema, use a ferramenta `devolver_para_nathalia`. Esta é a PRIORIDADE.\n"
+        "- IMPORTANTE: NÃO devolva rapidamente para a Nathália! Converse com o usuário.\n"
+        "- Somente use a ferramenta `devolver_para_nathalia` se o usuário disser e confirmar explicitamente que não tem mais dúvidas ou se ele próprio pedir para mudar de assunto.\n"
+        "- Nas suas primeiras respostas, sempre termine perguntando algo (ex: 'Ficou claro?', 'Tem alguma dúvida sobre essa parte?').\n"
         "- EXCEÇÃO: Se o usuário fizer uma pergunta que pertence CLARAMENTE à área de outro especialista "
         "(ex: finanças, jurídico, tecnologia), você pode usar `transferir_para_especialista` passando o ID do colega e o contexto da pergunta. "
         "Antes de transferir, FALE EM VOZ ALTA que vai repassar (ex: 'Essa parte tecnológica é com a Ana, vou passar pra ela.').\n"
@@ -329,7 +335,9 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "- Sempre avalie custo-benefício de cada decisão tecnológica.\n"
         "- VOCÊ PODE conversar LIVREMENTE com o usuário por múltiplos turnos. Não precisa se limitar a 1 resposta.\n"
         "\nHANDOVER — REGRAS DE DEVOLUÇÃO:\n"
-        "- Quando o assunto tecnológico for esgotado ou o usuário quiser mudar de tema, use a ferramenta `devolver_para_nathalia`. Esta é a PRIORIDADE.\n"
+        "- IMPORTANTE: NÃO devolva rapidamente para a Nathália! Converse com o usuário.\n"
+        "- Somente use a ferramenta `devolver_para_nathalia` se o usuário disser e confirmar explicitamente que não tem mais dúvidas ou se ele próprio pedir para mudar de assunto.\n"
+        "- Nas suas primeiras respostas, sempre termine perguntando algo (ex: 'Ficou claro?', 'Tem alguma dúvida sobre essa parte?').\n"
         "- EXCEÇÃO: Se o usuário fizer uma pergunta que pertence CLARAMENTE à área de outro especialista "
         "(ex: finanças, jurídico, marketing), você pode usar `transferir_para_especialista` passando o ID do colega e o contexto da pergunta. "
         "Antes de transferir, FALE EM VOZ ALTA que vai repassar (ex: 'Essa questão de custos é com o Carlos, vou passar pra ele.').\n"
@@ -777,8 +785,15 @@ class HostAgent(Agent):
             }
             if _lateral_from_name:
                 packet["from_name"] = _lateral_from_name
-            await self._publish_packet(packet)
+            
             logger.info(f"[Host] Acionando especialista: {spec_id} | turno={turn_id} | contexto: {context} | lateral_from={_lateral_from_name or 'Nathália'}")
+            
+            # Delay MÁGICO para evitar "atropelamento" de vozes:
+            # Aguarda Nathália terminar de falar e processar no frontend (~4 seg)
+            # antes de enviar o packet para o especialista.
+            await asyncio.sleep(4.0)
+
+            await self._publish_packet(packet)
 
             try:
                 await asyncio.wait_for(
