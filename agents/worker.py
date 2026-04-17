@@ -2949,14 +2949,17 @@ async def _run_entrypoint(ctx: JobContext) -> None:
 
         await persist_resume_snapshot()
 
-        # Desconecta especialistas com timeout máximo para evitar travamentos
+        # Desconecta especialistas PARALELAMENTE para não estourar o tempo e segurar a sala no Guard
+        disconnect_tasks = []
         for spec_room in blackboard.specialist_rooms:
-            try:
-                await asyncio.wait_for(spec_room.disconnect(), timeout=1.5)
-            except asyncio.CancelledError:
-                pass
-            except Exception as e:
-                logger.warning(f"[Job] Erro/Timeout ao desconectar room de especialista: {e}")
+            disconnect_tasks.append(asyncio.wait_for(spec_room.disconnect(), timeout=1.5))
+        
+        if disconnect_tasks:
+            await asyncio.gather(*disconnect_tasks, return_exceptions=True)
+
+        # Remove o room do Guard o mais rápido possível para liberar nova conexão do usuário 
+        room_name = getattr(ctx.job.room, "name", ctx.room.name) if getattr(ctx, "job", None) else ctx.room.name
+        _active_rooms.discard(room_name)
 
         # DESCONECTA O HOST E A SALA PRINCIPAL (Libera o ambiente)
         try:
