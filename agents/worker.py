@@ -2933,27 +2933,37 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                         headers={"Content-Type": "application/json"},
                         method="POST",
                     )
-                    with urllib.request.urlopen(req):
+                    with urllib.request.urlopen(req, timeout=5.0):
                         return True
                 except Exception as e:
                     logger.warning(f"[Resume] Falha ao persistir snapshot de retomada: {e}")
                     return False
 
-            loop = asyncio.get_running_loop()
-            await loop.run_in_executor(None, _post)
+            try:
+                loop = asyncio.get_running_loop()
+                await asyncio.wait_for(loop.run_in_executor(None, _post), timeout=6.0)
+            except Exception as e:
+                logger.warning(f"[Resume] Timeout ao persistir snapshot: {e}")
 
         await persist_resume_snapshot()
 
         # Desconecta especialistas com timeout máximo para evitar travamentos
         for spec_room in blackboard.specialist_rooms:
             try:
-                await asyncio.wait_for(spec_room.disconnect(), timeout=2.0)
+                await asyncio.wait_for(spec_room.disconnect(), timeout=1.5)
+            except asyncio.CancelledError:
+                pass
             except Exception as e:
                 logger.warning(f"[Job] Erro/Timeout ao desconectar room de especialista: {e}")
-            except asyncio.CancelledError:
-                # O await dentro de task cancelada vai dar throw repetidamente.
-                # Capturamos para não impedir as chamadas síncronas de baixo.
-                pass
+
+        # DESCONECTA O HOST E A SALA PRINCIPAL (Libera o ambiente)
+        try:
+            await asyncio.wait_for(ctx.room.disconnect(), timeout=2.0)
+            logger.info("[Job] Sala principal forçadamente desconectada pelo agente Host.")
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            logger.warning(f"[Job] Erro ao tentar desconectar sala principal: {e}")
 
         room_name = getattr(ctx.job.room, "name", ctx.room.name) if getattr(ctx, "job", None) else ctx.room.name
 
