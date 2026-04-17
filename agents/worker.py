@@ -1605,7 +1605,7 @@ class HostAgent(Agent):
 
             def _call_draft():
                 return client.models.generate_content(
-                    model="gemini-3.1-flash-lite-preview",
+                    model="gemini-2.5-flash",
                     contents=draft_prompt,
                     config=types.GenerateContentConfig(
                         temperature=0.65,
@@ -1668,7 +1668,7 @@ class HostAgent(Agent):
         try:
             def _call_review():
                 return client.models.generate_content(
-                    model="gemini-3.1-flash-lite-preview",
+                    model="gemini-2.5-flash",
                     contents=review_prompt,
                     config=types.GenerateContentConfig(
                         temperature=0.5,

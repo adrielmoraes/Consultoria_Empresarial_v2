@@ -8,10 +8,12 @@ dependencies = [
     "google-genai>=1.0.0",
     "google-generativeai>=0.8.0",
     "livekit>=1.1.2",
-    "livekit-agents>=1.4.6",
     "livekit-api>=1.1.0",
+    "livekit-agents[bey]>=1.4.6",
+    "livekit-plugins-bey>=1.4.0",
     "livekit-plugins-google>=1.4.6",
     "markdown>=3.5.0",
     "python-dotenv>=1.0.0",
     "reportlab>=4.0.0",
+    "duckduckgo-search>=6.0.0",
 ]

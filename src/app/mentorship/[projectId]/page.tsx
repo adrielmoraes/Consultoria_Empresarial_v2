@@ -802,7 +802,6 @@ export default function MentorshipRoomPage() {
           }
         });
 
-        // Manipulação de Tracks
         room.on(
           RoomEvent.TrackSubscribed,
           (track, _pub, participant: RemoteParticipant) => {
@@ -816,7 +815,9 @@ export default function MentorshipRoomPage() {
               el.autoplay = true;
               audioContainerRef.current.appendChild(el);
             } else if (track.kind === Track.Kind.Video && participant.identity.startsWith("bey-")) {
-              const agId = participant.identity.replace("bey-", "");
+              let agId = participant.identity.replace("bey-", "");
+              if (agId.startsWith("agent-")) agId = agId.replace("agent-", "");
+              
               setActiveVideoTracks((prev) => ({ ...prev, [agId]: track as RemoteVideoTrack }));
               console.log(`[Video] Câmera do avatar ${agId} recebida e registrada.`);
             }
@@ -832,13 +833,14 @@ export default function MentorshipRoomPage() {
                  ?.remove();
                track.detach();
             } else if (track.kind === Track.Kind.Video && participant.identity.startsWith("bey-")) {
-              const agId = participant.identity.replace("bey-", "");
+              let agId = participant.identity.replace("bey-", "");
+              if (agId.startsWith("agent-")) agId = agId.replace("agent-", "");
+              
               setActiveVideoTracks((prev) => {
                 const next = { ...prev };
                 delete next[agId];
                 return next;
               });
-              // Track visual detached no próprio React Component Unmount
               console.log(`[Video] Câmera do avatar ${agId} removida.`);
             }
           }
