@@ -103,6 +103,21 @@ logging.getLogger("livekit").setLevel(logging.WARNING)
 logging.getLogger("root").setLevel(logging.WARNING)
 logging.getLogger("google").setLevel(logging.WARNING)
 
+# ── Filtro anti-flood ──────────────────────────────────────────────────────────
+# As mensagens "ignoring byte/text stream" do LiveKit SDK são emitidas centenas
+# de vezes por segundo quando múltiplos agentes estão na mesma sala, saturando
+# o event loop e impedindo o processamento de áudio/fala. Filtramos aqui.
+class _IgnoringStreamFilter(logging.Filter):
+    _SUPPRESSED = ("ignoring byte stream", "ignoring text stream")
+    def filter(self, record: logging.LogRecord) -> bool:
+        msg = record.getMessage()
+        return not any(s in msg for s in self._SUPPRESSED)
+
+for _handler in logging.root.handlers:
+    _handler.addFilter(_IgnoringStreamFilter())
+logging.getLogger("root").addFilter(_IgnoringStreamFilter())
+# ──────────────────────────────────────────────────────────────────────────────
+
 # Rastreia salas que já possuem um job ativo para rejeitar dispatches duplicados.
 _active_rooms: set[str] = set()
 
@@ -1689,12 +1704,18 @@ class HostAgent(Agent):
             search_query = query_resp.text.strip().replace("\"", "").replace("'", "")
             logger.info(f"[Marco] Query gerada para web search: {search_query}")
             
-            # 2. Pesquisar de forma assíncrona
+            # 2. Pesquisar na Web com fallback para sincrono em thread
             logger.info("[Marco] Consultando DuckDuckGo...")
             resultados_ddgs = []
-            async with AsyncDDGS() as ddgs:
-                async for res in ddgs.text(search_query, max_results=3, region="br-pt"):
-                    resultados_ddgs.append(f"Título: {res.get('title')}\nTrecho: {res.get('body')}")
+            
+            def _do_search():
+                if DDGS is None:
+                    return []
+                return list(DDGS().text(search_query, max_results=3, region="br-pt"))
+
+            raw_results = await loop.run_in_executor(None, _do_search)
+            for res in raw_results:
+                resultados_ddgs.append(f"Título: {res.get('title')}\nTrecho: {res.get('body')}")
             
             if resultados_ddgs:
                 web_context = "\n\n--- DADOS PESQUISADOS NA WEB EM TEMPO REAL ---\n" + "\n\n".join(resultados_ddgs)
