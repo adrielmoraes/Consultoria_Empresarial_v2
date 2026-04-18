@@ -997,50 +997,53 @@ class HostAgent(Agent):
         user_name = self._blackboard.user_name or "empreendedor"
         project_name = self._blackboard.project_name or "seu projeto"
 
-        # Marco trabalha nos bastidores — gera o documento usando o modelo de linguagem com Search
-        logger.info("[Marco] Acionando LLM (Gemini 2.5 Pro + Search) para gerar Plano de Execução...")
-        self._blackboard.add_message("Sistema", f"Marco iniciou a pesquisa e o processamento do Plano para {user_name}...")
+        async def _background_task():
+            # Marco trabalha nos bastidores — gera o documento usando o modelo de linguagem com Search
+            logger.info("[Marco] Acionando LLM (Gemini 2.5 Pro + Search) para gerar Plano de Execução...")
+            self._blackboard.add_message("Sistema", f"Marco iniciou a pesquisa e o processamento do Plano para {user_name}...")
 
-        # Aguarda um pequeno momento para enviar a mensagem do sistema antes que o LLM comece
-        await asyncio.sleep(2.0)
+            # Aguarda um pequeno momento para enviar a mensagem do sistema antes que o LLM comece
+            await asyncio.sleep(2.0)
 
-        # Gera o documento Markdown estruturado de forma inteligente
-        markdown_plan = await self._generate_markdown_plan_with_agent(user_name, project_name)
+            # Gera o documento Markdown estruturado de forma inteligente
+            markdown_plan = await self._generate_markdown_plan_with_agent(user_name, project_name)
 
-        # Gera o PDF profissional com a logomarca Hive Mind
-        pdf_base64: str | None = None
-        try:
-            from pdf_generator import generate_pdf
-            loop = asyncio.get_running_loop()
-            pdf_bytes = await loop.run_in_executor(
-                None,
-                generate_pdf,
-                markdown_plan,
-                project_name,
-                user_name,
-            )
-            pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
-            logger.info(f"[Marco] PDF gerado com sucesso ({len(pdf_bytes)} bytes / {len(pdf_base64)} chars Base64).")
-        except Exception as pdf_err:
-            logger.warning(f"[Marco] Falha ao gerar PDF — apenas Markdown será enviado: {pdf_err}")
+            # Gera o PDF profissional com a logomarca Hive Mind
+            pdf_base64: str | None = None
+            try:
+                from pdf_generator import generate_pdf
+                loop = asyncio.get_running_loop()
+                pdf_bytes = await loop.run_in_executor(
+                    None,
+                    generate_pdf,
+                    markdown_plan,
+                    project_name,
+                    user_name,
+                )
+                pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
+                logger.info(f"[Marco] PDF gerado com sucesso ({len(pdf_bytes)} bytes / {len(pdf_base64)} chars Base64).")
+            except Exception as pdf_err:
+                logger.warning(f"[Marco] Falha ao gerar PDF — apenas Markdown será enviado: {pdf_err}")
 
-        try:
-            packet: dict = {
-                "type": "execution_plan",
-                "plan": markdown_plan,
-                "text": markdown_plan,
-            }
-            if pdf_base64:
-                packet["pdf_base64"] = pdf_base64
-            await self._publish_packet(packet)
-            logger.info("[Marco] Plano de Execução publicado como data packet (bastidores).")
-        except Exception as e:
-            logger.warning(f"[Marco] Erro ao publicar plano de execução: {e}")
+            try:
+                packet: dict = {
+                    "type": "execution_plan",
+                    "plan": markdown_plan,
+                    "text": markdown_plan,
+                }
+                if pdf_base64:
+                    packet["pdf_base64"] = pdf_base64
+                await self._publish_packet(packet)
+                logger.info("[Marco] Plano de Execução publicado como data packet (bastidores).")
+            except Exception as e:
+                logger.warning(f"[Marco] Erro ao publicar plano de execução: {e}")
+
+        asyncio.create_task(_background_task())
 
         return (
-            f"Marco preparou o Plano de Execução completo para {user_name} nos bastidores. "
-            f"O documento já foi enviado para a tela do usuário. "
-            f"Informe ao usuário que o plano está pronto e disponível para download."
+            f"MARCO_ACIONADO: Você avisou ao Marco nos bastidores. ELE JÁ ESTA TRABALHANDO no Plano de Execução para {user_name}. "
+            f"Gere UMA NOVA FALA AVISANDO O USUÁRIO: diga exatamente que o Marco começou a redigir o plano nos bastidores, "
+            f"fazendo pesquisas e em instantes chegará pronto na tela dele. Seja natural."
         )
 
     # ------------------------------------------------------------------
@@ -1090,29 +1093,31 @@ class HostAgent(Agent):
         }
         doc_title = titulos.get(doc_type, tipo_documento.replace("_", " ").title())
 
-        logger.info(f"[Marco] Gerando documento '{doc_type}' para {user_name}...")
-        self._blackboard.add_message("Sistema", f"Marco iniciou geração de {doc_title} para {user_name}...")
+        async def _background_task():
+            logger.info(f"[Marco] Gerando documento '{doc_type}' para {user_name}...")
+            self._blackboard.add_message("Sistema", f"Marco iniciou geração de {doc_title} para {user_name}...")
 
-        markdown_doc = await self._generate_custom_document(
-            doc_type=doc_type,
-            doc_title=doc_title,
-            user_name=user_name,
-            project_name=project_name,
-            extra_context=descricao_contexto,
-        )
+            markdown_doc = await self._generate_custom_document(
+                doc_type=doc_type,
+                doc_title=doc_title,
+                user_name=user_name,
+                project_name=project_name,
+                extra_context=descricao_contexto,
+            )
 
-        await self._publish_document_packet(
-            doc_type=doc_type,
-            doc_title=doc_title,
-            markdown_content=markdown_doc,
-            user_name=user_name,
-            project_name=project_name,
-        )
+            await self._publish_document_packet(
+                doc_type=doc_type,
+                doc_title=doc_title,
+                markdown_content=markdown_doc,
+                user_name=user_name,
+                project_name=project_name,
+            )
+
+        asyncio.create_task(_background_task())
 
         return (
-            f"Marco concluiu a {doc_title} para {user_name} nos bastidores. "
-            f"O documento já foi enviado para a tela. "
-            f"Informe ao usuário que o documento está disponível para download."
+            f"MARCO_ACIONADO: Você acionou o Marco para preparar: {doc_title}. "
+            f"Diga que ele já esta pesquisando e gerando o PDF nos bastidores e em instantes chegará para {user_name}."
         )
 
     @function_tool
@@ -1133,29 +1138,32 @@ class HostAgent(Agent):
         user_name = self._blackboard.user_name or "empreendedor"
         project_name = self._blackboard.project_name or "seu projeto"
 
-        logger.info(f"[Marco] Pesquisando mercado: {setor} | {pergunta_especifica}")
-        self._blackboard.add_message("Sistema", f"Marco iniciou pesquisa de mercado sobre '{setor}'...")
+        async def _background_task():
+            logger.info(f"[Marco] Pesquisando mercado: {setor} | {pergunta_especifica}")
+            self._blackboard.add_message("Sistema", f"Marco iniciou pesquisa de mercado sobre '{setor}'...")
 
-        extra_context = f"Setor pesquisado: {setor}\nFoco da pesquisa: {pergunta_especifica}"
-        markdown_doc = await self._generate_custom_document(
-            doc_type="pesquisa_mercado",
-            doc_title="Pesquisa de Mercado",
-            user_name=user_name,
-            project_name=project_name,
-            extra_context=extra_context,
-        )
+            extra_context = f"Setor pesquisado: {setor}\nFoco da pesquisa: {pergunta_especifica}"
+            markdown_doc = await self._generate_custom_document(
+                doc_type="pesquisa_mercado",
+                doc_title="Pesquisa de Mercado",
+                user_name=user_name,
+                project_name=project_name,
+                extra_context=extra_context,
+            )
 
-        await self._publish_document_packet(
-            doc_type="pesquisa_mercado",
-            doc_title=f"Pesquisa de Mercado — {setor}",
-            markdown_content=markdown_doc,
-            user_name=user_name,
-            project_name=project_name,
-        )
+            await self._publish_document_packet(
+                doc_type="pesquisa_mercado",
+                doc_title=f"Pesquisa de Mercado — {setor}",
+                markdown_content=markdown_doc,
+                user_name=user_name,
+                project_name=project_name,
+            )
+
+        asyncio.create_task(_background_task())
 
         return (
-            f"Marco concluiu a Pesquisa de Mercado sobre '{setor}' para {user_name}. "
-            f"O relatório completo já está disponível na tela do usuário. "
+            f"MARCO_ACIONADO: A pesquisa sobre '{setor}' já está rodando em paralelo. "
+            f"Avise ao {user_name} que o Marco vai coletar os dados na Web e o relatório aparecerá na tela dele."
         )
 
     @function_tool
@@ -1174,30 +1182,31 @@ class HostAgent(Agent):
         user_name = self._blackboard.user_name or "empreendedor"
         project_name = self._blackboard.project_name or "seu projeto"
 
-        orgao_processo = f"Abertura de Empresa ({tipo_empresa})"
-        logger.info(f"[Marco] Gerando guia de abertura de empresa: {tipo_empresa}")
-        self._blackboard.add_message("Sistema", f"Marco iniciou guia de abertura de empresa ({tipo_empresa})...")
+        async def _background_task():
+            orgao_processo = f"Abertura de Empresa ({tipo_empresa})"
+            logger.info(f"[Marco] Gerando guia de abertura de empresa: {tipo_empresa}")
+            self._blackboard.add_message("Sistema", f"Marco iniciou guia de abertura de empresa ({tipo_empresa})...")
 
-        markdown_doc = await self._generate_public_agency_guidance(
-            orgao_processo=orgao_processo,
-            contexto=f"Tipo de empresa: {tipo_empresa}. Contexto do negócio: {self._blackboard.get_context_summary()[:800]}",
-            user_name=user_name,
-            project_name=project_name,
-        )
+            markdown_doc = await self._generate_public_agency_guidance(
+                orgao_processo=orgao_processo,
+                contexto=f"Tipo de empresa: {tipo_empresa}. Contexto do negócio: {self._blackboard.get_context_summary()[:800]}",
+                user_name=user_name,
+                project_name=project_name,
+            )
 
-        await self._publish_document_packet(
-            doc_type="orientacao_orgao",
-            doc_title=f"Guia: Abertura de Empresa — {tipo_empresa}",
-            markdown_content=markdown_doc,
-            user_name=user_name,
-            project_name=project_name,
-        )
+            await self._publish_document_packet(
+                doc_type="orientacao_orgao",
+                doc_title=f"Guia: Abertura de Empresa — {tipo_empresa}",
+                markdown_content=markdown_doc,
+                user_name=user_name,
+                project_name=project_name,
+            )
+
+        asyncio.create_task(_background_task())
 
         return (
-            f"Marco preparou o Guia de Abertura de Empresa ({tipo_empresa}) para {user_name}. "
-            f"O documento explica passo a passo, custos, links e prazos. "
-            f"Já está disponível na tela para download. "
-            f"IMPORTANTE: Informe ao usuário que este é um guia orientativo — o CNPJ deve ser solicitado nos portais governamentais."
+            f"MARCO_ACIONADO: Você avisou ao Marco para preparar o guia de Abertura ({tipo_empresa}). "
+            f"Diga que ele compilara com links, prazos e custos na web, gerando e enviando em background para a tela."
         )
 
     @function_tool
@@ -1226,29 +1235,30 @@ class HostAgent(Agent):
         user_name = self._blackboard.user_name or "empreendedor"
         project_name = self._blackboard.project_name or "seu projeto"
 
-        logger.info(f"[Marco] Gerando orientação sobre: {orgao_processo}")
-        self._blackboard.add_message("Sistema", f"Marco preparando guia sobre '{orgao_processo}'...")
+        async def _background_task():
+            logger.info(f"[Marco] Gerando orientação sobre: {orgao_processo}")
+            self._blackboard.add_message("Sistema", f"Marco preparando guia sobre '{orgao_processo}'...")
 
-        markdown_doc = await self._generate_public_agency_guidance(
-            orgao_processo=orgao_processo,
-            contexto=contexto_adicional,
-            user_name=user_name,
-            project_name=project_name,
-        )
+            markdown_doc = await self._generate_public_agency_guidance(
+                orgao_processo=orgao_processo,
+                contexto=contexto_adicional,
+                user_name=user_name,
+                project_name=project_name,
+            )
 
-        await self._publish_document_packet(
-            doc_type="orientacao_orgao",
-            doc_title=f"Guia: {orgao_processo}",
-            markdown_content=markdown_doc,
-            user_name=user_name,
-            project_name=project_name,
-        )
+            await self._publish_document_packet(
+                doc_type="orientacao_orgao",
+                doc_title=f"Guia: {orgao_processo}",
+                markdown_content=markdown_doc,
+                user_name=user_name,
+                project_name=project_name,
+            )
+
+        asyncio.create_task(_background_task())
 
         return (
-            f"Marco concluiu o Guia sobre '{orgao_processo}' para {user_name}. "
-            f"O documento já está disponível na tela com passo a passo, custos e links oficiais. "
-            f"IMPORTANTE: Reforce ao usuário que este é um guia orientativo. "
-            f"O processo oficial deve ser realizado diretamente nos portais governamentais indicados."
+            f"MARCO_ACIONADO: Você avisou ao Marco sobre '{orgao_processo}' e ele está extraindo as orientais na rede em background. "
+            f"Diga que é bom o {user_name} aguardar pois o documento chegará pronto."
         )
 
     @function_tool
@@ -1273,41 +1283,42 @@ class HostAgent(Agent):
         user_name = self._blackboard.user_name or "empreendedor"
         project_name = self._blackboard.project_name or "seu projeto"
 
-        logger.info(f"[Marco] Gerando modelo de contrato: {tipo_contrato} | partes: {partes_envolvidas}")
-        self._blackboard.add_message("Sistema", f"Marco preparando modelo de contrato de {tipo_contrato}...")
+        async def _background_task():
+            logger.info(f"[Marco] Gerando modelo de contrato: {tipo_contrato} | partes: {partes_envolvidas}")
+            self._blackboard.add_message("Sistema", f"Marco preparando modelo de contrato de {tipo_contrato}...")
 
-        extra_context = (
-            f"Tipo de contrato: {tipo_contrato}\n"
-            f"Partes envolvidas: {partes_envolvidas}\n"
-            f"Contexto do negócio: {self._blackboard.get_context_summary()[:600]}"
-        )
+            extra_context = (
+                f"Tipo de contrato: {tipo_contrato}\n"
+                f"Partes envolvidas: {partes_envolvidas}\n"
+                f"Contexto do negócio: {self._blackboard.get_context_summary()[:600]}"
+            )
 
-        markdown_doc = await self._generate_custom_document(
-            doc_type="modelo_contrato",
-            doc_title=f"Modelo de Contrato — {tipo_contrato.title()}",
-            user_name=user_name,
-            project_name=project_name,
-            extra_context=extra_context,
-            extra_vars={
-                "tipo_contrato": tipo_contrato,
-                "tipo_contrato_upper": tipo_contrato.upper(),
-                "partes": partes_envolvidas,
-            },
-        )
+            markdown_doc = await self._generate_custom_document(
+                doc_type="modelo_contrato",
+                doc_title=f"Modelo de Contrato — {tipo_contrato.title()}",
+                user_name=user_name,
+                project_name=project_name,
+                extra_context=extra_context,
+                extra_vars={
+                    "tipo_contrato": tipo_contrato,
+                    "tipo_contrato_upper": tipo_contrato.upper(),
+                    "partes": partes_envolvidas,
+                },
+            )
 
-        await self._publish_document_packet(
-            doc_type="modelo_contrato",
-            doc_title=f"Modelo de Contrato — {tipo_contrato.title()}",
-            markdown_content=markdown_doc,
-            user_name=user_name,
-            project_name=project_name,
-        )
+            await self._publish_document_packet(
+                doc_type="modelo_contrato",
+                doc_title=f"Modelo de Contrato — {tipo_contrato.title()}",
+                markdown_content=markdown_doc,
+                user_name=user_name,
+                project_name=project_name,
+            )
+
+        asyncio.create_task(_background_task())
 
         return (
-            f"Marco concluiu o Modelo de Contrato de {tipo_contrato.title()} para {user_name}. "
-            f"O documento já está disponível na tela. "
-            f"FUNDAMENTAL: Informe ao usuário que este é um modelo base e DEVE ser revisado "
-            f"por um advogado especializado antes de ser assinado."
+            f"MARCO_ACIONADO: Você falou com Marco e ele já redigirá o modelo do contrato para os dados deste cenário. "
+            f"Fale que ele está no backstage adaptando e em instantes chegará para {user_name} revisar com advogados reais."
         )
 
     @function_tool
@@ -1326,31 +1337,33 @@ class HostAgent(Agent):
         user_name = self._blackboard.user_name or "empreendedor"
         project_name = self._blackboard.project_name or "seu projeto"
 
-        logger.info(f"[Marco] Gerando Pitch Deck para {publico_alvo}...")
-        self._blackboard.add_message("Sistema", f"Marco preparando Pitch Deck para {publico_alvo}...")
+        async def _background_task():
+            logger.info(f"[Marco] Gerando Pitch Deck para {publico_alvo}...")
+            self._blackboard.add_message("Sistema", f"Marco preparando Pitch Deck para {publico_alvo}...")
 
-        extra_context = f"Público-alvo da apresentação: {publico_alvo}"
-        markdown_doc = await self._generate_custom_document(
-            doc_type="pitch_deck",
-            doc_title="Pitch Deck",
-            user_name=user_name,
-            project_name=project_name,
-            extra_context=extra_context,
-            extra_vars={"publico": publico_alvo},
-        )
+            extra_context = f"Público-alvo da apresentação: {publico_alvo}"
+            markdown_doc = await self._generate_custom_document(
+                doc_type="pitch_deck",
+                doc_title="Pitch Deck",
+                user_name=user_name,
+                project_name=project_name,
+                extra_context=extra_context,
+                extra_vars={"publico": publico_alvo},
+            )
 
-        await self._publish_document_packet(
-            doc_type="pitch_deck",
-            doc_title=f"Pitch Deck — {project_name}",
-            markdown_content=markdown_doc,
-            user_name=user_name,
-            project_name=project_name,
-        )
+            await self._publish_document_packet(
+                doc_type="pitch_deck",
+                doc_title=f"Pitch Deck — {project_name}",
+                markdown_content=markdown_doc,
+                user_name=user_name,
+                project_name=project_name,
+            )
+
+        asyncio.create_task(_background_task())
 
         return (
-            f"Marco criou o Pitch Deck de {project_name} para {user_name}! "
-            f"O documento com os 12 slides já está disponível na tela para download. "
-            f"Sugira ao usuário revisar os dados financeiros e personalizar com informações reais antes de apresentar."
+            f"MARCO_ACIONADO: Marco começou a arquitetar o esquema do Pitch Deck em background. "
+            f"Avise que está no processo em andamento e gerando em PDF."
         )
 
     # ------------------------------------------------------------------
