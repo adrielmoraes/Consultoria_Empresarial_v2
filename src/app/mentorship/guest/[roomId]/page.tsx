@@ -577,9 +577,11 @@ export default function GuestMentorshipPage() {
               <GuestAgentCard key={agent.id} agent={agent} />
             ))}
           </div>
-          <div className="md:hidden grid grid-cols-2 gap-3 overflow-y-auto pb-4 h-full">
+          <div className="md:hidden grid grid-cols-2 lg:hidden gap-3 overflow-y-auto pb-4 h-full content-start">
             {agents.map((agent) => (
-              <GuestAgentCard key={agent.id} agent={agent} compact />
+              <div key={agent.id} className={agent.id === "host" ? "col-span-2 aspect-video" : "col-span-1 aspect-square"}>
+                 <GuestAgentCard agent={agent} compact />
+              </div>
             ))}
           </div>
         </div>
@@ -693,9 +695,7 @@ function GuestAgentCard({
   return (
     <motion.div
       layout
-      className={`relative rounded-3xl overflow-hidden border transition-all duration-700 ease-in-out bg-black/40 backdrop-blur-md ${
-        compact ? "h-40" : "h-full"
-      } ${
+      className={`relative rounded-3xl overflow-hidden border transition-all duration-700 ease-in-out bg-black/40 backdrop-blur-md h-full ${
         agent.speaking
           ? "border-[#d4af37] shadow-[0_0_50px_rgba(212,175,55,0.25)] scale-[1.02] z-10"
           : agent.connected

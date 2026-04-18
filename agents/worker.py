@@ -113,7 +113,7 @@ GEMINI_REALTIME_CONFIG = {
 
 DATA_PACKET_SCHEMA_VERSION = "1.0"
 ACTIVATION_ACK_TIMEOUT_SECONDS = 8.0
-ACTIVATION_DONE_TIMEOUT_SECONDS = 45.0
+ACTIVATION_DONE_TIMEOUT_SECONDS = 300.0
 ACTIVATION_DEBOUNCE_SECONDS = 0.8
 SPECIALIST_GENERATION_TIMEOUT_SECONDS = 35.0
 CONTEXT_RECENT_WINDOW = 12
@@ -836,9 +836,9 @@ class HostAgent(Agent):
             
             logger.info(f"[Host] Acionando especialista: {spec_id} | turno={turn_id} | contexto: {context} | lateral_from={_lateral_from_name or 'Nathália'}")
             
-            # Delay curto para evitar sobreposição de vozes
-            # (Nathália termina de falar a frase de apresentação)
-            await asyncio.sleep(1.5)
+            # Delay mais longo (4s) para garantir que a Nathália termine de falar
+            # a frase de apresentação antes que o especialista assuma.
+            await asyncio.sleep(4)
 
             # SILENCIA a Nathália ANTES de enviar o packet
             # Impede que o Gemini da Nathália intercepte o áudio do usuário
