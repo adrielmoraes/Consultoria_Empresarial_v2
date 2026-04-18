@@ -238,11 +238,16 @@ REGRAS DE ORQUESTRAÇÃO:
 17. Quando o usuário quiser apresentar o negocio para investidores ou parceiros → use gerar_pitch_deck.
 18. Se precisar cobrir múltiplos temas em sequencia, acione cada especialista separadamente.
 19. RETOMADA: Se você perceber que há histórico de conversa anterior, comece dizendo que está retomando.
-20. TURNO DE FALA: Quando você acionar um especialista via função, PARE DE FALAR imediatamente. NÃO adicione comentários após a chamada.
-21. NUNCA fale ao mesmo tempo que um especialista. Dê espaço total para ele responder.
-22. Após o especialista terminar (devolver a palavra a você), retome com 1-2 frases de transição antes de continuar.
-23. HANDOVER: Quando você aciona um especialista, ele assumirá a conversa diretamente com o usuário por múltiplos turnos. Você ficará em SILÊNCIO ABSOLUTO esperando ele devolver a palavra. NÃO interrompa.
-24. MARCO NOS BASTIDORES: Quando acionar o Marco via qualquer ferramenta gerar_*, avise ao usuário que o Marco está preparando o documento nos bastidores e que chegará em instantes. Exemplo: "Vou pedir ao Marco para preparar isso agora nos bastidores!"
+
+REGRAS CRÍTICAS DE SILÊNCIO DURANTE HANDOVER:
+20. ANTES de acionar uma ferramenta de especialista, diga UMA frase curta apresentando-o. Exemplo: "Vou chamar o Carlos para te ajudar com isso!". Depois acione a ferramenta IMEDIATAMENTE.
+21. Quando a ferramenta retornar com sucesso, NÃO FALE ABSOLUTAMENTE NADA. O especialista JÁ ESTÁ FALANDO com o usuário. Qualquer palavra sua vai ATROPELAR o especialista.
+22. Se a ferramenta retornar "ESPECIALISTA_ATIVADO", isso significa SUCESSO ABSOLUTO. O especialista está conversando com o usuário. Fique em SILÊNCIO TOTAL.
+23. NUNCA diga frases como "Enquanto o X resolve..." ou "Vou chamar outro enquanto isso" após o acionamento bem-sucedido. O especialista JÁ ESTÁ ATIVO.
+24. Você só deve voltar a falar quando o especialista DEVOLVER A PALAVRA para você (a ferramenta vai retornar "ESPECIALISTA_DEVOLVEU").
+25. Se a ferramenta retornar erro ou timeout, aí sim explique ao usuário e ofereça alternativa.
+26. HANDOVER: Quando você aciona um especialista, ele assumirá a conversa diretamente com o usuário por múltiplos turnos. Você ficará em SILÊNCIO ABSOLUTO esperando ele devolver a palavra. NÃO interrompa.
+27. MARCO NOS BASTIDORES: Quando acionar o Marco via qualquer ferramenta gerar_*, avise ao usuário que o Marco está preparando o documento nos bastidores e que chegará em instantes. Exemplo: "Vou pedir ao Marco para preparar isso agora nos bastidores!"
 
 MODO OUVINTE (SALA COM MÚLTIPLOS HUMANOS):
 - A sala pode ter convidados (sócios, diretores) além do usuário principal.
@@ -709,6 +714,35 @@ class HostAgent(Agent):
         self._turn_events: dict[int, dict[str, asyncio.Event]] = {}
         self._turn_status: dict[int, dict] = {}
         self._last_activation_at: dict[str, float] = {}
+        self._host_audio_muted = False  # Controle de mute do áudio para silenciar durante turno de especialista
+        self._host_session: Optional[AgentSession] = None  # Referência ao host_session (definida após start)
+
+    # ------------------------------------------------------------------
+    # Controle de áudio da Nathália — silencia durante turno de especialista
+    # ------------------------------------------------------------------
+    def _mute_host_audio(self) -> None:
+        """Dessubscreve o áudio do usuário na Nathália para silenciá-la durante turno de especialista."""
+        if self._host_audio_muted:
+            return
+        self._host_audio_muted = True
+        for p in self._room.remote_participants.values():
+            if p.identity.startswith("user-") or p.identity.startswith("guest-"):
+                for pub in p.track_publications.values():
+                    if pub.kind == rtc.TrackKind.KIND_AUDIO:
+                        pub.set_subscribed(False)
+        logger.info("[Host] Áudio do usuário DESSUBSCRITO — Nathália SILENCIADA durante turno de especialista.")
+
+    def _unmute_host_audio(self) -> None:
+        """Resubscreve o áudio do usuário na Nathália quando o turno do especialista terminar."""
+        if not self._host_audio_muted:
+            return
+        self._host_audio_muted = False
+        for p in self._room.remote_participants.values():
+            if p.identity.startswith("user-") or p.identity.startswith("guest-"):
+                for pub in p.track_publications.values():
+                    if pub.kind == rtc.TrackKind.KIND_AUDIO:
+                        pub.set_subscribed(True)
+        logger.info("[Host] Áudio do usuário RESUBSCRITO — Nathália ATIVA novamente.")
 
     async def _publish_packet(self, payload: dict) -> None:
         base_payload = {
@@ -755,6 +789,13 @@ class HostAgent(Agent):
     # ------------------------------------------------------------------
 
     async def _activate_specialist(self, spec_id: str, context: str, _lateral_from_name: str = "") -> str:
+        """Ativa um especialista de forma NON-BLOCKING.
+        
+        Envia o packet de ativação, espera APENAS o ACK (confirmação de que o
+        especialista recebeu o packet), e retorna imediatamente.
+        O monitoramento do turno (done/timeout) é feito em background.
+        Isso libera o Gemini da Nathália para ficar em silêncio (em vez de travar).
+        """
         async with self._turn_lock:
             now = monotonic()
             last_activation = self._last_activation_at.get(spec_id, 0.0)
@@ -795,10 +836,14 @@ class HostAgent(Agent):
             
             logger.info(f"[Host] Acionando especialista: {spec_id} | turno={turn_id} | contexto: {context} | lateral_from={_lateral_from_name or 'Nathália'}")
             
-            # Delay MÁGICO para evitar "atropelamento" de vozes:
-            # Aguarda Nathália terminar de falar e processar no frontend (~4 seg)
-            # antes de enviar o packet para o especialista.
-            await asyncio.sleep(4.0)
+            # Delay curto para evitar sobreposição de vozes
+            # (Nathália termina de falar a frase de apresentação)
+            await asyncio.sleep(1.5)
+
+            # SILENCIA a Nathália ANTES de enviar o packet
+            # Impede que o Gemini da Nathália intercepte o áudio do usuário
+            # enquanto o especialista está conversando
+            self._mute_host_audio()
 
             await self._publish_packet(packet)
 
@@ -809,33 +854,42 @@ class HostAgent(Agent):
                 )
                 ack_latency = (monotonic() - start_ts) * 1000
                 self._blackboard.orchestration_metrics["activation_ack_latency_ms_total"] += ack_latency
+                logger.info(f"[Host] ACK recebido de {spec_id} em {ack_latency:.0f}ms. Especialista ATIVO.")
             except asyncio.TimeoutError:
                 self._blackboard.orchestration_metrics["activations_timeout"] += 1
                 self._blackboard.active_agent = None
                 self._turn_events.pop(turn_id, None)
                 self._turn_status.pop(turn_id, None)
+                self._unmute_host_audio()  # Reativa áudio em caso de falha
                 logger.warning(f"[Host] Timeout aguardando ACK de {spec_id} no turno {turn_id}.")
                 return (
                     f"{SPECIALIST_NAMES[spec_id]} não respondeu a tempo. "
                     f"Tente reformular a pergunta ou seguir com outro especialista."
                 )
 
-            try:
-                await asyncio.wait_for(
-                    self._turn_events[turn_id]["done"].wait(),
-                    timeout=ACTIVATION_DONE_TIMEOUT_SECONDS,
-                )
-            except asyncio.TimeoutError:
-                self._blackboard.orchestration_metrics["activations_timeout"] += 1
-                self._blackboard.active_agent = None
-                self._turn_events.pop(turn_id, None)
-                self._turn_status.pop(turn_id, None)
-                logger.warning(f"[Host] Timeout aguardando conclusão de {spec_id} no turno {turn_id}.")
-                return (
-                    f"{SPECIALIST_NAMES[spec_id]} demorou além do limite esperado. "
-                    f"Você pode tentar novamente ou avançar para outro tema."
-                )
+            # NON-BLOCKING: Lança task em background para monitorar o turno
+            # e NÃO espera o especialista terminar dentro da tool call.
+            asyncio.create_task(self._monitor_specialist_turn(spec_id, turn_id, start_ts, host_session=self._host_session))
 
+            # Retorna IMEDIATAMENTE para o Gemini da Nathália.
+            # A mensagem instrui o LLM a ficar em silêncio absoluto.
+            return (
+                f"ESPECIALISTA_ATIVADO: {SPECIALIST_NAMES[spec_id]} está agora conversando diretamente com o usuário. "
+                f"FIQUE EM SILÊNCIO TOTAL. NÃO fale nada. NÃO comente. NÃO faça transições. "
+                f"O especialista vai devolver a palavra quando terminar."
+            )
+
+    async def _monitor_specialist_turn(self, spec_id: str, turn_id: int, start_ts: float, host_session: Optional[AgentSession] = None) -> None:
+        """Monitora o turno do especialista EM BACKGROUND (não bloqueia a Nathália)."""
+        try:
+            await asyncio.wait_for(
+                self._turn_events[turn_id]["done"].wait(),
+                timeout=ACTIVATION_DONE_TIMEOUT_SECONDS,
+            )
+        except asyncio.TimeoutError:
+            self._blackboard.orchestration_metrics["activations_timeout"] += 1
+            logger.warning(f"[Host] Timeout aguardando conclusão de {spec_id} no turno {turn_id}.")
+        finally:
             done_latency = (monotonic() - start_ts) * 1000
             self._blackboard.orchestration_metrics["activation_done_latency_ms_total"] += done_latency
             status_payload = self._turn_status.get(turn_id, {})
@@ -846,15 +900,33 @@ class HostAgent(Agent):
 
             if status_type == "agent_done":
                 self._blackboard.orchestration_metrics["activations_succeeded"] += 1
-                return f"{SPECIALIST_NAMES[spec_id]} concluiu a análise sobre: {context}"
-            if status_type == "agent_cancelled":
+            elif status_type == "agent_cancelled":
                 self._blackboard.orchestration_metrics["activations_cancelled"] += 1
-                return f"{SPECIALIST_NAMES[spec_id]} teve o turno interrompido. Você pode repetir a solicitação."
-            if status_type in ("agent_timeout", "agent_error"):
+            elif status_type in ("agent_timeout", "agent_error"):
                 self._blackboard.orchestration_metrics["activations_timeout"] += 1
-                return f"{SPECIALIST_NAMES[spec_id]} encontrou instabilidade. Siga para outro especialista ou tente novamente."
 
-            return f"{SPECIALIST_NAMES[spec_id]} foi acionado para analisar: {context}"
+            # REATIVA o áudio da Nathália quando o especialista devolver a palavra
+            self._unmute_host_audio()
+            logger.info(f"[Host] Turno de {SPECIALIST_NAMES[spec_id]} encerrado (status={status_type}). Nathália reativada.")
+
+            # Faz a Nathália retomar a conversa proativamente
+            if host_session and status_type == "agent_done":
+                spec_name = SPECIALIST_NAMES[spec_id]
+                user_name = self._blackboard.user_name or "você"
+                try:
+                    await asyncio.wait_for(
+                        host_session.generate_reply(
+                            instructions=(
+                                f"ESPECIALISTA_DEVOLVEU: {spec_name} acabou de devolver a palavra para você. "
+                                f"Retome a condução com 1-2 frases de transição. "
+                                f"Pergunte a {user_name} se ficou claro ou se quer explorar outro tema. "
+                                f"Seja breve e calorosa."
+                            ),
+                        ),
+                        timeout=15.0,
+                    )
+                except Exception as e:
+                    logger.warning(f"[Host] Erro ao gerar retomada pós-especialista: {e}")
 
     # ------------------------------------------------------------------
     # Function tools – chamados pelo LLM da Nathália quando necessário
@@ -2467,6 +2539,9 @@ async def _run_entrypoint(ctx: JobContext) -> None:
     except Exception as e:
         logger.error(f"[Host] Erro crítico ao iniciar Nathália: {e}", exc_info=True)
         return
+
+    # Guarda referência ao host_session no HostAgent para retomada automática
+    host_agent._host_session = host_session
 
     # Inicia o avatar Beyond Presence da Nathália no room principal
     asyncio.create_task(_start_avatar_session("host", host_session, ctx.room))
