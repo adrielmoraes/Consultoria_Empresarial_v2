@@ -1028,7 +1028,7 @@ class HostAgent(Agent):
             from pdf_generator import generate_pdf
             loop = asyncio.get_running_loop()
             pdf_bytes = await loop.run_in_executor(None, generate_pdf, markdown_plan, project_name, user_name)
-            pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
+            pdf_base64 = "data:application/pdf;base64," + base64.b64encode(pdf_bytes).decode("utf-8")
             logger.info(f"[Marco] PDF gerado com sucesso ({len(pdf_bytes)} bytes).")
         except Exception as pdf_err:
             logger.warning(f"[Marco] Falha ao gerar PDF — usando markdown: {pdf_err}")
@@ -1638,7 +1638,7 @@ class HostAgent(Agent):
                     doc_title=doc_title,
                 ),
             )
-            pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
+            pdf_base64 = "data:application/pdf;base64," + base64.b64encode(pdf_bytes).decode("utf-8")
             logger.info(f"[Marco] PDF '{doc_title}' gerado: {len(pdf_bytes)} bytes.")
         except Exception as e:
             logger.warning(f"[Marco] Falha ao gerar PDF para '{doc_title}': {e}")

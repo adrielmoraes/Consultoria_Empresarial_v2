@@ -1388,13 +1388,22 @@ export default function MentorshipRoomPage() {
                     </div>
                   </div>
                   <button
+                    data-marco-download="true"
                     onClick={() => {
-                      if (sessionId) {
+                      if (pdfBase64) {
+                        const link = document.createElement("a");
+                        link.href = pdfBase64.startsWith("data:") ? pdfBase64 : `data:application/pdf;base64,${pdfBase64}`;
+                        const docTitleAttr = document.querySelector<HTMLAnchorElement>("[data-marco-download]")?.getAttribute("data-doc-title") || "Plano_de_Execucao";
+                        link.download = `${docTitleAttr.replace(/\s+/g, "_")}_HiveMind.pdf`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      } else if (sessionId) {
                         window.open(`/api/execution-plan/${sessionId}`, "_blank");
                       }
                     }}
                     className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/20 text-violet-300 text-xs font-medium hover:bg-violet-500/30 transition-colors border border-violet-500/30"
-                    title="Baixar PDF do Plano"
+                    title="Baixar PDF"
                   >
                     <FileText className="w-3.5 h-3.5" />
                     PDF
