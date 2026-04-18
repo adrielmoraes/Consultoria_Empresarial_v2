@@ -413,6 +413,7 @@ class Blackboard:
     specialist_sessions: dict[str, AgentSession] = field(default_factory=dict)
     specialist_rooms: list[rtc.Room] = field(default_factory=list)
     documentos_disponiveis: list[str] = field(default_factory=list)
+    last_interaction_at: float = 0.0
     orchestration_metrics: dict[str, float] = field(default_factory=lambda: {
         "activations_total": 0,
         "activations_succeeded": 0,
@@ -423,6 +424,7 @@ class Blackboard:
     })
 
     def add_message(self, role: str, content: str) -> None:
+        self.last_interaction_at = monotonic()
         self.transcript.append({"role": role, "content": content})
         self._update_memory(role, content)
         logger.debug(f"[Blackboard] [{role}]: {content[:80]}...")
@@ -2303,14 +2305,29 @@ async def _start_specialist_in_room(
                 agent._handover_event.clear()
                 agent._handover_result = None
 
+                # Inicia tracking de inatividade (reseta agora para o tempo de fala não explodir)
+                agent._blackboard.last_interaction_at = monotonic()
                 try:
-                    await asyncio.wait_for(
-                        agent._handover_event.wait(),
-                        timeout=HANDOVER_TIMEOUT_SECONDS,
-                    )
-                except asyncio.TimeoutError:
-                    logger.warning(f"[{name}] Timeout do turno livre ({HANDOVER_TIMEOUT_SECONDS}s). Devolvendo para Nathália automaticamente.")
-                    agent._handover_result = {"type": "nathalia"}
+                    while not agent._handover_event.is_set():
+                        try:
+                            await asyncio.wait_for(agent._handover_event.wait(), timeout=2.0)
+                            break
+                        except asyncio.TimeoutError:
+                            pass
+                            
+                        # Fallback 1: inatividade/silêncio absoluto (60s)
+                        if monotonic() - agent._blackboard.last_interaction_at > 60.0:
+                            logger.warning(f"[{name}] Silêncio prolongado detectado (>60s). Devolvendo para Nathália.")
+                            agent._handover_result = {"type": "nathalia"}
+                            break
+                            
+                        # Fallback 2: limite máximo absoluto de turno (HANDOVER_TIMEOUT_SECONDS = 300s)
+                        if monotonic() - started_at > HANDOVER_TIMEOUT_SECONDS:
+                            logger.warning(f"[{name}] Limite do turno excedido ({HANDOVER_TIMEOUT_SECONDS}s). Devolvendo para Nathália.")
+                            agent._handover_result = {"type": "nathalia"}
+                            break
+                except Exception as handover_err:
+                    logger.warning(f"[{name}] Erro ao monitorar handover: {handover_err}")
 
                 # Processar resultado do handover
                 handover = agent._handover_result or {"type": "nathalia"}

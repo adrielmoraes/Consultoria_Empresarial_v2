@@ -1375,7 +1375,7 @@ export default function MentorshipRoomPage() {
           <div className="md:hidden grid grid-cols-2 lg:hidden gap-3 overflow-y-auto pb-4 h-full content-start">
             {agents.map((agent) => (
               <div key={agent.id} className={agent.id === "host" ? "col-span-2 aspect-video" : "col-span-1 aspect-square"}>
-                 <AgentCard agent={agent} compact />
+                 <AgentCard agent={agent} compact={agent.id !== "host"} />
               </div>
             ))}
           </div>
@@ -2144,7 +2144,7 @@ function AgentCard({
                 ? { scale: 1.05, boxShadow: "0 0 40px rgba(212, 175, 55, 0.4)" }
                 : { scale: 1, boxShadow: "0 0 20px rgba(0, 0, 0, 0.5)" }
             }
-            className={`${compact ? "w-16 h-16" : "w-32 h-32 lg:w-40 lg:h-40"
+            className={`${compact ? "w-20 h-20 md:w-24 md:h-24" : "w-32 h-32 lg:w-40 lg:h-40"
               } rounded-full bg-[#030712] border-2 ${agent.speaking ? 'border-[#d4af37]' : 'border-white/10'
               } flex items-center justify-center relative z-10 overflow-hidden group-hover:border-[#d4af37]/50 transition-colors`}
           >
@@ -2164,7 +2164,7 @@ function AgentCard({
             {/* Ícone vetorizado clássico (Exibição Fallback) */}
             {!agent.videoTrack && (
               <Icon
-                className={`${compact ? "w-8 h-8" : "w-14 h-14 lg:w-20 lg:h-20"
+                className={`${compact ? "w-10 h-10 md:w-12 md:h-12" : "w-14 h-14 lg:w-20 lg:h-20"
                   } ${agent.speaking ? 'text-[#d4af37]' : 'text-gray-400 group-hover:text-gray-300'} transition-colors relative z-20`}
               />
             )}
@@ -2214,10 +2214,10 @@ function AgentCard({
       {/* Info Overlay */}
       <div className="absolute bottom-0 left-0 right-0 p-6 bg-linear-to-t from-[#030712] via-[#030712]/90 to-transparent">
         <div className="relative z-10 text-center">
-          <h3 className={`font-black text-white tracking-tight uppercase leading-none ${compact ? "text-[10px]" : "text-lg"}`}>
+          <h3 className={`font-black text-white tracking-tight uppercase leading-none ${compact ? "text-[11px]" : "text-lg"}`}>
             {agent.name}
           </h3>
-          <p className={`font-medium text-[#d4af37] tracking-widest uppercase mt-1.5 ${compact ? "text-[8px]" : "text-[10px]"}`}>
+          <p className={`font-medium text-[#d4af37] tracking-widest uppercase mt-1.5 ${compact ? "text-[9px]" : "text-[10px]"}`}>
             {agent.role}
           </p>
         </div>
