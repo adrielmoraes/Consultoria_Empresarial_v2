@@ -2426,6 +2426,8 @@ async def entrypoint(ctx: JobContext) -> None:
         logger.info(f"[Guard] Sala '{room_name}' liberada do guard após encerramento global da task. Salas ativas após limpeza: {_active_rooms}")
 
 async def _run_entrypoint(ctx: JobContext) -> None:
+    shutdown_event = asyncio.Event()
+    
     # Log em arquivo para diagnóstico (compatível com Windows e Linux)
     log_path = os.path.join(tempfile.gettempdir(), "mentoria_agent.log")
     _fh = logging.FileHandler(log_path, mode="a")
@@ -2456,7 +2458,9 @@ async def _run_entrypoint(ctx: JobContext) -> None:
             logger.info(f"[Host] Áudio de {participant.identity} subscrito dinamicamente.")
 
     room_name = ctx.room.name
-    project_id = room_name.replace("mentoria-", "", 1) if room_name.startswith("mentoria-") else room_name
+    # Extrair UUID do projeto a partir do _room name (ex: mentoria-<uuid>-<suffix>)
+    project_uuid_match = re.search(r"([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})", room_name, re.IGNORECASE)
+    project_id = project_uuid_match.group(1) if project_uuid_match else room_name.replace("mentoria-", "", 1)
 
     # Blackboard compartilhado
     blackboard = Blackboard(project_name=project_id)
@@ -2776,6 +2780,9 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                 logger.warning(f"[Host] Erro na pergunta inicial: {e}")
 
             logger.info("[Host] Fluxo de abertura concluído.")
+
+    # Iniciar o fluxo de apresentações paralelamente
+    asyncio.create_task(welcome_and_introductions())
 
     @ctx.room.on("disconnected")
     def _on_room_disconnected(*args, **kwargs) -> None:
