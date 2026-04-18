@@ -2301,15 +2301,20 @@ async def _start_specialist_in_room(
                         f"{from_agent} acabou de transferir a palavra para você. "
                         f"O contexto da pergunta do usuário é: {context_text}. "
                         f"Inicie sua fala reconhecendo o colega e respondendo diretamente à pergunta do usuário. "
-                        f"Exemplo: 'Obrigado {from_agent.split(' ')[0]}. Sobre essa questão...'"
+                        f"REGRAS DE PEER-TO-PEER OBRIGATÓRIAS:\n"
+                        f"1. Você acaba de assumir o palco. NUNCA DEVOLVA para a Nathália na sua primeira reposta!\n"
+                        f"2. Você DEVE terminar a fala com uma pergunta para manter a conversa com o usuário e ouvi-lo.\n"
+                        f"3. Somente acione ferramentas de transferência QUANDO o usuário disser explicitamente que não tem mais dúvidas com você."
                     )
                 else:
                     # Ativação normal pela Nathália
                     prompt = (
-                        f"Nathália acabou de te acionar. O contexto é: {context_text}. "
-                        f"Responda de forma objetiva e profissional. "
-                        f"Continue conversando livremente com o usuário. "
-                        f"Quando o assunto da sua área estiver esgotado, use a ferramenta devolver_para_nathalia."
+                        f"Nathália acabou de te acionar. O contexto da pergunta do usuário é: {context_text}. "
+                        f"Responda a questão do usuário detalhando sua visão e experiência.\n"
+                        f"REGRAS DE PEER-TO-PEER OBRIGATÓRIAS:\n"
+                        f"1. Você acaba de assumir a mentoria. NUNCA DEVOLVA para a Nathália na sua primeira resposta!\n"
+                        f"2. Você DEVE terminar a fala com uma pergunta para continuar a conversa livremente com o usuário e ouvir o que ele tem a dizer.\n"
+                        f"3. Somente devolva a palavra para a Nathália usando a ferramenta se o usuário não tiver mais dúvidas com a sua especialidade."
                     )
 
                 # Gera resposta inicial
@@ -2650,11 +2655,12 @@ async def _run_entrypoint(ctx: JobContext) -> None:
             except Exception as e:
                 logger.warning(f"[Host] Erro ao retomar sessão: {e}")
 
-            # Conecta especialistas PARALELAMENTE (mais rápido na retomada)
-            logger.info("[Retomada] Conectando especialistas simultaneamente...")
-            tasks = []
+            # Conecta especialistas SEQUENCIALMENTE (evita Rate Limit do Beyond/Gemini)
+            logger.info("[Retomada] Conectando especialistas sequencialmente para evitar rate limits...")
             for sid in SPECIALIST_ORDER:
-                tasks.append(_start_specialist_in_room(
+                if not blackboard.is_active:
+                    break
+                await _start_specialist_in_room(
                     spec_id=sid,
                     blackboard=blackboard,
                     ws_url=ws_url,
@@ -2663,9 +2669,8 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                     room_name=ctx.room.name,
                     host_room=ctx.room,
                     auto_introduce=False,
-                ))
-            if blackboard.is_active:
-                await asyncio.gather(*tasks, return_exceptions=True)
+                )
+                await asyncio.sleep(1.0)  # Delay para respeitar rate limits
             logger.info("[Host] Retomada concluída. Todos os especialistas reconectados.")
 
         else:
@@ -2683,15 +2688,17 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                 "Eles vão se apresentar um a um agora. Fique à vontade!"
             )
 
-            # Conecta especialistas 5s após Nathália INICIAR a fala (em paralelo)
+            # Conecta especialistas 5s após Nathália INICIAR a fala (sequencialmente)
             async def _connect_specialists_delayed():
                 await asyncio.sleep(5.0)
                 if not blackboard.is_active:
                     return []
-                logger.info("[Apresentação] Conectando especialistas (5s após início da fala)...")
-                tasks = []
+                logger.info("[Apresentação] Conectando especialistas sequencialmente (5s após início da fala)...")
+                sessions_result = []
                 for sid in SPECIALIST_ORDER:
-                    tasks.append(_start_specialist_in_room(
+                    if not blackboard.is_active:
+                        break
+                    res = await _start_specialist_in_room(
                         spec_id=sid,
                         blackboard=blackboard,
                         ws_url=ws_url,
@@ -2700,8 +2707,10 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                         room_name=ctx.room.name,
                         host_room=ctx.room,
                         auto_introduce=False,
-                    ))
-                return await asyncio.gather(*tasks, return_exceptions=True)
+                    )
+                    sessions_result.append(res)
+                    await asyncio.sleep(1.0)  # Delay para respeitar rate limits
+                return sessions_result
 
             # Dispara Nathália falando E conexão dos especialistas concorrentemente
             logger.info("[Host] Nathália enviando apresentação inicial (sem perguntas)...")
