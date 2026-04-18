@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Projeto não encontrado" }, { status: 404 });
     }
 
-    const roomName = `mentoria-${projectId}`;
+    const roomPrefix = `mentoria-${projectId}`;
 
     // Busca sessão ativa existente
     const [existingSession] = await db
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (existingSession) {
-      const existingRoomName = existingSession.livekitRoomId ?? roomName;
+      const existingRoomName = existingSession.livekitRoomId ?? roomPrefix;
       const ageMs = Date.now() - existingSession.startedAt.getTime();
       const nonAgentParticipantCount = await getNonAgentParticipantCount(existingRoomName);
 
@@ -123,12 +123,15 @@ export async function POST(request: NextRequest) {
         .where(eq(mentoringSessions.id, existingSession.id));
     }
 
+    // Garantir que a nova sala seja sempre única para contornar lentidão na limpeza do Worker
+    const uniqueRoomName = `${roomPrefix}-${crypto.randomUUID().split("-")[0]}`;
+
     // Criar nova sessão
     const [session] = await db
       .insert(mentoringSessions)
       .values({
         projectId,
-        livekitRoomId: roomName,
+        livekitRoomId: uniqueRoomName,
         status: "active",
       })
       .returning();
@@ -141,12 +144,12 @@ export async function POST(request: NextRequest) {
 
     // Despachar agente
     try {
-      await dispatchAgent(roomName);
+      await dispatchAgent(uniqueRoomName);
     } catch (dispatchError) {
       console.error("[Sessions API] Erro ao disparar agente:", dispatchError);
     }
 
-    return NextResponse.json({ sessionId: session.id, roomName });
+    return NextResponse.json({ sessionId: session.id, roomName: uniqueRoomName });
   } catch (error) {
     console.error("Erro ao criar sessão:", error);
     return NextResponse.json(
