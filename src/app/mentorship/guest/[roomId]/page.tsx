@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import {
+  AlertCircle,
   Brain,
   Mic,
   MicOff,
@@ -136,6 +137,7 @@ export default function GuestMentorshipPage() {
   const [micActive, setMicActive] = useState(false);
   const [micLevel, setMicLevel] = useState(0);
   const [micError, setMicError] = useState<string | null>(null);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   const roomRef = useRef<Room | null>(null);
   const audioContainerRef = useRef<HTMLDivElement>(null);
@@ -239,6 +241,7 @@ export default function GuestMentorshipPage() {
     async function connect() {
       try {
         setConnectionState("connecting");
+        setConnectionError(null);
 
         // Obter guest token
         const tokenRes = await fetch("/api/livekit/guest-token", {
@@ -248,7 +251,12 @@ export default function GuestMentorshipPage() {
         });
 
         if (!tokenRes.ok) {
-          throw new Error("Falha ao obter token de acesso");
+          const errorData = (await tokenRes.json().catch(() => null)) as
+            | { error?: string; code?: string }
+            | null;
+          throw new Error(
+            errorData?.error || "Falha ao obter token de acesso"
+          );
         }
 
         const { token, url } = await tokenRes.json();
@@ -399,10 +407,15 @@ export default function GuestMentorshipPage() {
         });
 
         await room.connect(url, token);
-      } catch {
+      } catch (error) {
         if (!isMounted) return;
         setConnectionState("error");
-        addTranscriptMessage("Sistema", "Erro ao conectar na sala.");
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Erro ao conectar na sala.";
+        setConnectionError(message);
+        addTranscriptMessage("Sistema", message);
       }
     }
 
@@ -462,6 +475,26 @@ export default function GuestMentorshipPage() {
           className="mt-4 px-6 py-2.5 rounded-xl bg-[#d4af37] text-[#030712] font-bold text-sm hover:bg-[#b08d24] transition-colors"
         >
           Voltar ao Início
+        </button>
+      </div>
+    );
+  }
+
+  if (connectionState === "error") {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center bg-[#030712] gap-4 px-6 text-center">
+        <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center">
+          <AlertCircle className="w-8 h-8 text-red-300" />
+        </div>
+        <h2 className="text-xl font-bold text-white">Nao foi possivel entrar</h2>
+        <p className="text-sm text-gray-400 max-w-md">
+          {connectionError || "Ocorreu um problema ao conectar na reuniao."}
+        </p>
+        <button
+          onClick={() => router.push("/")}
+          className="mt-4 px-6 py-2.5 rounded-xl bg-[#d4af37] text-[#030712] font-bold text-sm hover:bg-[#b08d24] transition-colors"
+        >
+          Voltar ao Inicio
         </button>
       </div>
     );

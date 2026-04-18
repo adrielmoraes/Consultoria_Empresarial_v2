@@ -1,5 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
-import { AccessToken } from "livekit-server-sdk";
+import { AccessToken, RoomServiceClient } from "livekit-server-sdk";
+
+const MAX_GUESTS_PER_ROOM = 3;
+
+async function getGuestParticipantCount(roomName: string): Promise<number | null> {
+  const url = process.env.LIVEKIT_URL || process.env.NEXT_PUBLIC_LIVEKIT_URL;
+  const apiKey = process.env.LIVEKIT_API_KEY;
+  const apiSecret = process.env.LIVEKIT_API_SECRET;
+
+  if (!url || !apiKey || !apiSecret) {
+    return null;
+  }
+
+  const roomServiceClient = new RoomServiceClient(url, apiKey, apiSecret);
+
+  try {
+    const participants = await roomServiceClient.listParticipants(roomName);
+    return participants.filter((participant) => {
+      const identity = participant.identity ?? "";
+      return identity.startsWith("guest-");
+    }).length;
+  } catch (error) {
+    console.warn(
+      `[Guest Token API] Falha ao listar convidados da sala ${roomName}:`,
+      error
+    );
+    return null;
+  }
+}
 
 /**
  * Gera um token de acesso LiveKit para convidados (guests) entrarem em uma sala.
@@ -24,6 +52,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Configuração LiveKit ausente no servidor" },
         { status: 500 }
+      );
+    }
+
+    const currentGuestCount = await getGuestParticipantCount(roomName);
+
+    if (currentGuestCount !== null && currentGuestCount >= MAX_GUESTS_PER_ROOM) {
+      return NextResponse.json(
+        {
+          error: "Esta reuniao ja atingiu o limite de 3 convidados.",
+          code: "GUEST_LIMIT_REACHED",
+          maxGuests: MAX_GUESTS_PER_ROOM,
+          currentGuestCount,
+        },
+        { status: 403 }
       );
     }
 
