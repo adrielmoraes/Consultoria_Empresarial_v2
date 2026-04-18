@@ -1066,6 +1066,13 @@ export default function MentorshipRoomPage() {
         if (!isMounted) return;
         console.error("[LiveKit] Erro ao conectar:", error);
         setConnectionState("error");
+
+        if (error instanceof Error && error.message.includes("NO_CREDITS")) {
+          alert("Sem minutos disponíveis. Você será redirecionado para a página de planos.");
+          router.replace("/dashboard/subscription");
+          return;
+        }
+
         addTranscriptMessage("Sistema", "Erro ao conectar.");
         connectionStartedRef.current = false; // Permite tentar novamente
       }
