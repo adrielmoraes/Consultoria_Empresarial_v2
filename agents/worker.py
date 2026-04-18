@@ -248,6 +248,7 @@ REGRAS CRÍTICAS DE SILÊNCIO DURANTE HANDOVER:
 25. Se a ferramenta retornar erro ou timeout, aí sim explique ao usuário e ofereça alternativa.
 26. HANDOVER: Quando você aciona um especialista, ele assumirá a conversa diretamente com o usuário por múltiplos turnos. Você ficará em SILÊNCIO ABSOLUTO esperando ele devolver a palavra. NÃO interrompa.
 27. MARCO NOS BASTIDORES: Quando acionar o Marco via qualquer ferramenta gerar_*, avise ao usuário que o Marco está preparando o documento nos bastidores e que chegará em instantes. Exemplo: "Vou pedir ao Marco para preparar isso agora nos bastidores!"
+28. PROATIVIDADE DOCUMENTAL: Se a mentoria render discussões muito produtivas, ou se passaram cerca de 20 minutos de sessão, tenha a iniciativa de dizer: "Vou pedir para nosso Estrategista Marco já documentar esses insights de agora num arquivo pra você ter na tela". E, em seguida, acione a ferramenta gerar_plano_execucao (ou a que for mais adequada).
 
 MODO OUVINTE (SALA COM MÚLTIPLOS HUMANOS):
 - A sala pode ter convidados (sócios, diretores) além do usuário principal.
@@ -414,6 +415,7 @@ class Blackboard:
     specialist_rooms: list[rtc.Room] = field(default_factory=list)
     documentos_disponiveis: list[str] = field(default_factory=list)
     last_interaction_at: float = 0.0
+    marco_triggered: bool = False
     orchestration_metrics: dict[str, float] = field(default_factory=lambda: {
         "activations_total": 0,
         "activations_succeeded": 0,
@@ -986,6 +988,33 @@ class HostAgent(Agent):
         """
         return await self._activate_specialist("cto", questao)
 
+    async def gerar_plano_forcado(self, user_name: str, project_name: str):
+        self._blackboard.marco_triggered = True
+        logger.info("[Marco] Acionando LLM (Gemini 2.5 Pro + Search) para gerar Plano de Execução...")
+        self._blackboard.add_message("Sistema", f"Marco iniciou a pesquisa e o processamento do Plano para {user_name}...")
+
+        await asyncio.sleep(2.0)
+        markdown_plan = await self._generate_markdown_plan_with_agent(user_name, project_name)
+
+        pdf_base64: str | None = None
+        try:
+            from pdf_generator import generate_pdf
+            loop = asyncio.get_running_loop()
+            pdf_bytes = await loop.run_in_executor(None, generate_pdf, markdown_plan, project_name, user_name)
+            pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
+            logger.info(f"[Marco] PDF gerado com sucesso ({len(pdf_bytes)} bytes).")
+        except Exception as pdf_err:
+            logger.warning(f"[Marco] Falha ao gerar PDF — usando markdown: {pdf_err}")
+
+        try:
+            packet: dict = {"type": "execution_plan", "plan": markdown_plan, "text": markdown_plan}
+            if pdf_base64:
+                packet["pdf_base64"] = pdf_base64
+            await self._publish_packet(packet)
+            logger.info("[Marco] Plano de Execução publicado (bastidores).")
+        except Exception as e:
+            logger.warning(f"[Marco] Erro ao publicar plano: {e}")
+
     @function_tool
     async def gerar_plano_execucao(
         self,
@@ -999,48 +1028,7 @@ class HostAgent(Agent):
         user_name = self._blackboard.user_name or "empreendedor"
         project_name = self._blackboard.project_name or "seu projeto"
 
-        async def _background_task():
-            # Marco trabalha nos bastidores — gera o documento usando o modelo de linguagem com Search
-            logger.info("[Marco] Acionando LLM (Gemini 2.5 Pro + Search) para gerar Plano de Execução...")
-            self._blackboard.add_message("Sistema", f"Marco iniciou a pesquisa e o processamento do Plano para {user_name}...")
-
-            # Aguarda um pequeno momento para enviar a mensagem do sistema antes que o LLM comece
-            await asyncio.sleep(2.0)
-
-            # Gera o documento Markdown estruturado de forma inteligente
-            markdown_plan = await self._generate_markdown_plan_with_agent(user_name, project_name)
-
-            # Gera o PDF profissional com a logomarca Hive Mind
-            pdf_base64: str | None = None
-            try:
-                from pdf_generator import generate_pdf
-                loop = asyncio.get_running_loop()
-                pdf_bytes = await loop.run_in_executor(
-                    None,
-                    generate_pdf,
-                    markdown_plan,
-                    project_name,
-                    user_name,
-                )
-                pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
-                logger.info(f"[Marco] PDF gerado com sucesso ({len(pdf_bytes)} bytes / {len(pdf_base64)} chars Base64).")
-            except Exception as pdf_err:
-                logger.warning(f"[Marco] Falha ao gerar PDF — apenas Markdown será enviado: {pdf_err}")
-
-            try:
-                packet: dict = {
-                    "type": "execution_plan",
-                    "plan": markdown_plan,
-                    "text": markdown_plan,
-                }
-                if pdf_base64:
-                    packet["pdf_base64"] = pdf_base64
-                await self._publish_packet(packet)
-                logger.info("[Marco] Plano de Execução publicado como data packet (bastidores).")
-            except Exception as e:
-                logger.warning(f"[Marco] Erro ao publicar plano de execução: {e}")
-
-        asyncio.create_task(_background_task())
+        asyncio.create_task(self.gerar_plano_forcado(user_name, project_name))
 
         return (
             f"MARCO_ACIONADO: Você avisou ao Marco nos bastidores. ELE JÁ ESTA TRABALHANDO no Plano de Execução para {user_name}. "
@@ -2959,8 +2947,20 @@ async def _run_entrypoint(ctx: JobContext) -> None:
 
             if msg_type == "end_session":
                 logger.info("[Room] Pedido de encerramento recebido do frontend.")
-                asyncio.create_task(
-                    ctx.room.local_participant.publish_data(
+
+                async def _end_session_flow():
+                    if not blackboard.marco_triggered:
+                        logger.info("[Room] Marco não foi acionado. Acionando geração automática forçada do plano.")
+                        u_name = blackboard.user_name or "empreendedor"
+                        p_name = blackboard.project_name or "seu projeto"
+                        # Bloqueia a finalização da sessão até a emissão do PDF pelo Marco
+                        try:
+                            await host_agent.gerar_plano_forcado(u_name, p_name)
+                        except Exception as e:
+                            logger.error(f"[Room] Erro na geração automática forçada do Marco: {e}")
+
+                    # Após Marco terminar a geração, publica o encerramento que fará o redirect final no Frontend
+                    await ctx.room.local_participant.publish_data(
                         json.dumps({
                             "version": DATA_PACKET_SCHEMA_VERSION,
                             "type": "session_end",
@@ -2970,8 +2970,9 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                         }).encode(),
                         reliable=True,
                     )
-                )
-                shutdown_event.set()
+                    shutdown_event.set()
+
+                asyncio.create_task(_end_session_flow())
 
             elif msg_type == "set_project_name":
                 blackboard.project_name = msg.get("name", "")

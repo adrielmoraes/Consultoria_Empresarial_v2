@@ -1122,50 +1122,27 @@ export default function MentorshipRoomPage() {
   // CORREÇÃO P4: usa safeFetch — erros de HTTP são logados e não engolidos.
   const handleEndSession = async () => {
     setEnding(true);
-    try {
-      if (
-        roomRef.current &&
-        roomRef.current.state === ConnectionState.Connected
-      ) {
-        try {
-          const data = new TextEncoder().encode(
-            JSON.stringify({ type: "end_session" })
-          );
-          await roomRef.current.localParticipant.publishData(data, {
-            reliable: true,
-          });
-          await new Promise((r) => setTimeout(r, 1000));
-        } catch {
-          // best-effort — não bloqueia o encerramento
-        }
-      }
 
-      if (sessionId) {
-        const fullTranscript = transcript
-          .map((m) => `[${m.speaker}]: ${m.text}`)
-          .join("\n");
-        try {
-          await safeFetch("/api/sessions/finalize", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              sessionId,
-              transcript: fullTranscript,
-              documents: sessionDocuments,
-            }),
-          });
-        } catch (err) {
-          console.error("[Sessão] Falha ao finalizar:", err);
-          // Não bloqueia o redirect — o usuário não deve ficar preso na sala
-        }
-      }
+    if (roomRef.current && roomRef.current.state === ConnectionState.Connected) {
+      try {
+        const data = new TextEncoder().encode(
+          JSON.stringify({ type: "end_session" })
+        );
+        await roomRef.current.localParticipant.publishData(data, {
+          reliable: true,
+        });
 
-      await roomRef.current?.disconnect();
-      router.push("/dashboard");
-    } catch {
-      setEnding(false);
-      router.push("/dashboard");
+        // Backend was instructed to kill the session. Let's wait up to 35 seconds
+        // for it to generate the PDF via Marco and send the "session_end" packet,
+        // which will trigger handleSessionCompleted natively.
+        await new Promise((resolve) => setTimeout(resolve, 35000));
+      } catch {
+        console.warn("[Sessão] Erro ao enviar end_session para backend. Forçando finalização.");
+      }
     }
+
+    // Fallback: Se passaram 35 segs e o backend não nos enviou 'session_end' pra fechar limpo, forçamos:
+    await handleSessionCompletedRef.current?.();
   };
 
   // CORREÇÃO P4: mesma aplicação de safeFetch aqui.
@@ -1683,7 +1660,7 @@ export default function MentorshipRoomPage() {
                   {ending ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Encerrando...
+                      Mapeando Dossiê do Marco...
                     </>
                   ) : (
                     "Encerrar"
