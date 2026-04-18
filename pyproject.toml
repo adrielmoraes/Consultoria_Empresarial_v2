@@ -1,7 +1,7 @@
 [project]
 name = "repl-nix-workspace"
 version = "0.1.0"
-description = "Add your description here"
+description = "Hive Mind — Plataforma de Mentoria Empresarial Multi-Agentes"
 requires-python = ">=3.12"
 dependencies = [
     "aiohttp>=3.9.0",
@@ -13,6 +13,7 @@ dependencies = [
     "livekit-plugins-bey>=1.4.0",
     "livekit-plugins-google>=1.4.6",
     "markdown>=3.5.0",
+    "Pillow>=10.0.0",
     "python-dotenv>=1.0.0",
     "reportlab>=4.0.0",
     "duckduckgo-search>=6.0.0",

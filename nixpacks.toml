@@ -7,4 +7,4 @@ aptPkgs = ["gcc", "g++", "libffi-dev", "libssl-dev", "python3-dev"]
 cmd = "python -m pip install --upgrade pip && pip install -r agents/requirements.txt"
 
 [start]
-cmd = "python -m agents.worker start"
+cmd = "cd agents && python worker.py start"

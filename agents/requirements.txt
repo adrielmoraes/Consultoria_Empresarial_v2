@@ -15,5 +15,8 @@ aiohttp>=3.9.0
 duckduckgo-search>=6.0.0
 
 # Geração de PDFs e Markdown
+# ВАЖНО: pdf_generator.py é um módulo LOCAL em agents/ — não é um pacote pip.
+# O sys.path guard em worker.py garante que ele seja importável em produção.
 reportlab>=4.0.0
+Pillow>=10.0.0                   # ReportLab usa Pillow para processar imagens nos PDFs
 markdown>=3.5.0

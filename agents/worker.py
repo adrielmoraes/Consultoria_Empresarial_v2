@@ -22,6 +22,18 @@ Correções aplicadas (v4 → v5):
 
 from __future__ import annotations
 
+import sys
+import os as _os
+
+# ── sys.path guard ─────────────────────────────────────────────────────────────
+# Garante que o diretório que contém este arquivo (agents/) esteja no sys.path,
+# independentemente de onde o processo é iniciado (ex: "python -m agents.worker"
+# a partir da raiz do projeto). Sem isso, os imports lazy de pdf_generator falham.
+_agents_dir = _os.path.dirname(_os.path.abspath(__file__))
+if _agents_dir not in sys.path:
+    sys.path.insert(0, _agents_dir)
+# ──────────────────────────────────────────────────────────────────────────────
+
 import asyncio
 import base64
 import json
@@ -2561,10 +2573,209 @@ async def _run_entrypoint(ctx: JobContext) -> None:
     # Guarda referência ao host_session no HostAgent para retomada automática
     host_agent._host_session = host_session
 
-    # Inicia o avatar Beyond Presence da Nathália no room principal
-    asyncio.create_task(_start_avatar_session("host", host_session, ctx.room))
+    # ------------------------------------------------------------------
+    # 2. Fluxo de Apresentação ou Retomada de Sessão
+    # ------------------------------------------------------------------
+    async def welcome_and_introductions() -> None:
+        """
+        Se o Blackboard já tem histórico (retomada de sessão interrompida),
+        Nathália retoma sem repetir apresentações.
+        Caso contrário, executa o fluxo completo de boas-vindas.
 
-    shutdown_event = asyncio.Event()
+        Estratégia de inicialização sequencial:
+        - Cada especialista é conectado UM POR VEZ com delay entre conexões.
+        - Evita rate limiting 429 nos handshakes simultâneos ao Gemini.
+        - Em produção com N usuários, reduz a carga de 6N para picos menores.
+        """
+        is_resuming = len(blackboard.transcript) > 0
+
+        # CORREÇÃO CRÍTICA: Aguarda o avatar da Nathália estar completamente pronto
+        # ANTES de gerar qualquer reply de áudio. Se o avatar não estiver pronto,
+        # o generate_reply descarta o áudio silenciosamente.
+        logger.info("[Host] Aguardando avatar da Nathália (Beyond Presence) inicializar...")
+        await _start_avatar_session("host", host_session, ctx.room)
+        logger.info("[Host] Avatar da Nathália pronto. Aguardando estabilização do RealtimeModel...")
+
+        # Aguarda Nathália estabilizar e o RealtimeModel conectar ao Gemini
+        await asyncio.sleep(2.0)
+
+        if is_resuming:
+            # ── MODO RETOMADA ──────────────────────────────────────────
+            user_name_part = f", {blackboard.user_name}" if blackboard.user_name else ""
+            resumption_context = blackboard.get_context_summary()
+            logger.info("[Host] Nathália retomando sessão existente...")
+            resumption_msg = (
+                f"Estou retomando nossa sessão! "
+                f"Olá{user_name_part}, que bom ter você de volta. "
+                f"Nossa conversa foi interrompida, mas tenho todo o contexto do que discutimos. "
+                f"Podemos continuar exatamente de onde paramos. "
+                f"Estávamos falando sobre: {blackboard.user_query or 'seu projeto'}. "
+                f"Como você gostaria de continuar?"
+            )
+            try:
+                await asyncio.wait_for(
+                    host_session.generate_reply(
+                        instructions=(
+                            f"Retome a sessão de forma calorosa dizendo: {resumption_msg} "
+                            f"Contexto da sessão anterior para você: {resumption_context}"
+                        ),
+                    ),
+                    timeout=30.0,
+                )
+            except Exception as e:
+                logger.warning(f"[Host] Erro ao retomar sessão: {e}")
+
+            # Conecta especialistas PARALELAMENTE (mais rápido na retomada)
+            logger.info("[Retomada] Conectando especialistas simultaneamente...")
+            tasks = []
+            for sid in SPECIALIST_ORDER:
+                tasks.append(_start_specialist_in_room(
+                    spec_id=sid,
+                    blackboard=blackboard,
+                    ws_url=ws_url,
+                    lk_api_key=lk_api_key,
+                    lk_api_secret=lk_api_secret,
+                    room_name=ctx.room.name,
+                    host_room=ctx.room,
+                    auto_introduce=False,
+                ))
+            if blackboard.is_active:
+                await asyncio.gather(*tasks, return_exceptions=True)
+            logger.info("[Host] Retomada concluída. Todos os especialistas reconectados.")
+
+        else:
+            # ── MODO INICIAL ───────────────────────────────────────────
+            # Fluxo: Nathália apresenta (sem perguntas) → 5s depois especialistas
+            # começam a conectar → apresentações sequenciais → pergunta inicial.
+            host_greeting = (
+                "Olá! Seja muito bem-vindo ao Hive Mind! "
+                "Sou a Nathália, sua apresentadora e mentora líder desta sessão. "
+                "Montei uma equipe completa de especialistas para te ajudar hoje: "
+                "Carlos no financeiro, Daniel no jurídico, Rodrigo em marketing "
+                "e Ana em tecnologia. "
+                "Além deles, o Marco, nosso estrategista-chefe, está trabalhando nos bastidores "
+                "documentando tudo e preparando um plano de execução completo para você! "
+                "Eles vão se apresentar um a um agora. Fique à vontade!"
+            )
+
+            # Conecta especialistas 5s após Nathália INICIAR a fala (em paralelo)
+            async def _connect_specialists_delayed():
+                await asyncio.sleep(5.0)
+                if not blackboard.is_active:
+                    return []
+                logger.info("[Apresentação] Conectando especialistas (5s após início da fala)...")
+                tasks = []
+                for sid in SPECIALIST_ORDER:
+                    tasks.append(_start_specialist_in_room(
+                        spec_id=sid,
+                        blackboard=blackboard,
+                        ws_url=ws_url,
+                        lk_api_key=lk_api_key,
+                        lk_api_secret=lk_api_secret,
+                        room_name=ctx.room.name,
+                        host_room=ctx.room,
+                        auto_introduce=False,
+                    ))
+                return await asyncio.gather(*tasks, return_exceptions=True)
+
+            # Dispara Nathália falando E conexão dos especialistas concorrentemente
+            logger.info("[Host] Nathália enviando apresentação inicial (sem perguntas)...")
+            connect_task = asyncio.create_task(_connect_specialists_delayed())
+
+            try:
+                await asyncio.wait_for(
+                    host_session.generate_reply(
+                        instructions=(
+                            f"Apresente-se de forma calorosa e natural dizendo: {host_greeting} "
+                            f"NÃO faça NENHUMA pergunta. Apenas apresente-se e anuncie o time. "
+                            f"Encerre sua fala após a apresentação."
+                        ),
+                    ),
+                    timeout=30.0,
+                )
+            except asyncio.TimeoutError:
+                logger.warning("[Host] Timeout (30s) ao gerar reply inicial.")
+            except Exception as e:
+                logger.warning(f"[Host] Erro ao gerar reply inicial: {type(e).__name__}: {e}", exc_info=True)
+
+            # Aguarda especialistas terminarem de conectar
+            if not blackboard.is_active:
+                connect_task.cancel()
+                return
+            sessions = await connect_task
+            if not blackboard.is_active:
+                return
+
+            logger.info("[Apresentação] Conexões concluídas. Apresentando-se agora...")
+
+            # Executa as apresentações sequencialmente — um por vez
+            for sid, spec_session in zip(SPECIALIST_ORDER, sessions):
+                if not blackboard.is_active:
+                    logger.info("[Apresentação] Job encerrando, abortando sequência.")
+                    return
+
+                spec_name = SPECIALIST_NAMES[sid]
+
+                if isinstance(spec_session, Exception) or not spec_session:
+                    logger.warning(f"[Apresentação] {spec_name} falhou ao conectar. Pulando. (Err: {spec_session})")
+                    continue
+
+                intro_text = SPECIALIST_INTRODUCTIONS[sid]
+                logger.info(f"[Apresentação] {spec_name} se apresentando...")
+
+                for attempt in range(2):
+                    try:
+                        await asyncio.wait_for(
+                            spec_session.generate_reply(
+                                instructions=(
+                                    f"Apresente-se de forma calorosa e natural dizendo: {intro_text} "
+                                    f"Máximo 3 frases. Não faça perguntas ao usuário de forma alguma. "
+                                    f"Apenas e unicamente se apresente e conclua a fala."
+                                ),
+                            ),
+                            timeout=30.0,
+                        )
+                        logger.info(f"[Apresentação] {spec_name} concluiu.")
+                        await asyncio.sleep(POST_INTRO_WAIT)
+                        break
+                    except Exception as e:
+                        if attempt == 0:
+                            logger.warning(f"[Apresentação] Timeout/Erro na apresentação de {spec_name}. Tentando de novo... ({e})")
+                            await asyncio.sleep(1.0)
+                        else:
+                            logger.error(f"[Apresentação] Falha final ao apresentar {spec_name}: {e}")
+
+            logger.info("[Apresentação] Todos os especialistas foram apresentados.")
+
+            if not blackboard.is_active:
+                return
+
+            # SOMENTE AGORA Nathália faz a primeira pergunta ao usuário
+            if blackboard.user_name:
+                closing = (
+                    f"Pronto, {blackboard.user_name}! Toda a nossa equipe já se apresentou. "
+                    f"Agora sou toda ouvidos — qual é o seu maior desafio ou a principal questão "
+                    f"que você quer resolver hoje?"
+                )
+            else:
+                closing = (
+                    "Pronto! Toda a nossa equipe já se apresentou. "
+                    "Antes de tudo, adoraria saber o seu nome — e depois me conte: "
+                    "qual é o seu projeto ou negócio e o que você quer resolver hoje?"
+                )
+
+            logger.info("[Host] Nathália fazendo pergunta inicial (pós-apresentações)...")
+            try:
+                await asyncio.wait_for(
+                    host_session.generate_reply(
+                        instructions=f"Faça a seguinte pergunta de forma calorosa e natural: {closing}",
+                    ),
+                    timeout=30.0,
+                )
+            except Exception as e:
+                logger.warning(f"[Host] Erro na pergunta inicial: {e}")
+
+            logger.info("[Host] Fluxo de abertura concluído.")
 
     @ctx.room.on("disconnected")
     def _on_room_disconnected(*args, **kwargs) -> None:
@@ -2712,205 +2923,6 @@ async def _run_entrypoint(ctx: JobContext) -> None:
             )
         )
 
-    # ------------------------------------------------------------------
-    # 2. Fluxo de Apresentação ou Retomada de Sessão
-    # ------------------------------------------------------------------
-    async def welcome_and_introductions() -> None:
-        """
-        Se o Blackboard já tem histórico (retomada de sessão interrompida),
-        Nathália retoma sem repetir apresentações.
-        Caso contrário, executa o fluxo completo de boas-vindas.
-
-        Estratégia de inicialização sequencial:
-        - Cada especialista é conectado UM POR VEZ com delay entre conexões.
-        - Evita rate limiting 429 nos handshakes simultâneos ao Gemini.
-        - Em produção com N usuários, reduz a carga de 6N para picos menores.
-        """
-        is_resuming = len(blackboard.transcript) > 0
-
-        # Aguarda Nathália estabilizar e o RealtimeModel conectar ao Gemini
-        await asyncio.sleep(2.0)
-
-        if is_resuming:
-            # ── MODO RETOMADA ──────────────────────────────────────────
-            user_name_part = f", {blackboard.user_name}" if blackboard.user_name else ""
-            resumption_context = blackboard.get_context_summary()
-            logger.info("[Host] Nathália retomando sessão existente...")
-            resumption_msg = (
-                f"Estou retomando nossa sessão! "
-                f"Olá{user_name_part}, que bom ter você de volta. "
-                f"Nossa conversa foi interrompida, mas tenho todo o contexto do que discutimos. "
-                f"Podemos continuar exatamente de onde paramos. "
-                f"Estávamos falando sobre: {blackboard.user_query or 'seu projeto'}. "
-                f"Como você gostaria de continuar?"
-            )
-            try:
-                await asyncio.wait_for(
-                    host_session.generate_reply(
-                        instructions=(
-                            f"Retome a sessão de forma calorosa dizendo: {resumption_msg} "
-                            f"Contexto da sessão anterior para você: {resumption_context}"
-                        ),
-                    ),
-                    timeout=30.0,
-                )
-            except Exception as e:
-                logger.warning(f"[Host] Erro ao retomar sessão: {e}")
-
-            # Conecta especialistas PARALELAMENTE (mais rapido)
-            logger.info("[Retomada] Conectando especialistas simultaneamente...")
-            tasks = []
-            for sid in SPECIALIST_ORDER:
-                tasks.append(_start_specialist_in_room(
-                    spec_id=sid,
-                    blackboard=blackboard,
-                    ws_url=ws_url,
-                    lk_api_key=lk_api_key,
-                    lk_api_secret=lk_api_secret,
-                    room_name=ctx.room.name,
-                    host_room=ctx.room,
-                    auto_introduce=False,
-                ))
-            
-            if blackboard.is_active:
-                await asyncio.gather(*tasks, return_exceptions=True)
-                
-            logger.info("[Host] Retomada concluída. Todos os especialistas reconectados.")
-
-        else:
-            # ── MODO INICIAL ───────────────────────────────────────────
-            # Fluxo: Nathália apresenta (sem perguntas) → 5s depois especialistas
-            # começam a conectar → apresentações sequenciais → pergunta inicial.
-            host_greeting = (
-                "Olá! Seja muito bem-vindo ao Hive Mind! "
-                "Sou a Nathália, sua apresentadora e mentora líder desta sessão. "
-                "Montei uma equipe completa de especialistas para te ajudar hoje: "
-                "Carlos no financeiro, Daniel no jurídico, Rodrigo em marketing "
-                "e Ana em tecnologia. "
-                "Além deles, o Marco, nosso estrategista-chefe, está trabalhando nos bastidores "
-                "documentando tudo e preparando um plano de execução completo para você! "
-                "Eles vão se apresentar um a um agora. Fique à vontade!"
-            )
-
-            # Conecta especialistas 5s após Nathália INICIAR a fala (em paralelo)
-            async def _connect_specialists_delayed():
-                await asyncio.sleep(5.0)
-                if not blackboard.is_active:
-                    return []
-                logger.info("[Apresentação] Conectando especialistas (5s após início da fala)...")
-                tasks = []
-                for sid in SPECIALIST_ORDER:
-                    tasks.append(_start_specialist_in_room(
-                        spec_id=sid,
-                        blackboard=blackboard,
-                        ws_url=ws_url,
-                        lk_api_key=lk_api_key,
-                        lk_api_secret=lk_api_secret,
-                        room_name=ctx.room.name,
-                        host_room=ctx.room,
-                        auto_introduce=False,
-                    ))
-                return await asyncio.gather(*tasks, return_exceptions=True)
-
-            # Dispara Nathália falando E conexão dos especialistas concorrentemente
-            logger.info("[Host] Nathália enviando apresentação inicial (sem perguntas)...")
-            connect_task = asyncio.create_task(_connect_specialists_delayed())
-
-            try:
-                await asyncio.wait_for(
-                    host_session.generate_reply(
-                        instructions=(
-                            f"Apresente-se de forma calorosa e natural dizendo: {host_greeting} "
-                            f"NÃO faça NENHUMA pergunta. Apenas apresente-se e anuncie o time. "
-                            f"Encerre sua fala após a apresentação."
-                        ),
-                    ),
-                    timeout=30.0,
-                )
-            except asyncio.TimeoutError:
-                logger.warning("[Host] Timeout (30s) ao gerar reply inicial.")
-            except Exception as e:
-                logger.warning(f"[Host] Erro ao gerar reply inicial: {type(e).__name__}: {e}", exc_info=True)
-
-            # Aguarda especialistas terminarem de conectar
-            if not blackboard.is_active:
-                connect_task.cancel()
-                return
-            sessions = await connect_task
-            if not blackboard.is_active:
-                return
-
-            logger.info("[Apresentação] Conexões concluídas. Apresentando-se agora...")
-
-            # Executa as apresentações sequencialmente — um por vez
-            for sid, spec_session in zip(SPECIALIST_ORDER, sessions):
-                if not blackboard.is_active:
-                    logger.info("[Apresentação] Job encerrando, abortando sequência.")
-                    return
-
-                spec_name = SPECIALIST_NAMES[sid]
-
-                if isinstance(spec_session, Exception) or not spec_session:
-                    logger.warning(f"[Apresentação] {spec_name} falhou ao conectar. Pulando. (Err: {spec_session})")
-                    continue
-
-                intro_text = SPECIALIST_INTRODUCTIONS[sid]
-                logger.info(f"[Apresentação] {spec_name} se apresentando...")
-
-                # Retry wrapper around generate_reply
-                for attempt in range(2):
-                    try:
-                        await asyncio.wait_for(
-                            spec_session.generate_reply(
-                                instructions=(
-                                    f"Apresente-se de forma calorosa e natural dizendo: {intro_text} "
-                                    f"Máximo 3 frases. Não faça perguntas ao usuário de forma alguma. "
-                                    f"Apenas e unicamente se apresente e conclua a fala."
-                                ),
-                            ),
-                            timeout=30.0,
-                        )
-                        logger.info(f"[Apresentação] {spec_name} concluiu.")
-                        await asyncio.sleep(POST_INTRO_WAIT)
-                        break
-                    except Exception as e:
-                        if attempt == 0:
-                            logger.warning(f"[Apresentação] Timeout/Erro na apresentação de {spec_name}. Tentando de novo... ({e})")
-                            await asyncio.sleep(1.0)
-                        else:
-                            logger.error(f"[Apresentação] Falha final ao apresentar {spec_name}: {e}")
-
-            logger.info("[Apresentação] Todos os especialistas foram apresentados.")
-
-            if not blackboard.is_active:
-                return
-
-            # SOMENTE AGORA Nathália faz a primeira pergunta ao usuário
-            if blackboard.user_name:
-                closing = (
-                    f"Pronto, {blackboard.user_name}! Toda a nossa equipe já se apresentou. "
-                    f"Agora sou toda ouvidos — qual é o seu maior desafio ou a principal questão "
-                    f"que você quer resolver hoje?"
-                )
-            else:
-                closing = (
-                    "Pronto! Toda a nossa equipe já se apresentou. "
-                    "Antes de tudo, adoraria saber o seu nome — e depois me conte: "
-                    "qual é o seu projeto ou negócio e o que você quer resolver hoje?"
-                )
-
-            logger.info("[Host] Nathália fazendo pergunta inicial (pós-apresentações)...")
-            try:
-                await asyncio.wait_for(
-                    host_session.generate_reply(
-                        instructions=f"Faça a seguinte pergunta de forma calorosa e natural: {closing}",
-                    ),
-                    timeout=30.0,
-                )
-            except Exception as e:
-                logger.warning(f"[Host] Erro na pergunta inicial: {e}")
-
-            logger.info("[Host] Fluxo de abertura concluído.")
 
     asyncio.create_task(welcome_and_introductions())
 
