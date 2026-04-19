@@ -41,6 +41,7 @@ import logging
 import os
 import re
 import tempfile
+import unicodedata
 from dataclasses import dataclass, field
 from time import monotonic
 from typing import Optional
@@ -58,12 +59,19 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Mapeia GEMINI_API_KEY → GOOGLE_API_KEY para os plugins que leem essa variável.
-# SEMPRE faz o override — evita conflito quando o Railway define GOOGLE_API_KEY
-# com valor diferente ou desatualizado.
-_gemini_key = os.getenv("GEMINI_API_KEY", "")
-if _gemini_key:
-    os.environ["GOOGLE_API_KEY"] = _gemini_key
+# Usa somente GEMINI_API_KEY e remove GOOGLE_API_KEY do ambiente para evitar
+# que a SDK do Google escolha a variável errada e gere warnings ambíguos.
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
+os.environ.pop("GOOGLE_API_KEY", None)
+
+if not GEMINI_API_KEY:
+    logging.getLogger(__name__).warning(
+        "[worker] GEMINI_API_KEY não definida. As integrações Gemini podem falhar."
+    )
+
+
+def get_gemini_api_key() -> str:
+    return GEMINI_API_KEY
 
 # BEY_API_KEY já está no .env com o nome correto (Beyond Presence SDK lê diretamente)
 
@@ -173,16 +181,12 @@ SPECIALIST_IDENTITIES: dict[str, str] = {
     "plan":  "agent-plan",
 }
 
-# IDs dos avatares Beyond Presence mapeados por agente
-# Cada variável de ambiente corresponde a um personagem específico.
+# IDs dos avatares Beyond Presence mapeados por agente.
+# Regra atual do produto: somente a Nathália usa avatar.
+# Os demais especialistas atuam por voz, e o Marco opera só nos bastidores.
 # Fonte: https://docs.livekit.io/agents/models/avatar/plugins/bey/
 AVATAR_IDS: dict[str, str] = {
-    "host":  os.getenv("BEY_AVATAR_ID_HOST", ""),   # Nathália
-    "legal": os.getenv("BEY_AVATAR_ID_LEGAL", ""),  # Daniel (Advogado)
-    "cfo":   os.getenv("BEY_AVATAR_ID_CFO", ""),    # Carlos (CFO)
-    "cmo":   os.getenv("BEY_AVATAR_ID_CMO", ""),    # Rodrigo (CMO)
-    "cto":   os.getenv("BEY_AVATAR_ID_CTO", ""),    # Ana (CTO)
-    # Marco (plan) não recebe avatar — opera exclusivamente nos bastidores
+    "host": os.getenv("BEY_AVATAR_ID_HOST", ""),  # Nathália
 }
 
 # Frases de apresentação individual de cada specialist_id
@@ -536,6 +540,72 @@ class Blackboard:
     def get_full_transcript(self) -> str:
         return "\n\n".join(f"[{m['role']}]: {m['content']}" for m in self.transcript)
 
+    def get_last_user_message(self) -> str:
+        for message in reversed(self.transcript):
+            if message.get("role") == "Usuário":
+                return (message.get("content") or "").strip()
+        return ""
+
+
+def _normalize_handoff_text(text: str) -> str:
+    normalized = unicodedata.normalize("NFKD", text or "")
+    return "".join(ch for ch in normalized if not unicodedata.combining(ch)).lower().strip()
+
+
+def classify_user_handoff_intent(text: str) -> Optional[str]:
+    normalized = _normalize_handoff_text(text)
+    if not normalized:
+        return None
+
+    explicit_done_markers = (
+        "nao tenho mais duvidas",
+        "não tenho mais dúvidas",
+        "sem mais duvidas",
+        "sem mais dúvidas",
+        "nao tenho mais perguntas",
+        "não tenho mais perguntas",
+        "ficou claro",
+        "ficou bem claro",
+        "agora ficou claro",
+        "entendi",
+        "perfeito entendi",
+        "era isso",
+        "isso responde",
+        "pode seguir",
+        "pode prosseguir",
+        "podemos seguir",
+        "podemos prosseguir",
+        "obrigado, era isso",
+        "obrigada, era isso",
+    )
+    if any(marker in normalized for marker in explicit_done_markers):
+        return "user_confirmed_done"
+
+    host_request_markers = (
+        "pode voltar pra nathalia",
+        "pode voltar para nathalia",
+        "pode voltar para a nathalia",
+        "quero falar com a nathalia",
+        "chama a nathalia",
+        "passa para a nathalia",
+        "volta para a nathalia",
+    )
+    if any(marker in normalized for marker in host_request_markers):
+        return "user_requested_host"
+
+    topic_change_markers = (
+        "vamos mudar de assunto",
+        "quero mudar de assunto",
+        "vamos para outro assunto",
+        "vamos falar de outra coisa",
+        "quero falar de outro tema",
+        "outro tema agora",
+    )
+    if any(marker in normalized for marker in topic_change_markers):
+        return "topic_change"
+
+    return None
+
 async def _query_documents_with_llm(pergunta: str, documentos: list[str]) -> str:
     from google import genai
     from google.genai import types
@@ -553,7 +623,7 @@ async def _query_documents_with_llm(pergunta: str, documentos: list[str]) -> str
     )
     
     try:
-        client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY", ""))
+        client = genai.Client(api_key=get_gemini_api_key())
         
         def _call_gemini():
             return client.models.generate_content(
@@ -599,7 +669,7 @@ class SpecialistAgent(Agent):
             instructions=SPECIALIST_SYSTEM_PROMPTS[spec_id],
             llm=google_plugin.realtime.RealtimeModel(
                 model=GEMINI_REALTIME_MODEL,
-                api_key=os.environ.get("GOOGLE_API_KEY", ""),
+                api_key=get_gemini_api_key(),
                 voice=AGENT_VOICES[spec_id],
                 instructions=(
                     "IDIOMA OBRIGATÓRIO: Você DEVE falar e entender APENAS em português brasileiro (pt-BR). "
@@ -659,9 +729,27 @@ class SpecialistAgent(Agent):
         - Você sente que é hora de a Nathália continuar mediando.
         PRIORIDADE: Esta é a forma PADRÃO de encerrar seu turno.
         """
+        last_user_message = self._blackboard.get_last_user_message()
+        handoff_reason = classify_user_handoff_intent(last_user_message)
+
+        if not handoff_reason:
+            logger.info(
+                f"[{self._name}] Devolução bloqueada — usuário ainda não confirmou fim da dúvida. "
+                f"Última fala: {last_user_message or '<vazia>'}"
+            )
+            return (
+                "CONTINUE_COM_USUARIO: o usuário ainda não confirmou explicitamente "
+                "que não tem mais dúvidas com você. Continue ajudando, aprofunde a resposta "
+                "e termine com uma pergunta objetiva de acompanhamento."
+            )
+
         logger.info(f"[{self._name}] Devolvendo palavra para Nathália.")
         self._blackboard.add_message(self._name, "Pronto, Nathália! Pode continuar.")
-        self._handover_result = {"type": "nathalia"}
+        self._handover_result = {
+            "type": "nathalia",
+            "reason": handoff_reason,
+            "last_user_message": last_user_message,
+        }
         self._handover_event.set()
         return "Palavra devolvida à Nathália com sucesso. Aguarde em silêncio."
 
@@ -708,7 +796,7 @@ class HostAgent(Agent):
     ) -> None:
         llm = google_plugin.realtime.RealtimeModel(
             model=GEMINI_REALTIME_MODEL,
-            api_key=os.environ.get("GOOGLE_API_KEY", ""),
+            api_key=get_gemini_api_key(),
             voice=AGENT_VOICES["host"],
             instructions=(
                 "IDIOMA OBRIGATÓRIO: Você DEVE falar e entender APENAS em português brasileiro (pt-BR). "
@@ -941,7 +1029,12 @@ class HostAgent(Agent):
             logger.info(f"[Host] Turno de {SPECIALIST_NAMES[spec_id]} encerrado (status={status_type}). Nathália reativada.")
 
             # Faz a Nathália retomar a conversa proativamente
-            if host_session and status_type == "agent_done":
+            handover_reason = status_payload.get("handover_reason")
+            if host_session and status_type == "agent_done" and handover_reason in {
+                "user_confirmed_done",
+                "user_requested_host",
+                "topic_change",
+            }:
                 spec_name = SPECIALIST_NAMES[spec_id]
                 user_name = self._blackboard.user_name or "você"
                 try:
@@ -1447,7 +1540,7 @@ class HostAgent(Agent):
         )
         web_context = ""
         try:
-            client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY", ""))
+            client = genai.Client(api_key=get_gemini_api_key())
             loop = asyncio.get_running_loop()
 
             def _get_query():
@@ -1503,7 +1596,7 @@ class HostAgent(Agent):
         # Geração com Gemini
         markdown_result = ""
         try:
-            client_gen = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY", ""))
+            client_gen = genai.Client(api_key=get_gemini_api_key())
             loop = asyncio.get_running_loop()
 
             def _call_llm():
@@ -1579,7 +1672,7 @@ class HostAgent(Agent):
 
         markdown_result = ""
         try:
-            client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY", ""))
+            client = genai.Client(api_key=get_gemini_api_key())
             loop = asyncio.get_running_loop()
 
             def _call_llm():
@@ -1685,7 +1778,7 @@ class HostAgent(Agent):
 
         # ── PESQUISA DE MERCADO VIA DUCKDUCKGO ───────────────────────────────
         logger.info("[Marco] Obtendo query de pesquisa de mercado para DDGS...")
-        client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY", ""))
+        client = genai.Client(api_key=get_gemini_api_key())
         
         web_context = ""
         try:
@@ -1737,7 +1830,7 @@ class HostAgent(Agent):
 
         draft_text: str = ""
         try:
-            client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY", ""))
+            client = genai.Client(api_key=get_gemini_api_key())
 
             def _call_draft():
                 return client.models.generate_content(
@@ -1962,7 +2055,7 @@ async def _start_avatar_session(
     if not avatar_id:
         logger.warning(
             f"[Avatar] avatar_id não definido para '{spec_id}' — "
-            "verifique as variáveis BEY_AVATAR_ID_* no .env"
+            "verifique o mapeamento em AVATAR_IDS e as variáveis de ambiente do avatar"
         )
         return None
 
@@ -1980,6 +2073,23 @@ async def _start_avatar_session(
     except Exception as e:
         logger.warning(f"[Avatar] Falha ao iniciar avatar para '{agent_name}': {e}")
         return None
+
+
+def _prefetch_avatar_session(
+    spec_id: str,
+    agent_session: AgentSession,
+    room: rtc.Room,
+) -> Optional[asyncio.Task[Optional[object]]]:
+    """
+    Dispara o start do avatar em background para reduzir a latência percebida
+    até a primeira fala do agente.
+    """
+    if not BEY_AVAILABLE or not AVATAR_IDS.get(spec_id, ""):
+        return None
+    return asyncio.create_task(
+        _start_avatar_session(spec_id, agent_session, room),
+        name=f"avatar-prefetch-{spec_id}",
+    )
 
 async def _start_specialist_in_room(
     spec_id: str,
@@ -2039,7 +2149,7 @@ async def _start_specialist_in_room(
                 return
             _audio_subscribed = True
             for p in room.remote_participants.values():
-                if p.identity.startswith("user-"):
+                if p.identity.startswith("user-") or p.identity.startswith("guest-"):
                     for pub in p.track_publications.values():
                         if pub.kind == rtc.TrackKind.KIND_AUDIO:
                             pub.set_subscribed(True)
@@ -2052,7 +2162,7 @@ async def _start_specialist_in_room(
                 return
             _audio_subscribed = False
             for p in room.remote_participants.values():
-                if p.identity.startswith("user-"):
+                if p.identity.startswith("user-") or p.identity.startswith("guest-"):
                     for pub in p.track_publications.values():
                         if pub.kind == rtc.TrackKind.KIND_AUDIO:
                             pub.set_subscribed(False)
@@ -2060,7 +2170,11 @@ async def _start_specialist_in_room(
 
         # Quando o usuário publicar áudio depois, subscreve SOMENTE se ativado
         def _on_track_published(publication, participant):
-            if _audio_subscribed and participant.identity.startswith("user-") and publication.kind == rtc.TrackKind.KIND_AUDIO:
+            if (
+                _audio_subscribed
+                and (participant.identity.startswith("user-") or participant.identity.startswith("guest-"))
+                and publication.kind == rtc.TrackKind.KIND_AUDIO
+            ):
                 publication.set_subscribed(True)
 
         room.on("track_published", _on_track_published)
@@ -2244,6 +2358,15 @@ async def _start_specialist_in_room(
                 )
             )
 
+        @session.on("user_input_transcribed")
+        def _on_specialist_user_speech(event) -> None:
+            if not blackboard.is_active or not _audio_subscribed:
+                return
+            if not getattr(event, "is_final", True):
+                return
+
+            _record_user_transcript(_extract_transcribed_text(event))
+
         # C5: Handler assíncrono para ativação de especialista.
         # REFATORADO PARA HANDOVER PEER-TO-PEER:
         # O especialista gera a resposta inicial e mantém o áudio aberto,
@@ -2344,13 +2467,13 @@ async def _start_specialist_in_room(
                         # Fallback 1: inatividade/silêncio absoluto (60s)
                         if monotonic() - agent._blackboard.last_interaction_at > 60.0:
                             logger.warning(f"[{name}] Silêncio prolongado detectado (>60s). Devolvendo para Nathália.")
-                            agent._handover_result = {"type": "nathalia"}
+                            agent._handover_result = {"type": "nathalia", "reason": "silence_timeout"}
                             break
                             
                         # Fallback 2: limite máximo absoluto de turno (HANDOVER_TIMEOUT_SECONDS = 300s)
                         if monotonic() - started_at > HANDOVER_TIMEOUT_SECONDS:
                             logger.warning(f"[{name}] Limite do turno excedido ({HANDOVER_TIMEOUT_SECONDS}s). Devolvendo para Nathália.")
-                            agent._handover_result = {"type": "nathalia"}
+                            agent._handover_result = {"type": "nathalia", "reason": "turn_timeout"}
                             break
                 except Exception as handover_err:
                     logger.warning(f"[{name}] Erro ao monitorar handover: {handover_err}")
@@ -2372,8 +2495,19 @@ async def _start_specialist_in_room(
                     logger.info(f"[{name}] TRANSFERÊNCIA LATERAL para {target_id}. Contexto: {transfer_context[:80]}.")
                 else:
                     # Devolução padrão para Nathália
-                    await _emit("agent_done", {"elapsed_ms": int((monotonic() - started_at) * 1000)})
-                    logger.info(f"[{name}] Turno encerrado. Palavra devolvida à Nathália.")
+                    handover_reason = handover.get("reason", "unspecified")
+                    await _emit(
+                        "agent_done",
+                        {
+                            "elapsed_ms": int((monotonic() - started_at) * 1000),
+                            "handover_reason": handover_reason,
+                            "last_user_message": handover.get("last_user_message", ""),
+                        },
+                    )
+                    logger.info(
+                        f"[{name}] Turno encerrado. Palavra devolvida à Nathália. "
+                        f"Motivo={handover_reason}"
+                    )
 
             except asyncio.CancelledError:
                 asyncio.create_task(_emit("agent_cancelled", {"elapsed_ms": int((monotonic() - started_at) * 1000)}))
@@ -2578,7 +2712,7 @@ async def _run_entrypoint(ctx: JobContext) -> None:
         blackboard.documentos_disponiveis = docs
         logger.info(f"[Docs] Foram carregados {len(docs)} documentos para a sessão.")
 
-    await fetch_resume_context()
+    resume_task = asyncio.create_task(fetch_resume_context())
     asyncio.create_task(fetch_docs())
 
     # Variáveis de ambiente para conectar especialistas
@@ -2600,6 +2734,10 @@ async def _run_entrypoint(ctx: JobContext) -> None:
         logger.error(f"[Host] Erro crítico ao iniciar Nathália: {e}", exc_info=True)
         return
 
+    host_avatar_task = _prefetch_avatar_session("host", host_session, ctx.room)
+    if host_avatar_task:
+        logger.info("[Host] Pré-aquecimento do avatar da Nathália iniciado em background.")
+
     # Guarda referência ao host_session no HostAgent para retomada automática
     host_agent._host_session = host_session
 
@@ -2617,14 +2755,18 @@ async def _run_entrypoint(ctx: JobContext) -> None:
         - Evita rate limiting 429 nos handshakes simultâneos ao Gemini.
         - Em produção com N usuários, reduz a carga de 6N para picos menores.
         """
+        await resume_task
         is_resuming = len(blackboard.transcript) > 0
 
         # CORREÇÃO CRÍTICA: Aguarda o avatar da Nathália estar completamente pronto
         # ANTES de gerar qualquer reply de áudio. Se o avatar não estiver pronto,
         # o generate_reply descarta o áudio silenciosamente.
-        logger.info("[Host] Aguardando avatar da Nathália (Beyond Presence) inicializar...")
-        await _start_avatar_session("host", host_session, ctx.room)
-        logger.info("[Host] Avatar da Nathália pronto. Aguardando estabilização do RealtimeModel...")
+        if host_avatar_task:
+            logger.info("[Host] Aguardando avatar da Nathália (Beyond Presence) concluir inicialização...")
+            await host_avatar_task
+            logger.info("[Host] Avatar da Nathália pronto. Aguardando estabilização do RealtimeModel...")
+        else:
+            logger.info("[Host] Avatar da Nathália indisponível ou desativado. Seguindo sem avatar.")
 
         # Aguarda Nathália estabilizar e o RealtimeModel conectar ao Gemini
         await asyncio.sleep(2.0)
@@ -2653,7 +2795,10 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                     timeout=30.0,
                 )
             except Exception as e:
-                logger.warning(f"[Host] Erro ao retomar sessão: {e}")
+                logger.warning(
+                    f"[Host] Erro ao retomar sessão: {type(e).__name__}: {e}",
+                    exc_info=True,
+                )
 
             # Conecta especialistas SEQUENCIALMENTE (evita Rate Limit do Beyond/Gemini)
             logger.info("[Retomada] Conectando especialistas sequencialmente para evitar rate limits...")
@@ -2829,6 +2974,62 @@ async def _run_entrypoint(ctx: JobContext) -> None:
             # Convidados podem sair sem afetar a sessão
             logger.info(f"[Room] Convidado {participant.identity} saiu da sala. Sessão continua normalmente.")
 
+    def _extract_transcribed_text(event) -> str:
+        if hasattr(event, "transcript"):
+            return (event.transcript or "").strip()
+        if hasattr(event, "text"):
+            return (event.text or "").strip()
+        return str(event).strip()
+
+    def _should_ignore_user_transcript(text: str) -> bool:
+        lower_text = text.lower()
+
+        if lower_text in ["<noise>", "[noise]", "silence", "noise", "ruído", "interruption", "breath"]:
+            logger.info(f"[Filtro] Ruído explícito descartado: {text}")
+            return True
+
+        non_latin_pattern = re.compile(r"[\u0e00-\u0e7f\u0600-\u06ff\u0980-\u09ff\u0e80-\u0eff\uac00-\ud7af]")
+        if non_latin_pattern.search(text):
+            logger.info(f"[Filtro] Alucinação de idioma detectada e descartada: {text}")
+            return True
+
+        if len(text) <= 3 and not any(v in lower_text for v in "aeiouáéíóúâêôãõ"):
+            logger.info(f"[Filtro] Fragmento curto sem vogais (ruído) descartado: {text}")
+            return True
+
+        common_pt_monos = {"oi", "é", "o", "a", "um", "eu", "se", "ir", "da", "do", "no", "na", "te", "me", "vc", "bj", "obg"}
+        if len(text) <= 2 and lower_text not in common_pt_monos:
+            logger.info(f"[Filtro] Monossílabo suspeito descartado: {text}")
+            return True
+
+        if lower_text.startswith("entendido") or lower_text.startswith("perfeito") or lower_text.startswith("claro"):
+            logger.info(f"[Filtro] Possível eco de agente descartado: {text}")
+            return True
+
+        return False
+
+    def _record_user_transcript(text: str, speaker_label: str = "Você") -> None:
+        text = text.strip()
+        if not text or _should_ignore_user_transcript(text):
+            return
+
+        logger.info(f"[Usuário fala] {text}")
+        blackboard.add_message("Usuário", text)
+        if not blackboard.user_query:
+            blackboard.user_query = text
+
+        asyncio.create_task(
+            ctx.room.local_participant.publish_data(
+                json.dumps({
+                    "version": DATA_PACKET_SCHEMA_VERSION,
+                    "type": "transcript",
+                    "speaker": speaker_label,
+                    "text": text,
+                }).encode(),
+                reliable=True,
+            )
+        )
+
     # ------------------------------------------------------------------
     # Captura transcrição do usuário → Blackboard + frontend
     # ------------------------------------------------------------------
@@ -2845,70 +3046,7 @@ async def _run_entrypoint(ctx: JobContext) -> None:
         if not getattr(event, "is_final", True):
             return
 
-        text = ""
-        if hasattr(event, "transcript"):
-            text = event.transcript
-        elif hasattr(event, "text"):
-            text = event.text
-        else:
-            text = str(event)
-
-        text = text.strip()
-        if not text:
-            return
-
-        # ==========================================================
-        # Filtro de Ruído / Alucinações (VAD/STT robustness)
-        # ==========================================================
-        lower_text = text.lower()
-
-        # 1. Filtro de ruído explícito
-        if lower_text in ["<noise>", "[noise]", "silence", "noise", "ruído", "interruption", "breath"]:
-            logger.info(f"[Filtro] Ruído explícito descartado: {text}")
-            return
-
-        # 2. Filtro de Script Não-Latino (Thai, Arabic, Bengali, etc.)
-        # O sistema é focado em pt-BR. Se houver scripts totalmente diferentes, é alucinação de ruído.
-        # Range Thai: \u0e00-\u0e7f, Arabic: \u0600-\u06ff, Bengali: \u0980-\u09ff, etc.
-        non_latin_pattern = re.compile(r"[\u0e00-\u0e7f\u0600-\u06ff\u0980-\u09ff\u0e80-\u0eff\uac00-\ud7af]")
-        if non_latin_pattern.search(text):
-            logger.info(f"[Filtro] Alucinação de idioma detectada e descartada: {text}")
-            return
-
-        # 3. Filtro de fragmentos curtíssimos sem vogais (ruído VAD)
-        # Palavras em PT sempre têm vogais. "é", "o", "a" são válidos.
-        if len(text) <= 3 and not any(v in lower_text for v in "aeiouáéíóúâêôãõ"):
-             logger.info(f"[Filtro] Fragmento curto sem vogais (ruído) descartado: {text}")
-             return
-
-        # 4. Filtro de monossílabos suspeitos que não são pt-BR comuns
-        common_pt_monos = {"oi", "é", "o", "a", "um", "eu", "se", "ir", "da", "do", "no", "na", "te", "me", "vc", "bj", "obg"}
-        if len(text) <= 2 and lower_text not in common_pt_monos:
-             logger.info(f"[Filtro] Monossílabo suspeito descartado: {text}")
-             return
-
-        # 5. Filtro de linguagem informal mas reconhecível (evita eco de agente)
-        # Se o texto parece resposta do agente (não fala de usuário), descarte
-        if lower_text.startswith("entendido") or lower_text.startswith("perfeito") or lower_text.startswith("claro"):
-            logger.info(f"[Filtro] Possível eco de agente descartado: {text}")
-            return
-        # ==========================================================
-
-        logger.info(f"[Usuário fala] {text}")
-        blackboard.add_message("Usuário", text)
-        if not blackboard.user_query:
-            blackboard.user_query = text
-        asyncio.create_task(
-            ctx.room.local_participant.publish_data(
-                json.dumps({
-                    "version": DATA_PACKET_SCHEMA_VERSION,
-                    "type": "transcript",
-                    "speaker": "Você",
-                    "text": text,
-                }).encode(),
-                reliable=True,
-            )
-        )
+        _record_user_transcript(_extract_transcribed_text(event))
 
     # ------------------------------------------------------------------
     # Captura transcrição da Nathália → Blackboard + frontend
@@ -2959,9 +3097,6 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                 reliable=True,
             )
         )
-
-
-    asyncio.create_task(welcome_and_introductions())
 
     # ------------------------------------------------------------------
     # Escuta mensagens de dados do frontend

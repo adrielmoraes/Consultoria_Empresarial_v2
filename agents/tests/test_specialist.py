@@ -149,7 +149,7 @@ class TestAgentActivation(unittest.TestCase):
 
         self.assertEqual(bb.active_agent, "cfo")
         self.assertEqual(len(bb.transcript), 1)
-        self.assertIn("Carlos (CFO)", bb.transcript[0]["content"])
+        self.assertIn("Carlos (CFO & VC)", bb.transcript[0]["content"])
 
     def test_multiple_activations(self):
         """Verifica que ativações sequenciais são registradas."""
@@ -161,6 +161,57 @@ class TestAgentActivation(unittest.TestCase):
 
         self.assertEqual(bb.active_agent, "cmo")  # Último ativado
         self.assertEqual(len(bb.transcript), 3)
+
+
+class TestSpecialistHandoffBehavior(unittest.IsolatedAsyncioTestCase):
+    """Garante que o especialista só encerra o turno quando a dúvida foi sanada."""
+
+    @patch.dict(os.environ, {"GOOGLE_API_KEY": "test-key", "GEMINI_API_KEY": "test-key"})
+    async def test_devolver_para_nathalia_bloqueia_quando_usuario_ainda_tem_duvida(self):
+        bb = Blackboard()
+        bb.add_message("Usuário", "Mas no meu caso a multa contratual continua valendo?")
+        agent = SpecialistAgent("legal", bb)
+
+        result = await agent.devolver_para_nathalia(None)
+
+        self.assertIn("CONTINUE_COM_USUARIO", result)
+        self.assertFalse(agent._handover_event.is_set())
+        self.assertIsNone(agent._handover_result)
+
+    @patch.dict(os.environ, {"GOOGLE_API_KEY": "test-key", "GEMINI_API_KEY": "test-key"})
+    async def test_devolver_para_nathalia_so_libera_com_confirmacao_clara(self):
+        bb = Blackboard()
+        bb.add_message("Usuário", "Perfeito, agora ficou claro e não tenho mais dúvidas.")
+        agent = SpecialistAgent("legal", bb)
+
+        result = await agent.devolver_para_nathalia(None)
+
+        self.assertIn("Palavra devolvida", result)
+        self.assertTrue(agent._handover_event.is_set())
+        self.assertEqual(agent._handover_result["type"], "nathalia")
+        self.assertEqual(agent._handover_result["reason"], "user_confirmed_done")
+        self.assertEqual(
+            agent._handover_result["last_user_message"],
+            "Perfeito, agora ficou claro e não tenho mais dúvidas.",
+        )
+
+    @patch.dict(os.environ, {"GOOGLE_API_KEY": "test-key", "GEMINI_API_KEY": "test-key"})
+    async def test_transferencia_lateral_continua_fluxo_sem_voltar_para_nathalia(self):
+        bb = Blackboard()
+        bb.add_message("Usuário", "Agora quero falar da parte tecnológica.")
+        agent = SpecialistAgent("cfo", bb)
+
+        result = await agent.transferir_para_especialista(
+            None,
+            "ana_cto",
+            "O usuário quer aprofundar a arquitetura e automação do produto.",
+        )
+
+        self.assertIn("Transferência para Ana", result)
+        self.assertTrue(agent._handover_event.is_set())
+        self.assertEqual(agent._handover_result["type"], "transfer")
+        self.assertEqual(agent._handover_result["target"], "cto")
+        self.assertEqual(agent._handover_result["from_name"], SPECIALIST_NAMES["cfo"])
 
 
 if __name__ == "__main__":

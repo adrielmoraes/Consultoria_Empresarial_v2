@@ -2,10 +2,11 @@
 Testes de integração — Avatares Beyond Presence
 =================================================
 Verifica:
- 1. Que AVATAR_IDS mapeia corretamente todos os agentes.
+ 1. Que apenas a Nathália possui avatar configurado.
  2. Que _start_avatar_session retorna None graciosamente quando BEY_AVAILABLE=False.
  3. Que _start_avatar_session chama bey_plugin.AvatarSession com os parâmetros corretos.
  4. Que erros na API Beyond são capturados sem derrubar o worker.
+ 5. Que o pré-aquecimento do avatar só ocorre para agentes com avatar configurado.
 """
 
 from __future__ import annotations
@@ -36,10 +37,6 @@ def worker_module():
     env_patch = {
         "BEY_API_KEY": "sk-test-key",
         "BEY_AVATAR_ID_HOST":  "694c83e2-8895-4a98-bd16-56332ca3f449",
-        "BEY_AVATAR_ID_LEGAL": "b63ba4e6-d346-45d0-ad28-5ddffaac0bd0_v2",
-        "BEY_AVATAR_ID_CFO":   "2ed7477f-3961-4ce1-b331-5e4530c55a57",
-        "BEY_AVATAR_ID_CMO":   "7124071d-480e-4fdc-ad0e-a2e0680f1378",
-        "BEY_AVATAR_ID_CTO":   "2bc759ab-a7e5-4b91-941d-9e42450d6546",
         "GEMINI_API_KEY":      "AIza-test",
         "LIVEKIT_URL":         "wss://test.livekit.cloud",
         "LIVEKIT_API_KEY":     "APItest",
@@ -58,42 +55,21 @@ def worker_module():
 # ---------------------------------------------------------------------------
 
 class TestAvatarIds:
-    """Verifica que AVATAR_IDS mapeia corretamente todos os agentes esperados."""
+    """Verifica que apenas a Nathália usa avatar."""
 
-    EXPECTED_AGENTS = {"host", "legal", "cfo", "cmo", "cto"}
-    EXPECTED_IDS = {
-        "host":  "694c83e2-8895-4a98-bd16-56332ca3f449",
-        "legal": "b63ba4e6-d346-45d0-ad28-5ddffaac0bd0_v2",
-        "cfo":   "2ed7477f-3961-4ce1-b331-5e4530c55a57",
-        "cmo":   "7124071d-480e-4fdc-ad0e-a2e0680f1378",
-        "cto":   "2bc759ab-a7e5-4b91-941d-9e42450d6546",
-    }
+    EXPECTED_IDS = {"host": "694c83e2-8895-4a98-bd16-56332ca3f449"}
 
-    def test_avatar_ids_contém_todos_os_agentes(self, worker_module):
-        assert self.EXPECTED_AGENTS.issubset(set(worker_module.AVATAR_IDS.keys())), (
-            f"AVATAR_IDS faltando agentes: {self.EXPECTED_AGENTS - set(worker_module.AVATAR_IDS.keys())}"
-        )
+    def test_avatar_ids_contem_apenas_host(self, worker_module):
+        assert set(worker_module.AVATAR_IDS.keys()) == {"host"}
 
     def test_avatar_ids_valor_correto_host(self, worker_module):
         assert worker_module.AVATAR_IDS["host"] == self.EXPECTED_IDS["host"]
 
-    def test_avatar_ids_valor_correto_legal(self, worker_module):
-        assert worker_module.AVATAR_IDS["legal"] == self.EXPECTED_IDS["legal"]
-
-    def test_avatar_ids_valor_correto_cfo(self, worker_module):
-        assert worker_module.AVATAR_IDS["cfo"] == self.EXPECTED_IDS["cfo"]
-
-    def test_avatar_ids_valor_correto_cmo(self, worker_module):
-        assert worker_module.AVATAR_IDS["cmo"] == self.EXPECTED_IDS["cmo"]
-
-    def test_avatar_ids_valor_correto_cto(self, worker_module):
-        assert worker_module.AVATAR_IDS["cto"] == self.EXPECTED_IDS["cto"]
-
-    def test_marco_nao_tem_avatar(self, worker_module):
-        """Marco opera nos bastidores e NÃO deve ter avatar."""
-        assert "plan" not in worker_module.AVATAR_IDS or worker_module.AVATAR_IDS.get("plan", "") == "", (
-            "Marco (plan) não deve ter avatar configurado."
-        )
+    def test_especialistas_e_marco_nao_tem_avatar(self, worker_module):
+        for spec_id in ("legal", "cfo", "cmo", "cto", "plan"):
+            assert worker_module.AVATAR_IDS.get(spec_id, "") == "", (
+                f"{spec_id} não deve ter avatar configurado."
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -158,12 +134,12 @@ class TestStartAvatarSessionHappyPath:
             worker_module.bey_plugin = mock_bey
             worker_module.BEY_AVAILABLE = True
 
-            result = await worker_module._start_avatar_session("cfo", mock_session, mock_room)
+            result = await worker_module._start_avatar_session("host", mock_session, mock_room)
 
             mock_bey.AvatarSession.assert_called_once()
             call_kwargs = mock_bey.AvatarSession.call_args.kwargs
-            assert call_kwargs["avatar_id"] == worker_module.AVATAR_IDS["cfo"]
-            assert "Carlos" in call_kwargs.get("avatar_participant_name", "")
+            assert call_kwargs["avatar_id"] == worker_module.AVATAR_IDS["host"]
+            assert "Nathália" in call_kwargs.get("avatar_participant_name", "")
             mock_avatar.start.assert_awaited_once_with(mock_session, room=mock_room)
             assert result == mock_avatar
         finally:
@@ -185,8 +161,45 @@ class TestStartAvatarSessionHappyPath:
             worker_module.bey_plugin = mock_bey
             worker_module.BEY_AVAILABLE = True
 
-            result = await worker_module._start_avatar_session("cmo", mock_session, mock_room)
+            result = await worker_module._start_avatar_session("host", mock_session, mock_room)
             assert result is None, "Exceção deve ser capturada e retornar None"
         finally:
             worker_module.bey_plugin = original_bey
             worker_module.BEY_AVAILABLE = original_available
+
+
+class TestAvatarPrefetch:
+    """Verifica o pré-aquecimento do avatar da Nathália."""
+
+    @pytest.mark.anyio
+    async def test_prefetch_cria_task_para_host(self, worker_module):
+        mock_session = MagicMock()
+        mock_room = MagicMock()
+
+        sentinel = object()
+
+        async def fake_start(spec_id, agent_session, room):
+            assert spec_id == "host"
+            assert agent_session is mock_session
+            assert room is mock_room
+            return sentinel
+
+        original_start = worker_module._start_avatar_session
+        original_available = worker_module.BEY_AVAILABLE
+        try:
+            worker_module._start_avatar_session = fake_start
+            worker_module.BEY_AVAILABLE = True
+
+            task = worker_module._prefetch_avatar_session("host", mock_session, mock_room)
+            assert task is not None
+            assert await task is sentinel
+        finally:
+            worker_module._start_avatar_session = original_start
+            worker_module.BEY_AVAILABLE = original_available
+
+    def test_prefetch_nao_cria_task_para_especialista_sem_avatar(self, worker_module):
+        mock_session = MagicMock()
+        mock_room = MagicMock()
+
+        task = worker_module._prefetch_avatar_session("cfo", mock_session, mock_room)
+        assert task is None

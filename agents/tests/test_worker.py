@@ -19,6 +19,7 @@ from worker import (
     HOST_PROMPT,
     GEMINI_REALTIME_MODEL,
     GEMINI_REALTIME_CONFIG,
+    classify_user_handoff_intent,
 )
 
 
@@ -81,9 +82,9 @@ class TestBlackboardGetContextSummary(unittest.TestCase):
             bb.add_message(f"User{i}", f"Mensagem {i}")
         summary = bb.get_context_summary()
         # Deve conter as últimas 20 mensagens (10 a 29)
-        self.assertIn("[User10]: Mensagem 10", summary)
+        self.assertIn("[User18]: Mensagem 18", summary)
         self.assertIn("[User29]: Mensagem 29", summary)
-        self.assertNotIn("[User9]: Mensagem 9", summary)
+        self.assertNotIn("[User17]: Mensagem 17", summary)
 
 
 class TestBlackboardGetFullTranscript(unittest.TestCase):
@@ -101,6 +102,22 @@ class TestBlackboardGetFullTranscript(unittest.TestCase):
         self.assertIn("[Nathália]: Olá!", result)
         self.assertIn("[Usuário]: Oi!", result)
         self.assertIn("\n\n", result)
+
+
+class TestBlackboardLastUserMessage(unittest.TestCase):
+    """Testa a recuperação da última fala do usuário."""
+
+    def test_returns_empty_when_user_never_spoke(self):
+        bb = Blackboard()
+        bb.add_message("Nathália", "Olá!")
+        self.assertEqual(bb.get_last_user_message(), "")
+
+    def test_returns_latest_user_message(self):
+        bb = Blackboard()
+        bb.add_message("Usuário", "Primeira dúvida")
+        bb.add_message("Daniel (Advogado)", "Posso te ajudar nisso.")
+        bb.add_message("Usuário", "Mas e a cláusula de rescisão?")
+        self.assertEqual(bb.get_last_user_message(), "Mas e a cláusula de rescisão?")
 
 
 class TestBlackboardDefaults(unittest.TestCase):
@@ -141,7 +158,7 @@ class TestConstantsAlignment(unittest.TestCase):
         self.assertEqual(set(SPECIALIST_SYSTEM_PROMPTS.keys()), self.EXPECTED_SPEC_IDS)
 
     def test_specialist_order_contains_all_specialists(self):
-        self.assertEqual(set(SPECIALIST_ORDER), self.EXPECTED_SPEC_IDS)
+        self.assertEqual(set(SPECIALIST_ORDER), {"cfo", "legal", "cmo", "cto"})
 
     def test_agent_voices_has_all_agents(self):
         expected_voices = {"host", "cfo", "legal", "cmo", "cto", "plan"}
@@ -155,7 +172,7 @@ class TestConstantsAlignment(unittest.TestCase):
             )
 
     def test_order_is_correct(self):
-        expected_order = ["cfo", "legal", "cmo", "cto", "plan"]
+        expected_order = ["cfo", "legal", "cmo", "cto"]
         self.assertEqual(SPECIALIST_ORDER, expected_order)
 
 
@@ -219,6 +236,27 @@ class TestGeminiConfig(unittest.TestCase):
             GEMINI_REALTIME_CONFIG["compression_trigger"],
             GEMINI_REALTIME_CONFIG["compression_sliding_window"],
             "trigger deve ser maior que sliding_window",
+        )
+
+
+class TestHandoffIntentClassification(unittest.TestCase):
+    """Garante que o especialista só devolve o turno com sinal claro do usuário."""
+
+    def test_detects_user_confirmed_done(self):
+        self.assertEqual(
+            classify_user_handoff_intent("Perfeito, agora ficou claro e não tenho mais dúvidas."),
+            "user_confirmed_done",
+        )
+
+    def test_detects_user_requested_host(self):
+        self.assertEqual(
+            classify_user_handoff_intent("Pode voltar para a Nathália para seguirmos."),
+            "user_requested_host",
+        )
+
+    def test_returns_none_when_user_still_has_questions(self):
+        self.assertIsNone(
+            classify_user_handoff_intent("Mas no meu caso a multa contratual continua valendo?")
         )
 
 
