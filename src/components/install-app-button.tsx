@@ -12,13 +12,13 @@ type BeforeInstallPromptEvent = Event & {
 export function InstallAppButton() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      window.matchMedia("(display-mode: standalone)").matches
-  );
+  const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      setIsInstalled(true);
+    }
+
     const handleBeforeInstallPrompt = (e: Event) => {
       const promptEvent = e as BeforeInstallPromptEvent;
       e.preventDefault();
