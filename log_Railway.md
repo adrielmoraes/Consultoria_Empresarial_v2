@@ -1,358 +1,1570 @@
-{"message":"HTTP server listening on :8081","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:14:48.443871+00:00","name":"livekit.agents"},"timestamp":"2026-04-18T23:14:48.968798570Z"}
-{"message":"INFO:livekit.agents:starting worker","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:14:48.968815003Z"}
-{"message":"starting worker","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:14:48.440643+00:00","name":"livekit.agents","version":"1.5.4","rtc-version":"1.1.5"},"timestamp":"2026-04-18T23:14:48.968820217Z"}
-{"message":"INFO:livekit.agents:plugin registered","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:14:48.968827180Z"}
-{"message":"plugin registered","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:14:48.440786+00:00","name":"livekit.agents","plugin":"livekit.plugins.google","version":"1.5.4"},"timestamp":"2026-04-18T23:14:48.968831614Z"}
-{"message":"INFO:livekit.agents:plugin registered","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:14:48.968835746Z"}
-{"message":"plugin registered","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:14:48.440841+00:00","name":"livekit.agents","plugin":"livekit.plugins.bey","version":"1.5.4"},"timestamp":"2026-04-18T23:14:48.968844599Z"}
-{"message":"INFO:livekit.agents:preloading plugins","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:14:48.968848657Z"}
-{"message":"preloading plugins","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:14:48.440883+00:00","name":"livekit.agents","packages":["livekit.plugins.google","livekit.plugins.bey","av"]},"timestamp":"2026-04-18T23:14:48.968852936Z"}
-{"message":"INFO:livekit.agents:HTTP server listening on :8081","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:14:48.968856665Z"}
-{"message":"INFO:livekit.agents:initializing process","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:14:50.247864139Z"}
-{"message":"initializing process","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:14:50.244792+00:00","name":"livekit.agents","pid":106},"timestamp":"2026-04-18T23:14:50.247869447Z"}
-{"message":"INFO:livekit.agents:initializing process","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:14:50.249565503Z"}
-{"message":"initializing process","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:14:50.248487+00:00","name":"livekit.agents","pid":108},"timestamp":"2026-04-18T23:14:50.249569888Z"}
-{"message":"INFO:livekit.agents:process initialized","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:14:50.299115209Z"}
-{"message":"process initialized","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:14:50.296025+00:00","name":"livekit.agents","pid":106,"elapsed_time":0.05},"timestamp":"2026-04-18T23:14:50.299118784Z"}
-{"message":"INFO:livekit.agents:process initialized","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:14:50.299122431Z"}
-{"message":"process initialized","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:14:50.297545+00:00","name":"livekit.agents","pid":108,"elapsed_time":0.05},"timestamp":"2026-04-18T23:14:50.299126416Z"}
-{"message":"INFO:livekit.agents:registered worker","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:14:50.329986150Z"}
-{"message":"registered worker","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:14:50.328880+00:00","name":"livekit.agents","agent_name":"mentoria-agent","id":"AW_b7oQUiwoTxkJ","url":"wss://mentoria-lumci8sc.livekit.cloud","region":"US East B","protocol":17},"timestamp":"2026-04-18T23:14:50.329990702Z"}
-{"message":"INFO:livekit.agents:received job request","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.172804905Z"}
-{"message":"received job request","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:25:38.663133+00:00","name":"livekit.agents","job_id":"AJ_9KaVpzadacAF","dispatch_id":"AD_XWwrJZhuMHbt","room":"mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-671b51e2","room_id":"RM_nFuqmQksFmuj","agent_name":"mentoria-agent","resuming":false,"enable_recording":false},"timestamp":"2026-04-18T23:25:41.172808363Z"}
-{"message":"INFO:mentoria-ai:[Guard] Job ACEITO para sala 'mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-671b51e2'. Salas ativas: {'mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-671b51e2'}","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.172811557Z"}
-{"message":"[Guard] Job ACEITO para sala 'mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-671b51e2'. Salas ativas: {'mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-671b51e2'}","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:25:38.664184+00:00","name":"mentoria-ai"},"timestamp":"2026-04-18T23:25:41.172814700Z"}
-{"message":"INFO:mentoria-ai:=== ENTRYPOINT MENTORIA AI v5 – sala: mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-671b51e2 ===","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.172817615Z"}
-{"message":"INFO:mentoria-ai:=== ENTRYPOINT MENTORIA AI v5 – sala: mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-671b51e2 ===","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.172821655Z"}
-{"message":"=== ENTRYPOINT MENTORIA AI v5 – sala: mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-671b51e2 ===","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:25:38.747083+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:25:41.172827881Z"}
-{"message":"INFO:livekit.agents:initializing process","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.172832395Z"}
-{"message":"initializing process","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:25:38.748319+00:00","name":"livekit.agents","pid":118},"timestamp":"2026-04-18T23:25:41.172835754Z"}
-{"message":"INFO:livekit.agents:process initialized","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.172838710Z"}
-{"message":"process initialized","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:25:38.827089+00:00","name":"livekit.agents","pid":118,"elapsed_time":0.08},"timestamp":"2026-04-18T23:25:41.172842801Z"}
-{"message":"INFO:mentoria-ai:Worker conectado ao room: mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-671b51e2 [Host AUDIO_ONLY]","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.174606796Z"}
-{"message":"INFO:mentoria-ai:Worker conectado ao room: mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-671b51e2 [Host AUDIO_ONLY]","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.174611481Z"}
-{"message":"Worker conectado ao room: mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-671b51e2 [Host AUDIO_ONLY]","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:25:39.101797+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:25:41.174614908Z"}
-{"message":"INFO:mentoria-ai:[Resume] Tentando buscar contexto em: https://consultoria-empresarial-v2.vercel.app/api/projects/f6aedab4-603a-4b60-9a13-eda8cc4832b9/resume-context","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.174618021Z"}
-{"message":"INFO:mentoria-ai:[Resume] Tentando buscar contexto em: https://consultoria-empresarial-v2.vercel.app/api/projects/f6aedab4-603a-4b60-9a13-eda8cc4832b9/resume-context","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.174621355Z"}
-{"message":"[Resume] Tentando buscar contexto em: https://consultoria-empresarial-v2.vercel.app/api/projects/f6aedab4-603a-4b60-9a13-eda8cc4832b9/resume-context","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:25:39.102702+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:25:41.174624393Z"}
-{"message":"INFO:mentoria-ai:[Resume] Contexto de retomada carregado com 10 mensagens.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.174627550Z"}
-{"message":"INFO:mentoria-ai:[Resume] Contexto de retomada carregado com 10 mensagens.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.174631174Z"}
-{"message":"[Resume] Contexto de retomada carregado com 10 mensagens.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:25:39.790271+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:25:41.174634219Z"}
-{"message":"INFO:mentoria-ai:[Docs] Tentando buscar documentos em: https://consultoria-empresarial-v2.vercel.app/api/projects/f6aedab4-603a-4b60-9a13-eda8cc4832b9/documents","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.174637011Z"}
-{"message":"WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.176829636Z"}
-{"message":"INFO:mentoria-ai:[Docs] Tentando buscar documentos em: https://consultoria-empresarial-v2.vercel.app/api/projects/f6aedab4-603a-4b60-9a13-eda8cc4832b9/documents","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.176834028Z"}
-{"message":"[Docs] Tentando buscar documentos em: https://consultoria-empresarial-v2.vercel.app/api/projects/f6aedab4-603a-4b60-9a13-eda8cc4832b9/documents","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:25:39.795732+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:25:41.176837943Z"}
-{"message":"WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.176843455Z"}
-{"message":"Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"warn","attributes":{"level":"warn","timestamp":"2026-04-18T23:25:39.797324+00:00","name":"google_genai._api_client","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:25:41.176848424Z"}
-{"message":"INFO:mentoria-ai:[Host] Nathália iniciada com RealtimeModel nativo.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.176852255Z"}
-{"message":"INFO:mentoria-ai:=== Job em execução. Aguardando interação... ===","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.176857505Z"}
-{"message":"INFO:mentoria-ai:[Host] Nathália iniciada com RealtimeModel nativo.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.176861139Z"}
-{"message":"[Host] Nathália iniciada com RealtimeModel nativo.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:25:39.889340+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:25:41.176865260Z"}
-{"message":"INFO:mentoria-ai:=== Job em execução. Aguardando interação... ===","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.176870894Z"}
-{"message":"=== Job em execução. Aguardando interação... ===","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:25:39.889806+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:25:41.176875492Z"}
-{"message":"INFO:mentoria-ai:[Host] Aguardando avatar da Nathália (Beyond Presence) inicializar...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.179006675Z"}
-{"message":"INFO:mentoria-ai:[Host] Aguardando avatar da Nathália (Beyond Presence) inicializar...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.179010292Z"}
-{"message":"[Host] Aguardando avatar da Nathália (Beyond Presence) inicializar...","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:25:39.890490+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:25:41.179013327Z"}
-{"message":"INFO:mentoria-ai:[Host] Aguardando avatar da Nathália (Beyond Presence) inicializar...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.179016304Z"}
-{"message":"INFO:mentoria-ai:[Host] Aguardando avatar da Nathália (Beyond Presence) inicializar...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.179019095Z"}
-{"message":"[Host] Aguardando avatar da Nathália (Beyond Presence) inicializar...","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:25:39.892847+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:25:41.179022780Z"}
-{"message":"INFO:mentoria-ai:[Docs] Foram carregados 0 documentos para a sessão.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.179025611Z"}
-{"message":"INFO:mentoria-ai:[Docs] Foram carregados 0 documentos para a sessão.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:41.179028379Z"}
-{"message":"[Docs] Foram carregados 0 documentos para a sessão.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:25:39.979877+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:25:41.179031164Z"}
-{"message":"INFO:mentoria-ai:[Room] Nome do usuário definido: Adriel Moraes ","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:43.350564890Z"}
-{"message":"INFO:mentoria-ai:[Room] Nome do usuário definido: Adriel Moraes ","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:43.350568812Z"}
-{"message":"[Room] Nome do usuário definido: Adriel Moraes ","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:25:43.348890+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:25:43.350572184Z"}
-{"message":"WARNING:livekit.agents:resume_false_interruption is enabled, but the audio output does not support pause, ignored","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:44.182533038Z"}
-{"message":"[Avatar] Avatar Beyond Presence iniciado para 'Nathália' (id=694c83e2...).","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:25:44.103424+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:25:44.182567252Z"}
-{"message":"INFO:mentoria-ai:[Avatar] Avatar Beyond Presence iniciado para 'Nathália' (id=694c83e2...).","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:44.182575484Z"}
-{"message":"INFO:mentoria-ai:[Host] Avatar da Nathália pronto. Aguardando estabilização do RealtimeModel...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:44.182580307Z"}
-{"message":"INFO:mentoria-ai:[Host] Avatar da Nathália pronto. Aguardando estabilização do RealtimeModel...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:44.182593279Z"}
-{"message":"INFO:mentoria-ai:[Avatar] Avatar Beyond Presence iniciado para 'Nathália' (id=694c83e2...).","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:44.182595350Z"}
-{"message":"INFO:mentoria-ai:[Host] Áudio de user-f6e6c76a-e2af-4426-8eb1-c29a87e81220-1776554737618 subscrito dinamicamente.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:44.182599077Z"}
-{"message":"[Host] Avatar da Nathália pronto. Aguardando estabilização do RealtimeModel...","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:25:44.103684+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:25:44.182603052Z"}
-{"message":"WARNING:livekit.agents:resume_false_interruption is enabled, but the audio output does not support pause, ignored","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:44.182604662Z"}
-{"message":"INFO:mentoria-ai:[Host] Áudio de user-f6e6c76a-e2af-4426-8eb1-c29a87e81220-1776554737618 subscrito dinamicamente.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:44.182614453Z"}
-{"message":"resume_false_interruption is enabled, but the audio output does not support pause, ignored","severity":"warn","attributes":{"level":"warn","timestamp":"2026-04-18T23:25:44.103093+00:00","name":"livekit.agents","audio_output":"DataStreamIO","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:25:44.182616468Z"}
-{"message":"[Host] Áudio de user-f6e6c76a-e2af-4426-8eb1-c29a87e81220-1776554737618 subscrito dinamicamente.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:25:44.140533+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:25:44.183493050Z"}
-{"message":"INFO:mentoria-ai:[Host] Nathália retomando sessão existente...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:46.178009376Z"}
-{"message":"INFO:mentoria-ai:[Host] Nathália retomando sessão existente...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:46.178012875Z"}
-{"message":"[Host] Nathália retomando sessão existente...","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:25:46.104906+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:25:46.178016967Z"}
-{"message":"failed to call bey presence api\nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/livekit/plugins/bey/avatar.py\", line 128, in _start_agent\n    raise APIStatusError(\nlivekit.agents._exceptions.APIStatusError: message='Server returned an error', status_code=400, retryable=False, body={\"detail\":\"Provided LiveKit URL is not reachable. Please check the URL and try again.\"}","severity":"error","attributes":{"level":"error","timestamp":"2026-04-18T23:25:50.707274+00:00","name":"livekit.plugins.bey","exc_info":"Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/livekit/plugins/bey/avatar.py\", line 128, in _start_agent\n    raise APIStatusError(\nlivekit.agents._exceptions.APIStatusError: message='Server returned an error', status_code=400, retryable=False, body={\"detail\":\"Provided LiveKit URL is not reachable. Please check the URL and try again.\"}","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:25:50.710182067Z"}
-{"message":"ERROR:livekit.plugins.bey:failed to call bey presence api","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:50.710199294Z"}
-{"message":"Traceback (most recent call last):","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:50.710206177Z"}
-{"message":"  File \"/opt/venv/lib/python3.12/site-packages/livekit/plugins/bey/avatar.py\", line 128, in _start_agent","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:50.710211658Z"}
-{"message":"    raise APIStatusError(","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:50.710216599Z"}
-{"message":"livekit.agents._exceptions.APIStatusError: message='Server returned an error', status_code=400, retryable=False, body={\"detail\":\"Provided LiveKit URL is not reachable. Please check the URL and try again.\"}","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:50.710222140Z"}
-{"message":"ERROR:livekit.plugins.bey:failed to call bey presence api","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:50.710226925Z"}
-{"message":"Traceback (most recent call last):","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:50.710231433Z"}
-{"message":"  File \"/opt/venv/lib/python3.12/site-packages/livekit/plugins/bey/avatar.py\", line 128, in _start_agent","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:50.710236019Z"}
-{"message":"    raise APIStatusError(","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:50.710240502Z"}
-{"message":"livekit.agents._exceptions.APIStatusError: message='Server returned an error', status_code=400, retryable=False, body={\"detail\":\"Provided LiveKit URL is not reachable. Please check the URL and try again.\"}","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:50.710244844Z"}
-{"message":"Traceback (most recent call last):","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:50.710249534Z"}
-{"message":"  File \"/opt/venv/lib/python3.12/site-packages/livekit/plugins/bey/avatar.py\", line 128, in _start_agent","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:50.710256445Z"}
-{"message":"    raise APIStatusError(","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:50.710260774Z"}
-{"message":"livekit.agents._exceptions.APIStatusError: message='Server returned an error', status_code=400, retryable=False, body={\"detail\":\"Provided LiveKit URL is not reachable. Please check the URL and try again.\"}","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:50.710265357Z"}
-{"message":"[Host] Avatar da Nathália pronto. Aguardando estabilização do RealtimeModel...","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:25:56.464484+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:25:56.471847786Z"}
-{"message":"WARNING:livekit.agents:resume_false_interruption is enabled, but the audio output does not support pause, ignored","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:56.471875607Z"}
-{"message":"INFO:mentoria-ai:[Avatar] Avatar Beyond Presence iniciado para 'Nathália' (id=694c83e2...).","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:56.471878609Z"}
-{"message":"INFO:mentoria-ai:[Host] Avatar da Nathália pronto. Aguardando estabilização do RealtimeModel...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:56.471881323Z"}
-{"message":"WARNING:livekit.agents:resume_false_interruption is enabled, but the audio output does not support pause, ignored","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:56.471884075Z"}
-{"message":"resume_false_interruption is enabled, but the audio output does not support pause, ignored","severity":"warn","attributes":{"level":"warn","timestamp":"2026-04-18T23:25:56.464093+00:00","name":"livekit.agents","audio_output":"DataStreamIO","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:25:56.471886996Z"}
-{"message":"INFO:mentoria-ai:[Avatar] Avatar Beyond Presence iniciado para 'Nathália' (id=694c83e2...).","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:56.471902105Z"}
-{"message":"[Avatar] Avatar Beyond Presence iniciado para 'Nathália' (id=694c83e2...).","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:25:56.464401+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:25:56.471906203Z"}
-{"message":"INFO:mentoria-ai:[Host] Avatar da Nathália pronto. Aguardando estabilização do RealtimeModel...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:56.471909438Z"}
-{"message":"INFO:mentoria-ai:[Host] Nathália retomando sessão existente...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:58.470966894Z"}
-{"message":"INFO:mentoria-ai:[Host] Nathália retomando sessão existente...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:25:58.470972314Z"}
-{"message":"[Host] Nathália retomando sessão existente...","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:25:58.465331+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:25:58.470976205Z"}
-{"message":"INFO:livekit.agents:playback finished event received","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:18.474979465Z"}
-{"message":"WARNING:livekit.agents:playback_finished called more times than playback segments were captured","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:18.474988766Z"}
-{"message":"INFO:livekit.agents:playback finished event received","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:18.474992431Z"}
-{"message":"playback finished event received","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:12.580490+00:00","name":"livekit.agents","caller_identity":"bey-host","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:18.474996141Z"}
-{"message":"WARNING:livekit.agents:playback_finished called more times than playback segments were captured","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:18.474999260Z"}
-{"message":"playback_finished called more times than playback segments were captured","severity":"warn","attributes":{"level":"warn","timestamp":"2026-04-18T23:26:12.580778+00:00","name":"livekit.agents","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:18.475003782Z"}
-{"message":"WARNING:mentoria-ai:[Host] Erro ao retomar sessão: ","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:18.475015772Z"}
-{"message":"INFO:mentoria-ai:[Retomada] Conectando especialistas sequencialmente para evitar rate limits...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:18.475019714Z"}
-{"message":"INFO:mentoria-ai:[Carlos (CFO & VC)] Iniciando conexão...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:18.475022994Z"}
-{"message":"WARNING:mentoria-ai:[Host] Erro ao retomar sessão: ","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:18.475026361Z"}
-{"message":"[Host] Erro ao retomar sessão: ","severity":"warn","attributes":{"level":"warn","timestamp":"2026-04-18T23:26:16.106666+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:18.475029690Z"}
-{"message":"INFO:mentoria-ai:[Retomada] Conectando especialistas sequencialmente para evitar rate limits...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:18.475033297Z"}
-{"message":"[Retomada] Conectando especialistas sequencialmente para evitar rate limits...","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:16.106904+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:18.475036656Z"}
-{"message":"INFO:mentoria-ai:[Carlos (CFO & VC)] Iniciando conexão...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:18.477644724Z"}
-{"message":"[Carlos (CFO & VC)] Iniciando conexão...","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:16.106979+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:18.477651701Z"}
-{"message":"INFO:mentoria-ai:[Carlos (CFO & VC)] Room conectado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:18.477655833Z"}
-{"message":"INFO:mentoria-ai:[Carlos (CFO & VC)] Room conectado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:18.477659616Z"}
-{"message":"[Carlos (CFO & VC)] Room conectado.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:16.423810+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:18.477663809Z"}
-{"message":"WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:18.477668425Z"}
-{"message":"WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:18.477673796Z"}
-{"message":"Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"warn","attributes":{"level":"warn","timestamp":"2026-04-18T23:26:16.427577+00:00","name":"google_genai._api_client","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:18.477678484Z"}
-{"message":"INFO:mentoria-ai:[Carlos (CFO & VC)] AgentSession iniciada com RealtimeModel nativo.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:18.477683785Z"}
-{"message":"INFO:mentoria-ai:[Carlos (CFO & VC)] AgentSession iniciada com RealtimeModel nativo.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:18.477688063Z"}
-{"message":"[Carlos (CFO & VC)] AgentSession iniciada com RealtimeModel nativo.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:16.452090+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:18.477692401Z"}
-{"message":"INFO:mentoria-ai:[Carlos (CFO & VC)] RealtimeModel inicializado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:18.477696982Z"}
-{"message":"INFO:mentoria-ai:[Carlos (CFO & VC)] RealtimeModel inicializado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:18.479755080Z"}
-{"message":"[Carlos (CFO & VC)] RealtimeModel inicializado.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:18.453355+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:18.479760061Z"}
-{"message":"INFO:mentoria-ai:[Carlos (CFO & VC)] Health-check agent_ready publicado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:18.479763850Z"}
-{"message":"INFO:mentoria-ai:[Carlos (CFO & VC)] Health-check agent_ready publicado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:18.479767389Z"}
-{"message":"[Carlos (CFO & VC)] Health-check agent_ready publicado.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:18.454578+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:18.479770711Z"}
-{"message":"INFO:mentoria-ai:[Daniel (CLO & Compliance)] Iniciando conexão...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:19.459386844Z"}
-{"message":"INFO:mentoria-ai:[Daniel (CLO & Compliance)] Iniciando conexão...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:19.459391194Z"}
-{"message":"[Daniel (CLO & Compliance)] Iniciando conexão...","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:19.455731+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:19.459394289Z"}
-{"message":"INFO:mentoria-ai:[Daniel (CLO & Compliance)] Room conectado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:19.727504579Z"}
-{"message":"INFO:mentoria-ai:[Daniel (CLO & Compliance)] Room conectado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:19.727511648Z"}
-{"message":"[Daniel (CLO & Compliance)] Room conectado.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:19.725598+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:19.727517448Z"}
-{"message":"WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:19.729997699Z"}
-{"message":"WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:19.732371598Z"}
-{"message":"Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"warn","attributes":{"level":"warn","timestamp":"2026-04-18T23:26:19.729218+00:00","name":"google_genai._api_client","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:19.732376297Z"}
-{"message":"INFO:mentoria-ai:[Daniel (CLO & Compliance)] AgentSession iniciada com RealtimeModel nativo.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:19.752281764Z"}
-{"message":"INFO:mentoria-ai:[Daniel (CLO & Compliance)] AgentSession iniciada com RealtimeModel nativo.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:19.754602240Z"}
-{"message":"[Daniel (CLO & Compliance)] AgentSession iniciada com RealtimeModel nativo.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:19.751107+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:19.754606873Z"}
-{"message":"INFO:mentoria-ai:[Daniel (CLO & Compliance)] RealtimeModel inicializado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:21.754974999Z"}
-{"message":"INFO:mentoria-ai:[Daniel (CLO & Compliance)] RealtimeModel inicializado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:21.754987663Z"}
-{"message":"[Daniel (CLO & Compliance)] RealtimeModel inicializado.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:21.752848+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:21.754993649Z"}
-{"message":"INFO:mentoria-ai:[Daniel (CLO & Compliance)] Health-check agent_ready publicado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:21.754998353Z"}
-{"message":"INFO:mentoria-ai:[Daniel (CLO & Compliance)] Health-check agent_ready publicado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:21.757418292Z"}
-{"message":"[Daniel (CLO & Compliance)] Health-check agent_ready publicado.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:21.754012+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:21.757424551Z"}
-{"message":"INFO:mentoria-ai:[Rodrigo (CMO & Growth)] Iniciando conexão...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:22.755350336Z"}
-{"message":"INFO:mentoria-ai:[Rodrigo (CMO & Growth)] Iniciando conexão...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:22.757569359Z"}
-{"message":"[Rodrigo (CMO & Growth)] Iniciando conexão...","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:22.754411+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:22.757574068Z"}
-{"message":"INFO:mentoria-ai:[Rodrigo (CMO & Growth)] Room conectado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:23.208894133Z"}
-{"message":"INFO:mentoria-ai:[Rodrigo (CMO & Growth)] Room conectado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:23.208898833Z"}
-{"message":"[Rodrigo (CMO & Growth)] Room conectado.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:23.022976+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:23.208903566Z"}
-{"message":"WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:23.208909194Z"}
-{"message":"WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:23.208913699Z"}
-{"message":"Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"warn","attributes":{"level":"warn","timestamp":"2026-04-18T23:26:23.027005+00:00","name":"google_genai._api_client","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:23.208918012Z"}
-{"message":"INFO:mentoria-ai:[Rodrigo (CMO & Growth)] AgentSession iniciada com RealtimeModel nativo.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:23.208922870Z"}
-{"message":"INFO:mentoria-ai:[Rodrigo (CMO & Growth)] AgentSession iniciada com RealtimeModel nativo.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:23.208927126Z"}
-{"message":"[Rodrigo (CMO & Growth)] AgentSession iniciada com RealtimeModel nativo.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:23.056589+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:23.208931239Z"}
-{"message":"WARNING:livekit.agents:didn't receive playback finished event after clear buffer, marking playout as done arbitrarily","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:23.208936563Z"}
-{"message":"WARNING:livekit.agents:didn't receive playback finished event after clear buffer, marking playout as done arbitrarily","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:23.208940460Z"}
-{"message":"didn't receive playback finished event after clear buffer, marking playout as done arbitrarily","severity":"warn","attributes":{"level":"warn","timestamp":"2026-04-18T23:26:23.099977+00:00","name":"livekit.agents","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:23.208944629Z"}
-{"message":"INFO:mentoria-ai:[Rodrigo (CMO & Growth)] RealtimeModel inicializado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:25.216710611Z"}
-{"message":"INFO:mentoria-ai:[Rodrigo (CMO & Growth)] RealtimeModel inicializado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:25.216713662Z"}
-{"message":"[Rodrigo (CMO & Growth)] RealtimeModel inicializado.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:25.057419+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:25.216716697Z"}
-{"message":"INFO:mentoria-ai:[Rodrigo (CMO & Growth)] Health-check agent_ready publicado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:25.216719797Z"}
-{"message":"INFO:mentoria-ai:[Rodrigo (CMO & Growth)] Health-check agent_ready publicado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:25.216722809Z"}
-{"message":"[Rodrigo (CMO & Growth)] Health-check agent_ready publicado.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:25.058622+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:25.216726795Z"}
-{"message":"ERROR:livekit.agents:speech not done in time after interruption, cancelling the speech arbitrarily.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:26.221257299Z"}
-{"message":"speech not done in time after interruption, cancelling the speech arbitrarily.","severity":"error","attributes":{"level":"error","timestamp":"2026-04-18T23:26:26.071455+00:00","name":"livekit.agents","speech_id":"speech_c997b2807d0a","timeout":5,"pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:26.221266041Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] Iniciando conexão...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:26.221269645Z"}
-{"message":"ERROR:livekit.agents:speech not done in time after interruption, cancelling the speech arbitrarily.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:26.221274620Z"}
-{"message":"speech not done in time after interruption, cancelling the speech arbitrarily.","severity":"error","attributes":{"level":"error","timestamp":"2026-04-18T23:26:26.071664+00:00","name":"livekit.agents","speech_id":"speech_125f917c8df5","timeout":5,"pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:26.221276061Z"}
-{"message":"INFO:mentoria-ai:[Retomada] Conectando especialistas sequencialmente para evitar rate limits...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:26.221287329Z"}
-{"message":"[Ana (CTO & IA)] Iniciando conexão...","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:26.059804+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:26.221297202Z"}
-{"message":"ERROR:livekit.agents:speech not done in time after interruption, cancelling the speech arbitrarily.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:26.221301012Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] Iniciando conexão...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:26.221304829Z"}
-{"message":"ERROR:livekit.agents:speech not done in time after interruption, cancelling the speech arbitrarily.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:26.221321982Z"}
-{"message":"INFO:mentoria-ai:[Retomada] Conectando especialistas sequencialmente para evitar rate limits...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:26.221333423Z"}
-{"message":"INFO:mentoria-ai:[Carlos (CFO & VC)] Iniciando conexão...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:26.221339203Z"}
-{"message":"[Retomada] Conectando especialistas sequencialmente para evitar rate limits...","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:26.071958+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:26.223102487Z"}
-{"message":"INFO:mentoria-ai:[Carlos (CFO & VC)] Iniciando conexão...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:26.223105766Z"}
-{"message":"[Carlos (CFO & VC)] Iniciando conexão...","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:26.072042+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:26.223109548Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] Room conectado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:26.238230361Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] Room conectado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:26.240103716Z"}
-{"message":"[Ana (CTO & IA)] Room conectado.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:26.237446+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:26.240114398Z"}
-{"message":"WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:26.241698404Z"}
-{"message":"WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:26.243239857Z"}
-{"message":"Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"warn","attributes":{"level":"warn","timestamp":"2026-04-18T23:26:26.240883+00:00","name":"google_genai._api_client","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:26.243245338Z"}
-{"message":"INFO:mentoria-ai:[Carlos (CFO & VC)] Room conectado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:26.268097362Z"}
-{"message":"INFO:mentoria-ai:[Carlos (CFO & VC)] Room conectado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:26.272399655Z"}
-{"message":"[Carlos (CFO & VC)] Room conectado.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:26.267431+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:26.272403003Z"}
-{"message":"WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:26.273940468Z"}
-{"message":"WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:26.275573049Z"}
-{"message":"Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"warn","attributes":{"level":"warn","timestamp":"2026-04-18T23:26:26.273434+00:00","name":"google_genai._api_client","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:26.275578304Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] AgentSession iniciada com RealtimeModel nativo.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:26.298259226Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] AgentSession iniciada com RealtimeModel nativo.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:26.300880490Z"}
-{"message":"[Ana (CTO & IA)] AgentSession iniciada com RealtimeModel nativo.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:26.297145+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:26.300885147Z"}
-{"message":"INFO:mentoria-ai:[Carlos (CFO & VC)] AgentSession iniciada com RealtimeModel nativo.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:26.303190015Z"}
-{"message":"INFO:mentoria-ai:[Carlos (CFO & VC)] AgentSession iniciada com RealtimeModel nativo.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:26.304948804Z"}
-{"message":"[Carlos (CFO & VC)] AgentSession iniciada com RealtimeModel nativo.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:26.302400+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:26.304957765Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] RealtimeModel inicializado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:28.300771281Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] RealtimeModel inicializado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:28.300777033Z"}
-{"message":"[Ana (CTO & IA)] RealtimeModel inicializado.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:28.297997+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:28.300780773Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] Health-check agent_ready publicado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:28.300783859Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] Health-check agent_ready publicado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:28.300786977Z"}
-{"message":"[Ana (CTO & IA)] Health-check agent_ready publicado.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:28.299269+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:28.300790045Z"}
-{"message":"INFO:mentoria-ai:[Carlos (CFO & VC)] RealtimeModel inicializado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:28.308545397Z"}
-{"message":"INFO:mentoria-ai:[Carlos (CFO & VC)] RealtimeModel inicializado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:28.308550518Z"}
-{"message":"[Carlos (CFO & VC)] RealtimeModel inicializado.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:28.303806+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:28.308553926Z"}
-{"message":"INFO:mentoria-ai:[Carlos (CFO & VC)] Health-check agent_ready publicado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:28.308556872Z"}
-{"message":"INFO:mentoria-ai:[Carlos (CFO & VC)] Health-check agent_ready publicado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:28.308559640Z"}
-{"message":"[Carlos (CFO & VC)] Health-check agent_ready publicado.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:28.304632+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:28.308562255Z"}
-{"message":"INFO:mentoria-ai:[Host] Retomada concluída. Todos os especialistas reconectados.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:29.302373420Z"}
-{"message":"INFO:mentoria-ai:[Host] Retomada concluída. Todos os especialistas reconectados.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:29.302377909Z"}
-{"message":"[Host] Retomada concluída. Todos os especialistas reconectados.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:29.300468+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:29.302381100Z"}
-{"message":"INFO:mentoria-ai:[Daniel (CLO & Compliance)] Iniciando conexão...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:29.306589179Z"}
-{"message":"INFO:mentoria-ai:[Daniel (CLO & Compliance)] Iniciando conexão...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:29.306594162Z"}
-{"message":"[Daniel (CLO & Compliance)] Iniciando conexão...","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:29.304945+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:29.306599253Z"}
-{"message":"INFO:mentoria-ai:[Daniel (CLO & Compliance)] Room conectado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:29.476524463Z"}
-{"message":"INFO:mentoria-ai:[Daniel (CLO & Compliance)] Room conectado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:29.476529781Z"}
-{"message":"[Daniel (CLO & Compliance)] Room conectado.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:29.473217+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:29.476532825Z"}
-{"message":"WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:29.478003651Z"}
-{"message":"WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:29.479813693Z"}
-{"message":"Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"warn","attributes":{"level":"warn","timestamp":"2026-04-18T23:26:29.477510+00:00","name":"google_genai._api_client","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:29.479819126Z"}
-{"message":"INFO:mentoria-ai:[Daniel (CLO & Compliance)] AgentSession iniciada com RealtimeModel nativo.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:29.504852933Z"}
-{"message":"INFO:mentoria-ai:[Daniel (CLO & Compliance)] AgentSession iniciada com RealtimeModel nativo.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:29.504859845Z"}
-{"message":"[Daniel (CLO & Compliance)] AgentSession iniciada com RealtimeModel nativo.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:29.502809+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:29.504864244Z"}
-{"message":"INFO:mentoria-ai:[Usuário fala] Olá, boa noite, tudo bem?","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:30.848300633Z"}
-{"message":"INFO:mentoria-ai:[Usuário fala] Olá, boa noite, tudo bem?","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:30.848306279Z"}
-{"message":"[Usuário fala] Olá, boa noite, tudo bem?","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:30.845651+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:30.848310837Z"}
-{"message":"INFO:mentoria-ai:[Daniel (CLO & Compliance)] RealtimeModel inicializado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:31.508555051Z"}
-{"message":"INFO:mentoria-ai:[Daniel (CLO & Compliance)] RealtimeModel inicializado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:31.508559379Z"}
-{"message":"[Daniel (CLO & Compliance)] RealtimeModel inicializado.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:31.504138+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:31.508562624Z"}
-{"message":"INFO:mentoria-ai:[Daniel (CLO & Compliance)] Health-check agent_ready publicado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:31.508565742Z"}
-{"message":"INFO:mentoria-ai:[Daniel (CLO & Compliance)] Health-check agent_ready publicado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:31.508568610Z"}
-{"message":"[Daniel (CLO & Compliance)] Health-check agent_ready publicado.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:31.505311+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:31.508571828Z"}
-{"message":"INFO:livekit.agents:playback finished event received","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:32.498634527Z"}
-{"message":"INFO:livekit.agents:playback finished event received","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:32.498643399Z"}
-{"message":"playback finished event received","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:32.497738+00:00","name":"livekit.agents","caller_identity":"bey-host","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:32.500557113Z"}
-{"message":"INFO:mentoria-ai:[Rodrigo (CMO & Growth)] Iniciando conexão...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:32.507220514Z"}
-{"message":"INFO:mentoria-ai:[Rodrigo (CMO & Growth)] Iniciando conexão...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:32.507224348Z"}
-{"message":"[Rodrigo (CMO & Growth)] Iniciando conexão...","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:32.505511+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:32.507228051Z"}
-{"message":"INFO:mentoria-ai:[Rodrigo (CMO & Growth)] Room conectado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:32.827582066Z"}
-{"message":"INFO:mentoria-ai:[Rodrigo (CMO & Growth)] Room conectado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:32.827587789Z"}
-{"message":"[Rodrigo (CMO & Growth)] Room conectado.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:32.822852+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:32.827591975Z"}
-{"message":"WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:32.827596409Z"}
-{"message":"WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:32.829147495Z"}
-{"message":"Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"warn","attributes":{"level":"warn","timestamp":"2026-04-18T23:26:32.826622+00:00","name":"google_genai._api_client","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:32.829155480Z"}
-{"message":"INFO:mentoria-ai:[Rodrigo (CMO & Growth)] AgentSession iniciada com RealtimeModel nativo.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:32.854321970Z"}
-{"message":"INFO:mentoria-ai:[Rodrigo (CMO & Growth)] AgentSession iniciada com RealtimeModel nativo.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:32.854329405Z"}
-{"message":"[Rodrigo (CMO & Growth)] AgentSession iniciada com RealtimeModel nativo.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:32.852180+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:32.854332965Z"}
-{"message":"INFO:mentoria-ai:[Rodrigo (CMO & Growth)] RealtimeModel inicializado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:34.857567219Z"}
-{"message":"INFO:mentoria-ai:[Rodrigo (CMO & Growth)] RealtimeModel inicializado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:34.857575199Z"}
-{"message":"[Rodrigo (CMO & Growth)] RealtimeModel inicializado.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:34.852880+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:34.857581439Z"}
-{"message":"INFO:mentoria-ai:[Rodrigo (CMO & Growth)] Health-check agent_ready publicado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:34.857587591Z"}
-{"message":"INFO:mentoria-ai:[Rodrigo (CMO & Growth)] Health-check agent_ready publicado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:34.857593555Z"}
-{"message":"[Rodrigo (CMO & Growth)] Health-check agent_ready publicado.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:34.854174+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:34.857599903Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] Iniciando conexão...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:35.856071368Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] Iniciando conexão...","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:35.857800111Z"}
-{"message":"[Ana (CTO & IA)] Iniciando conexão...","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:35.855250+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:35.857809840Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] Room conectado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:36.224381964Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] AgentSession iniciada com RealtimeModel nativo.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:36.224386874Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] AgentSession iniciada com RealtimeModel nativo.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:36.224392150Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] Room conectado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:36.224392556Z"}
-{"message":"[Ana (CTO & IA)] AgentSession iniciada com RealtimeModel nativo.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:36.055424+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:36.224396263Z"}
-{"message":"[Ana (CTO & IA)] Room conectado.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:36.024636+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:36.224400097Z"}
-{"message":"WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:36.224404592Z"}
-{"message":"WARNING:google_genai._api_client:Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:36.224407907Z"}
-{"message":"Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.","severity":"warn","attributes":{"level":"warn","timestamp":"2026-04-18T23:26:36.029078+00:00","name":"google_genai._api_client","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:36.224411755Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] RealtimeModel inicializado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:38.276370464Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] RealtimeModel inicializado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:38.276373144Z"}
-{"message":"[Ana (CTO & IA)] RealtimeModel inicializado.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:38.056855+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:38.276375889Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] Health-check agent_ready publicado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:38.276379200Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] Health-check agent_ready publicado.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:38.276382016Z"}
-{"message":"[Ana (CTO & IA)] Health-check agent_ready publicado.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:38.058064+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:38.276385003Z"}
-{"message":"INFO:mentoria-ai:[Host] Retomada concluída. Todos os especialistas reconectados.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:39.274936826Z"}
-{"message":"INFO:mentoria-ai:[Host] Retomada concluída. Todos os especialistas reconectados.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:39.274940496Z"}
-{"message":"[Host] Retomada concluída. Todos os especialistas reconectados.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:39.059231+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:39.274944336Z"}
-{"message":"INFO:livekit.agents:playback finished event received","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:41.284254960Z"}
-{"message":"playback finished event received","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:26:41.002142+00:00","name":"livekit.agents","caller_identity":"bey-host","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:26:41.284261613Z"}
-{"message":"INFO:livekit.agents:playback finished event received","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:26:41.284289130Z"}
-{"message":"INFO:mentoria-ai:[Usuário fala] Eu gostaria de receber mais alguma orientação de vocês.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:27:10.908026305Z"}
-{"message":"INFO:mentoria-ai:[Usuário fala] Eu gostaria de receber mais alguma orientação de vocês.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:27:10.908029125Z"}
-{"message":"[Usuário fala] Eu gostaria de receber mais alguma orientação de vocês.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:27:09.875616+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:27:10.908031863Z"}
-{"message":"INFO:livekit.agents:playback finished event received","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:27:11.348002725Z"}
-{"message":"INFO:livekit.agents:playback finished event received","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:27:11.348006779Z"}
-{"message":"playback finished event received","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:27:11.291833+00:00","name":"livekit.agents","caller_identity":"bey-host","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:27:11.348009984Z"}
-{"message":"INFO:mentoria-ai:[Usuário fala] Sim, pode continuar.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:27:30.961320347Z"}
-{"message":"INFO:mentoria-ai:[Usuário fala] Sim, pode continuar.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:27:30.961325745Z"}
-{"message":"[Usuário fala] Sim, pode continuar.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:27:22.484787+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:27:30.961330316Z"}
-{"message":"INFO:mentoria-ai:[Filtro] Alucinação de idioma detectada e descartada: โอ้ย","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:27:33.633651841Z"}
-{"message":"INFO:mentoria-ai:[Filtro] Alucinação de idioma detectada e descartada: โอ้ย","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:27:33.633655684Z"}
-{"message":"[Filtro] Alucinação de idioma detectada e descartada: โอ้ย","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:27:33.628270+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:27:33.633659465Z"}
-{"message":"INFO:livekit.agents:playback finished event received","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:27:34.957588088Z"}
-{"message":"INFO:livekit.agents:playback finished event received","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:27:34.959779573Z"}
-{"message":"playback finished event received","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:27:34.956803+00:00","name":"livekit.agents","caller_identity":"bey-host","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:27:34.959784138Z"}
-{"message":"INFO:mentoria-ai:[Usuário fala] Bom o seguinte.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:27:43.429488847Z"}
-{"message":"INFO:mentoria-ai:[Usuário fala] Bom o seguinte.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:27:43.429492757Z"}
-{"message":"[Usuário fala] Bom o seguinte.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:27:43.127837+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:27:43.429497974Z"}
-{"message":"INFO:mentoria-ai:[Usuário fala] eu estou fazendo um, desenvolvendo um robô, um robô de","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:27:50.449352572Z"}
-{"message":"INFO:mentoria-ai:[Usuário fala] eu estou fazendo um, desenvolvendo um robô, um robô de","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:27:50.449359265Z"}
-{"message":"[Usuário fala] eu estou fazendo um, desenvolvendo um robô, um robô de","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:27:50.359779+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:27:50.449363744Z"}
-{"message":"INFO:mentoria-ai:[Usuário fala] que tirar a sair.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:27:53.457461452Z"}
-{"message":"INFO:mentoria-ai:[Usuário fala] que tirar a sair.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:27:53.457466550Z"}
-{"message":"[Usuário fala] que tirar a sair.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:27:53.180855+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:27:53.457470398Z"}
-{"message":"INFO:mentoria-ai:[Filtro] Ruído explícito descartado: <noise>","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:28:13.052983058Z"}
-{"message":"INFO:mentoria-ai:[Filtro] Ruído explícito descartado: <noise>","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:28:13.052987207Z"}
-{"message":"[Filtro] Ruído explícito descartado: <noise>","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:28:12.624250+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:28:13.052990655Z"}
-{"message":"INFO:mentoria-ai:[Host] Acionando especialista: cto | turno=1 | contexto: desenvolvimento de um robô para tirar açaí | lateral_from=Nathália","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:28:13.052994181Z"}
-{"message":"INFO:mentoria-ai:[Host] Acionando especialista: cto | turno=1 | contexto: desenvolvimento de um robô para tirar açaí | lateral_from=Nathália","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:28:13.052997489Z"}
-{"message":"[Host] Acionando especialista: cto | turno=1 | contexto: desenvolvimento de um robô para tirar açaí | lateral_from=Nathália","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:28:12.627774+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:28:13.053001112Z"}
-{"message":"INFO:mentoria-ai:[Host] Áudio do usuário DESSUBSCRITO — Nathália SILENCIADA durante turno de especialista.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:28:16.631750907Z"}
-{"message":"INFO:mentoria-ai:[Host] Áudio do usuário DESSUBSCRITO — Nathália SILENCIADA durante turno de especialista.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:28:16.631757465Z"}
-{"message":"[Host] Áudio do usuário DESSUBSCRITO — Nathália SILENCIADA durante turno de especialista.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:28:16.629700+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:28:16.631761584Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] Áudio do usuário SUBSCRITO (ativado).","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:28:16.640309426Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] Áudio do usuário SUBSCRITO (ativado).","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:28:16.640312865Z"}
-{"message":"[Ana (CTO & IA)] Áudio do usuário SUBSCRITO (ativado).","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:28:16.639095+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:28:16.642886464Z"}
-{"message":"INFO:mentoria-ai:[Host] ACK recebido de cto em 4015ms. Especialista ATIVO.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:28:16.642889483Z"}
-{"message":"INFO:mentoria-ai:[Host] ACK recebido de cto em 4015ms. Especialista ATIVO.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:28:16.645451619Z"}
-{"message":"[Host] ACK recebido de cto em 4015ms. Especialista ATIVO.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:28:16.642379+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:28:16.645460602Z"}
-{"message":"INFO:mentoria-ai:[Host] Áudio de guest-1776554893134-4o5j41 subscrito dinamicamente.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:28:17.501483874Z"}
-{"message":"[Host] Áudio de guest-1776554893134-4o5j41 subscrito dinamicamente.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:28:17.169648+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:28:17.501491366Z"}
-{"message":"INFO:mentoria-ai:[Host] Áudio de guest-1776554893134-4o5j41 subscrito dinamicamente.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:28:17.501545474Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] Resposta inicial gerada. Entrando em modo conversa livre (Peer-to-Peer).","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:28:17.571499612Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] Resposta inicial gerada. Entrando em modo conversa livre (Peer-to-Peer).","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:28:17.571504040Z"}
-{"message":"[Ana (CTO & IA)] Resposta inicial gerada. Entrando em modo conversa livre (Peer-to-Peer).","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:28:17.567402+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:28:17.571506950Z"}
-{"message":"INFO:livekit.agents:playback finished event received","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:28:20.025107625Z"}
-{"message":"INFO:livekit.agents:playback finished event received","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:28:20.025113232Z"}
-{"message":"playback finished event received","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:28:20.023644+00:00","name":"livekit.agents","caller_identity":"bey-host","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:28:20.025117105Z"}
-{"message":"INFO:livekit.agents:playback finished event received","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:28:28.038528295Z"}
-{"message":"INFO:livekit.agents:playback finished event received","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:28:28.038534560Z"}
-{"message":"playback finished event received","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:28:28.036813+00:00","name":"livekit.agents","caller_identity":"bey-host","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:28:28.038538544Z"}
-{"message":"WARNING:mentoria-ai:[Ana (CTO & IA)] Silêncio prolongado detectado (>60s). Devolvendo para Nathália.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:29:38.045407316Z"}
-{"message":"WARNING:mentoria-ai:[Ana (CTO & IA)] Silêncio prolongado detectado (>60s). Devolvendo para Nathália.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:29:38.045416066Z"}
-{"message":"[Ana (CTO & IA)] Silêncio prolongado detectado (>60s). Devolvendo para Nathália.","severity":"warn","attributes":{"level":"warn","timestamp":"2026-04-18T23:29:29.592564+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:29:38.045421467Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] Turno encerrado. Palavra devolvida à Nathália.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:29:38.045426471Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] Turno encerrado. Palavra devolvida à Nathália.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:29:38.045431602Z"}
-{"message":"[Ana (CTO & IA)] Turno encerrado. Palavra devolvida à Nathália.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:29:29.594992+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:29:38.045437190Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] Áudio do usuário DESSUBSCRITO (silenciado).","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:29:38.045442791Z"}
-{"message":"INFO:mentoria-ai:[Ana (CTO & IA)] Áudio do usuário DESSUBSCRITO (silenciado).","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:29:38.045447727Z"}
-{"message":"[Ana (CTO & IA)] Áudio do usuário DESSUBSCRITO (silenciado).","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:29:29.595373+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:29:38.045452633Z"}
-{"message":"INFO:mentoria-ai:[Host] Áudio do usuário RESUBSCRITO — Nathália ATIVA novamente.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:29:38.045459674Z"}
-{"message":"INFO:mentoria-ai:[Host] Turno de Ana (CTO & IA) encerrado (status=agent_done). Nathália reativada.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:29:38.045463977Z"}
-{"message":"INFO:mentoria-ai:[Host] Áudio do usuário RESUBSCRITO — Nathália ATIVA novamente.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:29:38.045468714Z"}
-{"message":"[Host] Áudio do usuário RESUBSCRITO — Nathália ATIVA novamente.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:29:29.599170+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:29:38.047498202Z"}
-{"message":"INFO:mentoria-ai:[Host] Turno de Ana (CTO & IA) encerrado (status=agent_done). Nathália reativada.","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:29:38.047504840Z"}
-{"message":"[Host] Turno de Ana (CTO & IA) encerrado (status=agent_done). Nathália reativada.","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:29:29.599729+00:00","name":"mentoria-ai","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:29:38.047508466Z"}
-{"message":"playback finished event received","severity":"info","attributes":{"level":"info","timestamp":"2026-04-18T23:29:39.391713+00:00","name":"livekit.agents","caller_identity":"bey-host","pid":106,"job_id":"AJ_9KaVpzadacAF","room_id":"RM_nFuqmQksFmuj"},"timestamp":"2026-04-18T23:29:39.655228305Z"}
-{"message":"INFO:livekit.agents:playback finished event received","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:29:39.655243822Z"}
-{"message":"INFO:livekit.agents:playback finished event received","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-18T23:29:39.655247353Z"}
+INFO:livekit.agents:starting worker
+{"message": "starting worker", "level": "INFO", "name": "livekit.agents", "version": "1.5.4", "rtc-version": "1.1.5", "timestamp": "2026-04-19T20:06:43.500324+00:00"}
+INFO:livekit.agents:plugin registered
+{"message": "plugin registered", "level": "INFO", "name": "livekit.agents", "plugin": "livekit.plugins.google", "version": "1.5.4", "timestamp": "2026-04-19T20:06:43.500530+00:00"}
+INFO:livekit.agents:plugin registered
+{"message": "plugin registered", "level": "INFO", "name": "livekit.agents", "plugin": "livekit.plugins.bey", "version": "1.5.4", "timestamp": "2026-04-19T20:06:43.500634+00:00"}
+INFO:livekit.agents:preloading plugins
+{"message": "preloading plugins", "level": "INFO", "name": "livekit.agents", "packages": ["livekit.plugins.google", "livekit.plugins.bey", "av"], "timestamp": "2026-04-19T20:06:43.500715+00:00"}
+INFO:livekit.agents:HTTP server listening on :8081
+{"message": "HTTP server listening on :8081", "level": "INFO", "name": "livekit.agents", "timestamp": "2026-04-19T20:06:43.508371+00:00"}
+INFO:livekit.agents:initializing process
+{"message": "initializing process", "level": "INFO", "name": "livekit.agents", "pid": 5255, "timestamp": "2026-04-19T20:06:45.832264+00:00"}
+INFO:livekit.agents:initializing process
+{"message": "initializing process", "level": "INFO", "name": "livekit.agents", "pid": 5257, "timestamp": "2026-04-19T20:06:45.837017+00:00"}
+INFO:livekit.agents:initializing process
+{"message": "initializing process", "level": "INFO", "name": "livekit.agents", "pid": 5259, "timestamp": "2026-04-19T20:06:45.843115+00:00"}
+INFO:livekit.agents:initializing process
+{"message": "initializing process", "level": "INFO", "name": "livekit.agents", "pid": 5261, "timestamp": "2026-04-19T20:06:45.851211+00:00"}
+INFO:livekit.agents:process initialized
+{"message": "process initialized", "level": "INFO", "name": "livekit.agents", "pid": 5257, "elapsed_time": 0.08, "timestamp": "2026-04-19T20:06:45.921926+00:00"}
+INFO:livekit.agents:process initialized
+{"message": "process initialized", "level": "INFO", "name": "livekit.agents", "pid": 5255, "elapsed_time": 0.1, "timestamp": "2026-04-19T20:06:45.928835+00:00"}
+INFO:livekit.agents:process initialized
+{"message": "process initialized", "level": "INFO", "name": "livekit.agents", "pid": 5261, "elapsed_time": 0.09, "timestamp": "2026-04-19T20:06:45.943999+00:00"}
+INFO:livekit.agents:process initialized
+{"message": "process initialized", "level": "INFO", "name": "livekit.agents", "pid": 5259, "elapsed_time": 0.13, "timestamp": "2026-04-19T20:06:45.973150+00:00"}
+INFO:livekit.agents:registered worker
+{"message": "registered worker", "level": "INFO", "name": "livekit.agents", "agent_name": "mentoria-agent", "id": "AW_JTq4c2aunPYq", "url": "wss://mentoria-lumci8sc.livekit.cloud", "region": "US East B", "protocol": 17, "timestamp": "2026-04-19T20:06:46.063345+00:00"}
+INFO:livekit.agents:received job request
+{"message": "received job request", "level": "INFO", "name": "livekit.agents", "job_id": "AJ_YzQuuVXspduH", "dispatch_id": "AD_zeJeWsMcRfrx", "room": "mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-b45320e7", "room_id": "RM_f9bFzekxuE3X", "agent_name": "mentoria-agent", "resuming": false, "enable_recording": false, "timestamp": "2026-04-19T20:14:17.598378+00:00"}
+INFO:mentoria-ai:[Guard] Job ACEITO para sala 'mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-b45320e7'. Salas ativas: {'mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-b45320e7'}
+{"message": "[Guard] Job ACEITO para sala 'mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-b45320e7'. Salas ativas: {'mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-b45320e7'}", "level": "INFO", "name": "mentoria-ai", "timestamp": "2026-04-19T20:14:17.839834+00:00"}
+INFO:livekit.agents:initializing process
+{"message": "initializing process", "level": "INFO", "name": "livekit.agents", "pid": 6461, "timestamp": "2026-04-19T20:14:18.393506+00:00"}
+INFO:mentoria-ai:=== ENTRYPOINT MENTORIA AI v5 – sala: mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-b45320e7 ===
+INFO:mentoria-ai:=== ENTRYPOINT MENTORIA AI v5 – sala: mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-b45320e7 ===
+{"message": "=== ENTRYPOINT MENTORIA AI v5 – sala: mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-b45320e7 ===", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:19.134036+00:00"}
+INFO:livekit.agents:process initialized
+{"message": "process initialized", "level": "INFO", "name": "livekit.agents", "pid": 6461, "elapsed_time": 0.77, "timestamp": "2026-04-19T20:14:19.160951+00:00"}
+INFO:mentoria-ai:Worker conectado ao room: mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-b45320e7 [Host AUDIO_ONLY]
+INFO:mentoria-ai:Worker conectado ao room: mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-b45320e7 [Host AUDIO_ONLY]
+{"message": "Worker conectado ao room: mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-b45320e7 [Host AUDIO_ONLY]", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:19.753762+00:00"}
+INFO:mentoria-ai:[Resume] Tentando buscar contexto em: http://localhost:5000/api/projects/f6aedab4-603a-4b60-9a13-eda8cc4832b9/resume-context
+INFO:mentoria-ai:[Docs] Tentando buscar documentos em: http://localhost:5000/api/projects/f6aedab4-603a-4b60-9a13-eda8cc4832b9/documents
+INFO:mentoria-ai:[Resume] Tentando buscar contexto em: http://localhost:5000/api/projects/f6aedab4-603a-4b60-9a13-eda8cc4832b9/resume-context
+{"message": "[Resume] Tentando buscar contexto em: http://localhost:5000/api/projects/f6aedab4-603a-4b60-9a13-eda8cc4832b9/resume-context", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:19.782168+00:00"}
+INFO:mentoria-ai:[Docs] Tentando buscar documentos em: http://localhost:5000/api/projects/f6aedab4-603a-4b60-9a13-eda8cc4832b9/documents
+{"message": "[Docs] Tentando buscar documentos em: http://localhost:5000/api/projects/f6aedab4-603a-4b60-9a13-eda8cc4832b9/documents", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:19.783829+00:00"}
+INFO:mentoria-ai:[Host] Nathália iniciada com RealtimeModel nativo.
+INFO:mentoria-ai:[Host] Pré-aquecimento do avatar da Nathália iniciado em background.
+INFO:mentoria-ai:=== Job em execução. Aguardando interação... ===
+INFO:mentoria-ai:[Host] Nathália iniciada com RealtimeModel nativo.
+{"message": "[Host] Nathália iniciada com RealtimeModel nativo.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:20.028077+00:00"}
+INFO:mentoria-ai:[Host] Pré-aquecimento do avatar da Nathália iniciado em background.
+{"message": "[Host] Pré-aquecimento do avatar da Nathália iniciado em background.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:20.028538+00:00"}
+INFO:mentoria-ai:=== Job em execução. Aguardando interação... ===
+{"message": "=== Job em execução. Aguardando interação... ===", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:20.028716+00:00"}
+INFO:mentoria-ai:[Room] Nome do usuário definido: Adriel Moraes 
+INFO:mentoria-ai:[Room] Nome do usuário definido: Adriel Moraes 
+{"message": "[Room] Nome do usuário definido: Adriel Moraes ", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:21.835865+00:00"}
+INFO:mentoria-ai:[Host] Áudio de user-f6e6c76a-e2af-4426-8eb1-c29a87e81220-1776629655565 subscrito dinamicamente.
+INFO:mentoria-ai:[Host] Áudio de user-f6e6c76a-e2af-4426-8eb1-c29a87e81220-1776629655565 subscrito dinamicamente.
+{"message": "[Host] Áudio de user-f6e6c76a-e2af-4426-8eb1-c29a87e81220-1776629655565 subscrito dinamicamente.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:23.271129+00:00"}
+WARNING:livekit.agents:resume_false_interruption is enabled, but the audio output does not support pause, ignored
+INFO:mentoria-ai:[Avatar] Avatar Beyond Presence iniciado para 'Nathália' (id=694c83e2...).
+WARNING:livekit.agents:resume_false_interruption is enabled, but the audio output does not support pause, ignored
+{"message": "resume_false_interruption is enabled, but the audio output does not support pause, ignored", "level": "WARNING", "name": "livekit.agents", "audio_output": "DataStreamIO", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:23.366828+00:00"}
+INFO:mentoria-ai:[Avatar] Avatar Beyond Presence iniciado para 'Nathália' (id=694c83e2...).
+{"message": "[Avatar] Avatar Beyond Presence iniciado para 'Nathália' (id=694c83e2...).", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:23.367177+00:00"}
+INFO:mentoria-ai:[Docs] Foram carregados 0 documentos para a sessão.
+INFO:mentoria-ai:[Docs] Foram carregados 0 documentos para a sessão.
+{"message": "[Docs] Foram carregados 0 documentos para a sessão.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:26.805256+00:00"}
+INFO:mentoria-ai:[Resume] Contexto de retomada carregado com 29 mensagens.
+INFO:mentoria-ai:[Host] Aguardando avatar da Nathália (Beyond Presence) concluir inicialização...
+INFO:mentoria-ai:[Host] Avatar da Nathália pronto. Aguardando estabilização do RealtimeModel...
+INFO:mentoria-ai:[Resume] Contexto de retomada carregado com 29 mensagens.
+{"message": "[Resume] Contexto de retomada carregado com 29 mensagens.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:27.204399+00:00"}
+INFO:mentoria-ai:[Host] Aguardando avatar da Nathália (Beyond Presence) concluir inicialização...
+{"message": "[Host] Aguardando avatar da Nathália (Beyond Presence) concluir inicialização...", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:27.204667+00:00"}
+INFO:mentoria-ai:[Host] Avatar da Nathália pronto. Aguardando estabilização do RealtimeModel...
+{"message": "[Host] Avatar da Nathália pronto. Aguardando estabilização do RealtimeModel...", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:27.204870+00:00"}
+INFO:mentoria-ai:[Host] Nathália retomando sessão existente...
+INFO:mentoria-ai:[Host] Nathália retomando sessão existente...
+{"message": "[Host] Nathália retomando sessão existente...", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:29.205975+00:00"}
+INFO:livekit.agents:playback finished event received
+INFO:livekit.agents:playback finished event received
+{"message": "playback finished event received", "level": "INFO", "name": "livekit.agents", "caller_identity": "bey-host", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:36.096841+00:00"}
+INFO:mentoria-ai:[Retomada] Conectando especialistas sequencialmente para evitar rate limits...
+INFO:mentoria-ai:[Carlos (CFO & VC)] Iniciando conexão...
+INFO:mentoria-ai:[Retomada] Conectando especialistas sequencialmente para evitar rate limits...
+{"message": "[Retomada] Conectando especialistas sequencialmente para evitar rate limits...", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:36.100951+00:00"}
+INFO:mentoria-ai:[Carlos (CFO & VC)] Iniciando conexão...
+{"message": "[Carlos (CFO & VC)] Iniciando conexão...", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:36.101366+00:00"}
+INFO:mentoria-ai:[Carlos (CFO & VC)] Room conectado.
+INFO:mentoria-ai:[Carlos (CFO & VC)] Room conectado.
+{"message": "[Carlos (CFO & VC)] Room conectado.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:36.440955+00:00"}
+INFO:mentoria-ai:[Carlos (CFO & VC)] AgentSession iniciada com RealtimeModel nativo.
+INFO:mentoria-ai:[Carlos (CFO & VC)] AgentSession iniciada com RealtimeModel nativo.
+{"message": "[Carlos (CFO & VC)] AgentSession iniciada com RealtimeModel nativo.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:36.478279+00:00"}
+INFO:mentoria-ai:[Carlos (CFO & VC)] RealtimeModel inicializado.
+INFO:mentoria-ai:[Carlos (CFO & VC)] RealtimeModel inicializado.
+{"message": "[Carlos (CFO & VC)] RealtimeModel inicializado.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:38.479588+00:00"}
+INFO:mentoria-ai:[Carlos (CFO & VC)] Health-check agent_ready publicado.
+INFO:mentoria-ai:[Carlos (CFO & VC)] Health-check agent_ready publicado.
+{"message": "[Carlos (CFO & VC)] Health-check agent_ready publicado.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:38.480964+00:00"}
+INFO:mentoria-ai:[Daniel (CLO & Compliance)] Iniciando conexão...
+INFO:mentoria-ai:[Daniel (CLO & Compliance)] Iniciando conexão...
+{"message": "[Daniel (CLO & Compliance)] Iniciando conexão...", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:39.482202+00:00"}
+INFO:mentoria-ai:[Daniel (CLO & Compliance)] Room conectado.
+INFO:mentoria-ai:[Daniel (CLO & Compliance)] Room conectado.
+{"message": "[Daniel (CLO & Compliance)] Room conectado.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:39.752087+00:00"}
+INFO:mentoria-ai:[Daniel (CLO & Compliance)] AgentSession iniciada com RealtimeModel nativo.
+INFO:mentoria-ai:[Daniel (CLO & Compliance)] AgentSession iniciada com RealtimeModel nativo.
+{"message": "[Daniel (CLO & Compliance)] AgentSession iniciada com RealtimeModel nativo.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:39.784731+00:00"}
+INFO:mentoria-ai:[Daniel (CLO & Compliance)] RealtimeModel inicializado.
+INFO:mentoria-ai:[Daniel (CLO & Compliance)] RealtimeModel inicializado.
+{"message": "[Daniel (CLO & Compliance)] RealtimeModel inicializado.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:41.786273+00:00"}
+INFO:mentoria-ai:[Daniel (CLO & Compliance)] Health-check agent_ready publicado.
+INFO:mentoria-ai:[Daniel (CLO & Compliance)] Health-check agent_ready publicado.
+{"message": "[Daniel (CLO & Compliance)] Health-check agent_ready publicado.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:41.787401+00:00"}
+INFO:mentoria-ai:[Rodrigo (CMO & Growth)] Iniciando conexão...
+INFO:mentoria-ai:[Rodrigo (CMO & Growth)] Iniciando conexão...
+{"message": "[Rodrigo (CMO & Growth)] Iniciando conexão...", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:42.788266+00:00"}
+INFO:mentoria-ai:[Rodrigo (CMO & Growth)] Room conectado.
+INFO:mentoria-ai:[Rodrigo (CMO & Growth)] Room conectado.
+{"message": "[Rodrigo (CMO & Growth)] Room conectado.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:43.120776+00:00"}
+INFO:mentoria-ai:[Rodrigo (CMO & Growth)] AgentSession iniciada com RealtimeModel nativo.
+INFO:mentoria-ai:[Rodrigo (CMO & Growth)] AgentSession iniciada com RealtimeModel nativo.
+{"message": "[Rodrigo (CMO & Growth)] AgentSession iniciada com RealtimeModel nativo.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:43.148800+00:00"}
+INFO:mentoria-ai:[Rodrigo (CMO & Growth)] RealtimeModel inicializado.
+INFO:mentoria-ai:[Rodrigo (CMO & Growth)] RealtimeModel inicializado.
+{"message": "[Rodrigo (CMO & Growth)] RealtimeModel inicializado.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:45.149551+00:00"}
+INFO:mentoria-ai:[Rodrigo (CMO & Growth)] Health-check agent_ready publicado.
+INFO:mentoria-ai:[Rodrigo (CMO & Growth)] Health-check agent_ready publicado.
+{"message": "[Rodrigo (CMO & Growth)] Health-check agent_ready publicado.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:45.150904+00:00"}
+INFO:mentoria-ai:[Ana (CTO & IA)] Iniciando conexão...
+INFO:mentoria-ai:[Ana (CTO & IA)] Iniciando conexão...
+{"message": "[Ana (CTO & IA)] Iniciando conexão...", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:46.151579+00:00"}
+INFO:mentoria-ai:[Ana (CTO & IA)] Room conectado.
+INFO:mentoria-ai:[Ana (CTO & IA)] Room conectado.
+{"message": "[Ana (CTO & IA)] Room conectado.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:46.393713+00:00"}
+INFO:mentoria-ai:[Ana (CTO & IA)] AgentSession iniciada com RealtimeModel nativo.
+INFO:mentoria-ai:[Ana (CTO & IA)] AgentSession iniciada com RealtimeModel nativo.
+{"message": "[Ana (CTO & IA)] AgentSession iniciada com RealtimeModel nativo.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:46.431314+00:00"}
+INFO:mentoria-ai:[Ana (CTO & IA)] RealtimeModel inicializado.
+INFO:mentoria-ai:[Ana (CTO & IA)] RealtimeModel inicializado.
+{"message": "[Ana (CTO & IA)] RealtimeModel inicializado.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:48.432639+00:00"}
+INFO:mentoria-ai:[Ana (CTO & IA)] Health-check agent_ready publicado.
+INFO:mentoria-ai:[Ana (CTO & IA)] Health-check agent_ready publicado.
+{"message": "[Ana (CTO & IA)] Health-check agent_ready publicado.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:48.434034+00:00"}
+INFO:mentoria-ai:[Host] Retomada concluída. Todos os especialistas reconectados.
+INFO:mentoria-ai:[Host] Retomada concluída. Todos os especialistas reconectados.
+{"message": "[Host] Retomada concluída. Todos os especialistas reconectados.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:14:49.436020+00:00"}
+INFO:mentoria-ai:[Usuário fala] Olá Ana, boa tarde. Vamos continuar, por gentileza.
+INFO:mentoria-ai:[Usuário fala] Olá Ana, boa tarde. Vamos continuar, por gentileza.
+{"message": "[Usuário fala] Olá Ana, boa tarde. Vamos continuar, por gentileza.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:15:06.823318+00:00"}
+INFO:mentoria-ai:[Host] Acionando especialista: cto | turno=1 | contexto: Como escalar a arquitetura do MVP do SmartBot, que hoje é controlado por controle remoto, para uma solução de hiperautomação e engenharia de dados, garantindo a escalabilidade da produção? | lateral_from=Nathália
+INFO:mentoria-ai:[Host] Acionando especialista: cto | turno=1 | contexto: Como escalar a arquitetura do MVP do SmartBot, que hoje é controlado por controle remoto, para uma solução de hiperautomação e engenharia de dados, garantindo a escalabilidade da produção? | lateral_from=Nathália
+{"message": "[Host] Acionando especialista: cto | turno=1 | contexto: Como escalar a arquitetura do MVP do SmartBot, que hoje é controlado por controle remoto, para uma solução de hiperautomação e engenharia de dados, garantindo a escalabilidade da produção? | lateral_from=Nathália", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:15:06.828969+00:00"}
+INFO:mentoria-ai:[Host] Áudio do usuário DESSUBSCRITO — Nathália SILENCIADA durante turno de especialista.
+INFO:mentoria-ai:[Host] Áudio do usuário DESSUBSCRITO — Nathália SILENCIADA durante turno de especialista.
+{"message": "[Host] Áudio do usuário DESSUBSCRITO — Nathália SILENCIADA durante turno de especialista.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:15:10.829933+00:00"}
+INFO:mentoria-ai:[Ana (CTO & IA)] Áudio do usuário SUBSCRITO (ativado).
+INFO:mentoria-ai:[Ana (CTO & IA)] Ativado. Transcript atual: 32 msgs. Contador de msgs do usuário zerado.
+INFO:mentoria-ai:[Ana (CTO & IA)] Áudio do usuário SUBSCRITO (ativado).
+{"message": "[Ana (CTO & IA)] Áudio do usuário SUBSCRITO (ativado).", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:15:10.881691+00:00"}
+INFO:mentoria-ai:[Ana (CTO & IA)] Ativado. Transcript atual: 32 msgs. Contador de msgs do usuário zerado.
+{"message": "[Ana (CTO & IA)] Ativado. Transcript atual: 32 msgs. Contador de msgs do usuário zerado.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:15:10.881932+00:00"}
+INFO:mentoria-ai:[Host] ACK recebido de cto em 4065ms. Especialista ATIVO.
+INFO:mentoria-ai:[Host] ACK recebido de cto em 4065ms. Especialista ATIVO.
+{"message": "[Host] ACK recebido de cto em 4065ms. Especialista ATIVO.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:15:10.893780+00:00"}
+INFO:livekit.agents:playback finished event received
+INFO:livekit.agents:playback finished event received
+{"message": "playback finished event received", "level": "INFO", "name": "livekit.agents", "caller_identity": "bey-host", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:15:13.752897+00:00"}
+INFO:mentoria-ai:[Host] Acionando especialista: cto | turno=2 | contexto: Como escalar a arquitetura do MVP do SmartBot, que hoje é controlado por controle remoto, para uma solução de hiperautomação e engenharia de dados, garantindo a escalabilidade da produção? | lateral_from=Nathália
+INFO:mentoria-ai:[Host] Acionando especialista: cto | turno=2 | contexto: Como escalar a arquitetura do MVP do SmartBot, que hoje é controlado por controle remoto, para uma solução de hiperautomação e engenharia de dados, garantindo a escalabilidade da produção? | lateral_from=Nathália
+{"message": "[Host] Acionando especialista: cto | turno=2 | contexto: Como escalar a arquitetura do MVP do SmartBot, que hoje é controlado por controle remoto, para uma solução de hiperautomação e engenharia de dados, garantindo a escalabilidade da produção? | lateral_from=Nathália", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:15:15.099606+00:00"}
+INFO:mentoria-ai:[Ana (CTO & IA)] Geração INTERROMPIDA (turno de outro agente).
+INFO:mentoria-ai:[Ana (CTO & IA)] Áudio do usuário DESSUBSCRITO (silenciado).
+INFO:mentoria-ai:[Ana (CTO & IA)] Geração INTERROMPIDA (turno de outro agente).
+{"message": "[Ana (CTO & IA)] Geração INTERROMPIDA (turno de outro agente).", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:15:19.143607+00:00"}
+INFO:mentoria-ai:[Ana (CTO & IA)] Áudio do usuário DESSUBSCRITO (silenciado).
+{"message": "[Ana (CTO & IA)] Áudio do usuário DESSUBSCRITO (silenciado).", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:15:19.143963+00:00"}
+INFO:mentoria-ai:[Ana (CTO & IA)] Áudio do usuário SUBSCRITO (ativado).
+INFO:mentoria-ai:[Ana (CTO & IA)] Ativado. Transcript atual: 34 msgs. Contador de msgs do usuário zerado.
+INFO:mentoria-ai:[Ana (CTO & IA)] Áudio do usuário SUBSCRITO (ativado).
+{"message": "[Ana (CTO & IA)] Áudio do usuário SUBSCRITO (ativado).", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:15:19.147043+00:00"}
+INFO:mentoria-ai:[Ana (CTO & IA)] Ativado. Transcript atual: 34 msgs. Contador de msgs do usuário zerado.
+{"message": "[Ana (CTO & IA)] Ativado. Transcript atual: 34 msgs. Contador de msgs do usuário zerado.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:15:19.147826+00:00"}
+INFO:mentoria-ai:[Host] ACK recebido de cto em 4060ms. Especialista ATIVO.
+INFO:mentoria-ai:[Host] ACK recebido de cto em 4060ms. Especialista ATIVO.
+{"message": "[Host] ACK recebido de cto em 4060ms. Especialista ATIVO.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:15:19.160049+00:00"}
+INFO:mentoria-ai:[Host] Áudio do usuário RESUBSCRITO — Nathália ATIVA novamente.
+INFO:mentoria-ai:[Host] Turno de Ana (CTO & IA) encerrado (status=agent_cancelled). Nathália reativada.
+INFO:mentoria-ai:[Host] Áudio do usuário RESUBSCRITO — Nathália ATIVA novamente.
+{"message": "[Host] Áudio do usuário RESUBSCRITO — Nathália ATIVA novamente.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:15:19.164848+00:00"}
+INFO:mentoria-ai:[Host] Turno de Ana (CTO & IA) encerrado (status=agent_cancelled). Nathália reativada.
+{"message": "[Host] Turno de Ana (CTO & IA) encerrado (status=agent_cancelled). Nathália reativada.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:15:19.165503+00:00"}
+WARNING:mentoria-ai:[Ana (CTO & IA)] Timeout na geração da resposta (turno=2).
+INFO:mentoria-ai:[Ana (CTO & IA)] Áudio do usuário DESSUBSCRITO (silenciado).
+WARNING:mentoria-ai:[Ana (CTO & IA)] Timeout na geração da resposta (turno=2).
+{"message": "[Ana (CTO & IA)] Timeout na geração da resposta (turno=2).", "level": "WARNING", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:16:19.149810+00:00"}
+INFO:mentoria-ai:[Ana (CTO & IA)] Áudio do usuário DESSUBSCRITO (silenciado).
+{"message": "[Ana (CTO & IA)] Áudio do usuário DESSUBSCRITO (silenciado).", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:16:19.150151+00:00"}
+INFO:mentoria-ai:[Host] Turno de Ana (CTO & IA) encerrado (status=agent_timeout). Nathália reativada.
+INFO:mentoria-ai:[Host] Turno de Ana (CTO & IA) encerrado (status=agent_timeout). Nathália reativada.
+{"message": "[Host] Turno de Ana (CTO & IA) encerrado (status=agent_timeout). Nathália reativada.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:16:19.165538+00:00"}
+INFO:mentoria-ai:[Usuário fala] Hola, hola, Natália, você tá me ouvindo?
+INFO:mentoria-ai:[Usuário fala] Hola, hola, Natália, você tá me ouvindo?
+{"message": "[Usuário fala] Hola, hola, Natália, você tá me ouvindo?", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:20:51.548720+00:00"}
+INFO:livekit.agents:playback finished event received
+INFO:livekit.agents:playback finished event received
+{"message": "playback finished event received", "level": "INFO", "name": "livekit.agents", "caller_identity": "bey-host", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:20:52.530959+00:00"}
+INFO:mentoria-ai:[Usuário fala] parece que a Ana desconectou.
+INFO:mentoria-ai:[Usuário fala] parece que a Ana desconectou.
+{"message": "[Usuário fala] parece que a Ana desconectou.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:21:11.909540+00:00"}
+INFO:mentoria-ai:[Marco] Acionando LLM (Gemini 2.5 Pro + Search) para gerar Plano de Execução...
+INFO:mentoria-ai:[Marco] Acionando LLM (Gemini 2.5 Pro + Search) para gerar Plano de Execução...
+{"message": "[Marco] Acionando LLM (Gemini 2.5 Pro + Search) para gerar Plano de Execução...", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:21:11.916144+00:00"}
+INFO:mentoria-ai:[Marco] Obtendo query de pesquisa de mercado para DDGS...
+INFO:mentoria-ai:[Marco] Obtendo query de pesquisa de mercado para DDGS...
+{"message": "[Marco] Obtendo query de pesquisa de mercado para DDGS...", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:21:14.240849+00:00"}
+INFO:google_genai.models:AFC is enabled with max remote calls: 10.
+INFO:google_genai.models:AFC is enabled with max remote calls: 10.
+{"message": "AFC is enabled with max remote calls: 10.", "level": "INFO", "name": "google_genai.models", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:21:14.257264+00:00"}
+INFO:mentoria-ai:[Marco] Query gerada para web search: arquitet
+INFO:mentoria-ai:[Marco] Consultando DuckDuckGo...
+INFO:mentoria-ai:[Marco] Query gerada para web search: arquitet
+{"message": "[Marco] Query gerada para web search: arquitet", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:21:15.067603+00:00"}
+INFO:mentoria-ai:[Marco] Consultando DuckDuckGo...
+{"message": "[Marco] Consultando DuckDuckGo...", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:21:15.067808+00:00"}
+/home/runner/workspace/agents/worker.py:1933: RuntimeWarning: This package (`duckduckgo_search`) has been renamed to `ddgs`! Use `pip install ddgs` instead.
+  return list(DDGS().text(search_query, max_results=3, region="br-pt"))
+INFO:primp:response: https://www.bing.com/search?q=arquitet 200
+INFO:primp:response: https://www.bing.com/search?q=arquitet 200
+{"message": "response: https://www.bing.com/search?q=arquitet 200", "level": "INFO", "name": "primp", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:21:15.401131+00:00"}
+INFO:mentoria-ai:[Marco] ETAPA 1 — Gerando Draft com Gemini 3.1 flash-lite-preview + Google Search...
+INFO:mentoria-ai:[Marco] ETAPA 1 — Gerando Draft com Gemini 3.1 flash-lite-preview + Google Search...
+{"message": "[Marco] ETAPA 1 — Gerando Draft com Gemini 3.1 flash-lite-preview + Google Search...", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:21:15.441767+00:00"}
+INFO:google_genai.models:AFC is enabled with max remote calls: 10.
+INFO:google_genai.models:AFC is enabled with max remote calls: 10.
+{"message": "AFC is enabled with max remote calls: 10.", "level": "INFO", "name": "google_genai.models", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:21:15.462466+00:00"}
+INFO:livekit.agents:playback finished event received
+INFO:livekit.agents:playback finished event received
+{"message": "playback finished event received", "level": "INFO", "name": "livekit.agents", "caller_identity": "bey-host", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:21:20.857990+00:00"}
+INFO:livekit.agents:playback finished event received
+INFO:livekit.agents:playback finished event received
+{"message": "playback finished event received", "level": "INFO", "name": "livekit.agents", "caller_identity": "bey-host", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:21:35.202720+00:00"}
+INFO:mentoria-ai:[Usuário fala] Eh, certo, vamos para o financeiro, por gentileza, para que possamos tratar de algo como abertura de empresa, eh, registro, patente, eh, documentação necessária para a empresa.
+INFO:mentoria-ai:[Usuário fala] Eh, certo, vamos para o financeiro, por gentileza, para que possamos tratar de algo como abertura de empresa, eh, registro, patente, eh, documentação necessária para a empresa.
+{"message": "[Usuário fala] Eh, certo, vamos para o financeiro, por gentileza, para que possamos tratar de algo como abertura de empresa, eh, registro, patente, eh, documentação necessária para a empresa.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:01.923022+00:00"}
+INFO:mentoria-ai:[Host] Acionando especialista: legal | turno=3 | contexto: Qual o tipo societário ideal para o SmartBot e como proteger a propriedade intelectual (patente) e registrar a empresa no Brasil? | lateral_from=Nathália
+INFO:mentoria-ai:[Host] Acionando especialista: legal | turno=3 | contexto: Qual o tipo societário ideal para o SmartBot e como proteger a propriedade intelectual (patente) e registrar a empresa no Brasil? | lateral_from=Nathália
+{"message": "[Host] Acionando especialista: legal | turno=3 | contexto: Qual o tipo societário ideal para o SmartBot e como proteger a propriedade intelectual (patente) e registrar a empresa no Brasil? | lateral_from=Nathália", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:01.929100+00:00"}
+ERROR:mentoria-ai:[Marco] ETAPA 1 falhou: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}. Usando fallback estático.
+ERROR:mentoria-ai:[Marco] ETAPA 1 falhou: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}. Usando fallback estático.
+{"message": "[Marco] ETAPA 1 falhou: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}. Usando fallback estático.", "level": "ERROR", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:03.435048+00:00"}
+INFO:mentoria-ai.pdf:PDF Hive Mind gerado com sucesso (45505 bytes)
+INFO:mentoria-ai.pdf:PDF Hive Mind gerado com sucesso (45505 bytes)
+INFO:mentoria-ai:[Marco] PDF gerado com sucesso (45505 bytes).
+{"message": "PDF Hive Mind gerado com sucesso (45505 bytes)", "level": "INFO", "name": "mentoria-ai.pdf", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:03.534714+00:00"}
+INFO:mentoria-ai:[Marco] PDF gerado com sucesso (45505 bytes).
+{"message": "[Marco] PDF gerado com sucesso (45505 bytes).", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:03.535272+00:00"}
+INFO:mentoria-ai:[Marco] Plano de Execução publicado (bastidores).
+INFO:mentoria-ai:[Marco] Plano de Execução publicado (bastidores).
+{"message": "[Marco] Plano de Execução publicado (bastidores).", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:03.550516+00:00"}
+INFO:mentoria-ai:[Host] Áudio do usuário DESSUBSCRITO — Nathália SILENCIADA durante turno de especialista.
+INFO:mentoria-ai:[Host] Áudio do usuário DESSUBSCRITO — Nathália SILENCIADA durante turno de especialista.
+{"message": "[Host] Áudio do usuário DESSUBSCRITO — Nathália SILENCIADA durante turno de especialista.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:05.930716+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:20.936236+00:00"}
+ERROR:livekit.agents:exception occurred while executing tool
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py", line 655, in _traceable_fnc_tool
+    val = await function_callable()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/agents/worker.py", line 1209, in acionar_daniel_advogado
+    return await self._activate_specialist("legal", questao)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/agents/worker.py", line 1093, in _activate_specialist
+    await self._publish_packet(packet)
+  File "/home/runner/workspace/agents/worker.py", line 998, in _publish_packet
+    await self._room.local_participant.publish_data(
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 244, in publish_data
+    raise PublishDataError(cb.publish_data.error)
+livekit.rtc.participant.PublishDataError: engine: connection error: could not establish publisher connection: timeout
+ERROR:livekit.agents:exception occurred while executing tool
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py", line 655, in _traceable_fnc_tool
+    val = await function_callable()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/agents/worker.py", line 1209, in acionar_daniel_advogado
+    return await self._activate_specialist("legal", questao)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/agents/worker.py", line 1093, in _activate_specialist
+    await self._publish_packet(packet)
+  File "/home/runner/workspace/agents/worker.py", line 998, in _publish_packet
+    await self._room.local_participant.publish_data(
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 244, in publish_data
+    raise PublishDataError(cb.publish_data.error)
+livekit.rtc.participant.PublishDataError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py", line 655, in _traceable_fnc_tool
+    val = await function_callable()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/agents/worker.py", line 1209, in acionar_daniel_advogado
+    return await self._activate_specialist("legal", questao)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/agents/worker.py", line 1093, in _activate_specialist
+    await self._publish_packet(packet)
+  File "/home/runner/workspace/agents/worker.py", line 998, in _publish_packet
+    await self._room.local_participant.publish_data(
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 244, in publish_data
+    raise PublishDataError(cb.publish_data.error)
+livekit.rtc.participant.PublishDataError: engine: connection error: could not establish publisher connection: timeout
+{"message": "exception occurred while executing tool\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py\", line 655, in _traceable_fnc_tool\n    val = await function_callable()\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/agents/worker.py\", line 1209, in acionar_daniel_advogado\n    return await self._activate_specialist(\"legal\", questao)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/agents/worker.py\", line 1093, in _activate_specialist\n    await self._publish_packet(packet)\n  File \"/home/runner/workspace/agents/worker.py\", line 998, in _publish_packet\n    await self._room.local_participant.publish_data(\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 244, in publish_data\n    raise PublishDataError(cb.publish_data.error)\nlivekit.rtc.participant.PublishDataError: engine: connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py\", line 655, in _traceable_fnc_tool\n    val = await function_callable()\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/agents/worker.py\", line 1209, in acionar_daniel_advogado\n    return await self._activate_specialist(\"legal\", questao)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/agents/worker.py\", line 1093, in _activate_specialist\n    await self._publish_packet(packet)\n  File \"/home/runner/workspace/agents/worker.py\", line 998, in _publish_packet\n    await self._room.local_participant.publish_data(\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 244, in publish_data\n    raise PublishDataError(cb.publish_data.error)\nlivekit.rtc.participant.PublishDataError: engine: connection error: could not establish publisher connection: timeout", "function": "acionar_daniel_advogado", "speech_id": "speech_9856a1ac4d45", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:20.936534+00:00"}
+INFO:livekit.agents:playback finished event received
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::room::participant::local_participant:991:livekit::room::participant::local_participant - Failed to publish RPC ACK: Engine(Connection("could not establish publisher connection: timeout"))
+INFO:livekit.agents:playback finished event received
+{"message": "playback finished event received", "level": "INFO", "name": "livekit.agents", "caller_identity": "bey-host", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:24.929758+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:24.929913+00:00"}
+ERROR:livekit:livekit::room::participant::local_participant:991:livekit::room::participant::local_participant - Failed to publish RPC ACK: Engine(Connection("could not establish publisher connection: timeout"))
+{"message": "livekit::room::participant::local_participant:991:livekit::room::participant::local_participant - Failed to publish RPC ACK: Engine(Connection(\"could not establish publisher connection: timeout\"))", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:24.931691+00:00"}
+INFO:mentoria-ai:[Marco] Gerando guia de abertura de empresa: ainda não sei
+INFO:mentoria-ai:[Marco] Gerando guia de abertura de empresa: ainda não sei
+{"message": "[Marco] Gerando guia de abertura de empresa: ainda não sei", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:30.202529+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::room::participant::local_participant:991:livekit::room::participant::local_participant - Failed to publish RPC ACK: Engine(Connection("could not establish publisher connection: timeout"))
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:32.034892+00:00"}
+INFO:livekit.agents:playback finished event received
+ERROR:livekit:livekit::room::participant::local_participant:991:livekit::room::participant::local_participant - Failed to publish RPC ACK: Engine(Connection("could not establish publisher connection: timeout"))
+{"message": "livekit::room::participant::local_participant:991:livekit::room::participant::local_participant - Failed to publish RPC ACK: Engine(Connection(\"could not establish publisher connection: timeout\"))", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:32.035405+00:00"}
+INFO:livekit.agents:playback finished event received
+{"message": "playback finished event received", "level": "INFO", "name": "livekit.agents", "caller_identity": "bey-host", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:32.036320+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:39.136161+00:00"}
+INFO:livekit.agents:playback finished event received
+ERROR:livekit:livekit::room::participant::local_participant:991:livekit::room::participant::local_participant - Failed to publish RPC ACK: Engine(Connection("could not establish publisher connection: timeout"))
+INFO:livekit.agents:playback finished event received
+{"message": "playback finished event received", "level": "INFO", "name": "livekit.agents", "caller_identity": "bey-host", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:39.136642+00:00"}
+WARNING:livekit.agents:playback_finished called more times than playback segments were captured
+ERROR:livekit:livekit::room::participant::local_participant:991:livekit::room::participant::local_participant - Failed to publish RPC ACK: Engine(Connection("could not establish publisher connection: timeout"))
+{"message": "livekit::room::participant::local_participant:991:livekit::room::participant::local_participant - Failed to publish RPC ACK: Engine(Connection(\"could not establish publisher connection: timeout\"))", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:39.137401+00:00"}
+WARNING:livekit.agents:playback_finished called more times than playback segments were captured
+{"message": "playback_finished called more times than playback segments were captured", "level": "WARNING", "name": "livekit.agents", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:39.138782+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::room::participant::local_participant:1043:livekit::room::participant::local_participant - Failed to publish RPC response: Engine(Connection("could not establish publisher connection: timeout"))
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:39.931415+00:00"}
+ERROR:livekit:livekit::room::participant::local_participant:1043:livekit::room::participant::local_participant - Failed to publish RPC response: Engine(Connection("could not establish publisher connection: timeout"))
+{"message": "livekit::room::participant::local_participant:1043:livekit::room::participant::local_participant - Failed to publish RPC response: Engine(Connection(\"could not establish publisher connection: timeout\"))", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:39.931776+00:00"}
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "failed to send binary stream message\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "WARNING", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:39.932442+00:00"}
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:39.932708+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "failed to send binary stream message\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "WARNING", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:39.935894+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:39.936347+00:00"}
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+ERROR:asyncio:Task exception was never retrieved
+future: <Task finished name='Task-5855' coro=<LocalParticipant.publish_data() done, defined at /home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py:200> exception=PublishDataError('engine: connection error: could not establish publisher connection: timeout')>
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 244, in publish_data
+    raise PublishDataError(cb.publish_data.error)
+livekit.rtc.participant.PublishDataError: engine: connection error: could not establish publisher connection: timeout
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "failed to send binary stream message\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "WARNING", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:39.936547+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:39.937228+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:39.937402+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:39.937654+00:00"}
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "failed to send binary stream message\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "WARNING", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:39.938014+00:00"}
+ERROR:asyncio:Task exception was never retrieved
+future: <Task finished name='Task-5855' coro=<LocalParticipant.publish_data() done, defined at /home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py:200> exception=PublishDataError('engine: connection error: could not establish publisher connection: timeout')>
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 244, in publish_data
+    raise PublishDataError(cb.publish_data.error)
+livekit.rtc.participant.PublishDataError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 244, in publish_data
+    raise PublishDataError(cb.publish_data.error)
+livekit.rtc.participant.PublishDataError: engine: connection error: could not establish publisher connection: timeout
+{"message": "Task exception was never retrieved\nfuture: <Task finished name='Task-5855' coro=<LocalParticipant.publish_data() done, defined at /home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py:200> exception=PublishDataError('engine: connection error: could not establish publisher connection: timeout')>\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 244, in publish_data\n    raise PublishDataError(cb.publish_data.error)\nlivekit.rtc.participant.PublishDataError: engine: connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "asyncio", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 244, in publish_data\n    raise PublishDataError(cb.publish_data.error)\nlivekit.rtc.participant.PublishDataError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:39.938528+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:40.635381+00:00"}
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "failed to send binary stream message\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "WARNING", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:40.635946+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:40.636143+00:00"}
+WARNING:livekit.agents:failed to publish agent transcription to room
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py", line 318, in _publish_transcription
+    await self._room.local_participant.publish_transcription(transcription)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 312, in publish_transcription
+    raise PublishTranscriptionError(cb.publish_transcription.error)
+livekit.rtc.participant.PublishTranscriptionError: engine: connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+WARNING:livekit.agents:failed to publish agent transcription to room
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py", line 318, in _publish_transcription
+    await self._room.local_participant.publish_transcription(transcription)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 312, in publish_transcription
+    raise PublishTranscriptionError(cb.publish_transcription.error)
+livekit.rtc.participant.PublishTranscriptionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py", line 318, in _publish_transcription
+    await self._room.local_participant.publish_transcription(transcription)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 312, in publish_transcription
+    raise PublishTranscriptionError(cb.publish_transcription.error)
+livekit.rtc.participant.PublishTranscriptionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "failed to publish agent transcription to room\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py\", line 318, in _publish_transcription\n    await self._room.local_participant.publish_transcription(transcription)\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 312, in publish_transcription\n    raise PublishTranscriptionError(cb.publish_transcription.error)\nlivekit.rtc.participant.PublishTranscriptionError: engine: connection error: could not establish publisher connection: timeout", "level": "WARNING", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py\", line 318, in _publish_transcription\n    await self._room.local_participant.publish_transcription(transcription)\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 312, in publish_transcription\n    raise PublishTranscriptionError(cb.publish_transcription.error)\nlivekit.rtc.participant.PublishTranscriptionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:40.637171+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:40.637426+00:00"}
+WARNING:livekit.agents:failed to publish agent transcription to room
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py", line 449, in capture_text
+    self._writer = await self._create_text_writer()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py", line 425, in _create_text_writer
+    return await self._room.local_participant.stream_text(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 603, in stream_text
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+WARNING:livekit.agents:failed to publish agent transcription to room
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py", line 449, in capture_text
+    self._writer = await self._create_text_writer()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py", line 425, in _create_text_writer
+    return await self._room.local_participant.stream_text(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 603, in stream_text
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py", line 449, in capture_text
+    self._writer = await self._create_text_writer()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py", line 425, in _create_text_writer
+    return await self._room.local_participant.stream_text(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 603, in stream_text
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "failed to publish agent transcription to room\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py\", line 449, in capture_text\n    self._writer = await self._create_text_writer()\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py\", line 425, in _create_text_writer\n    return await self._room.local_participant.stream_text(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 603, in stream_text\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "WARNING", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py\", line 449, in capture_text\n    self._writer = await self._create_text_writer()\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py\", line 425, in _create_text_writer\n    return await self._room.local_participant.stream_text(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 603, in stream_text\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:40.639673+00:00"}
+ERROR:livekit.agents:Error in _audio_forwarding_task
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py", line 17, in async_fn_logs
+    return await fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py", line 430, in _audio_forwarding_task
+    await audio_output.capture_frame(frame)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py", line 128, in capture_frame
+    self._stream_writer = await self._room.local_participant.stream_bytes(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit.agents:Error in _audio_forwarding_task
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py", line 17, in async_fn_logs
+    return await fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py", line 430, in _audio_forwarding_task
+    await audio_output.capture_frame(frame)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py", line 128, in capture_frame
+    self._stream_writer = await self._room.local_participant.stream_bytes(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py", line 17, in async_fn_logs
+    return await fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py", line 430, in _audio_forwarding_task
+    await audio_output.capture_frame(frame)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py", line 128, in capture_frame
+    self._stream_writer = await self._room.local_participant.stream_bytes(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "Error in _audio_forwarding_task\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py\", line 17, in async_fn_logs\n    return await fn(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py\", line 430, in _audio_forwarding_task\n    await audio_output.capture_frame(frame)\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py\", line 128, in capture_frame\n    self._stream_writer = await self._room.local_participant.stream_bytes(\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py\", line 17, in async_fn_logs\n    return await fn(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py\", line 430, in _audio_forwarding_task\n    await audio_output.capture_frame(frame)\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py\", line 128, in capture_frame\n    self._stream_writer = await self._room.local_participant.stream_bytes(\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:41.067003+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:41.067313+00:00"}
+ERROR:livekit.agents:Error in _read_messages
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py", line 17, in async_fn_logs
+    return await fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/agent_activity.py", line 3100, in _read_messages
+    await asyncio.gather(*forward_tasks)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py", line 17, in async_fn_logs
+    return await fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py", line 430, in _audio_forwarding_task
+    await audio_output.capture_frame(frame)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py", line 128, in capture_frame
+    self._stream_writer = await self._room.local_participant.stream_bytes(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+ERROR:livekit.agents:Error in _read_messages
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py", line 17, in async_fn_logs
+    return await fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/agent_activity.py", line 3100, in _read_messages
+    await asyncio.gather(*forward_tasks)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py", line 17, in async_fn_logs
+    return await fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py", line 430, in _audio_forwarding_task
+    await audio_output.capture_frame(frame)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py", line 128, in capture_frame
+    self._stream_writer = await self._room.local_participant.stream_bytes(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py", line 17, in async_fn_logs
+    return await fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/agent_activity.py", line 3100, in _read_messages
+    await asyncio.gather(*forward_tasks)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py", line 17, in async_fn_logs
+    return await fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py", line 430, in _audio_forwarding_task
+    await audio_output.capture_frame(frame)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py", line 128, in capture_frame
+    self._stream_writer = await self._room.local_participant.stream_bytes(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "Error in _read_messages\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py\", line 17, in async_fn_logs\n    return await fn(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/agent_activity.py\", line 3100, in _read_messages\n    await asyncio.gather(*forward_tasks)\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py\", line 17, in async_fn_logs\n    return await fn(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py\", line 430, in _audio_forwarding_task\n    await audio_output.capture_frame(frame)\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py\", line 128, in capture_frame\n    self._stream_writer = await self._room.local_participant.stream_bytes(\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py\", line 17, in async_fn_logs\n    return await fn(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/agent_activity.py\", line 3100, in _read_messages\n    await asyncio.gather(*forward_tasks)\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py\", line 17, in async_fn_logs\n    return await fn(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py\", line 430, in _audio_forwarding_task\n    await audio_output.capture_frame(frame)\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py\", line 128, in capture_frame\n    self._stream_writer = await self._room.local_participant.stream_bytes(\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:41.071313+00:00"}
+INFO:mentoria-ai:[Marco] Gerando orientação sobre: Registro de marca e patente no INPI e Abertura de Empresa/Enquadramento inicial
+INFO:mentoria-ai:[Marco] Gerando orientação sobre: Registro de marca e patente no INPI e Abertura de Empresa/Enquadramento inicial
+{"message": "[Marco] Gerando orientação sobre: Registro de marca e patente no INPI e Abertura de Empresa/Enquadramento inicial", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:41.748078+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:45.202223+00:00"}
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "failed to send binary stream message\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "WARNING", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:45.202845+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::room::participant::local_participant:1043:livekit::room::participant::local_participant - Failed to publish RPC response: Engine(Connection("could not establish publisher connection: timeout"))
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:47.038603+00:00"}
+ERROR:livekit:livekit::room::participant::local_participant:1043:livekit::room::participant::local_participant - Failed to publish RPC response: Engine(Connection("could not establish publisher connection: timeout"))
+{"message": "livekit::room::participant::local_participant:1043:livekit::room::participant::local_participant - Failed to publish RPC response: Engine(Connection(\"could not establish publisher connection: timeout\"))", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:47.038946+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::room::participant::local_participant:1043:livekit::room::participant::local_participant - Failed to publish RPC response: Engine(Connection("could not establish publisher connection: timeout"))
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:54.140818+00:00"}
+ERROR:livekit:livekit::room::participant::local_participant:1043:livekit::room::participant::local_participant - Failed to publish RPC response: Engine(Connection("could not establish publisher connection: timeout"))
+{"message": "livekit::room::participant::local_participant:1043:livekit::room::participant::local_participant - Failed to publish RPC response: Engine(Connection(\"could not establish publisher connection: timeout\"))", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:54.141181+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+/home/runner/workspace/agents/worker.py:1626: RuntimeWarning: This package (`duckduckgo_search`) has been renamed to `ddgs`! Use `pip install ddgs` instead.
+  return list(DDGS().text(query, max_results=4, region="br-pt"))
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:54.934813+00:00"}
+INFO:primp:response: https://www.bing.com/search?q=Abertura+de+Empresa+%28ainda+n%C3%A3o+sei%29+Brasil+2024+passo+a+passo 200
+INFO:primp:response: https://www.bing.com/search?q=Abertura+de+Empresa+%28ainda+n%C3%A3o+sei%29+Brasil+2024+passo+a+passo 200
+{"message": "response: https://www.bing.com/search?q=Abertura+de+Empresa+%28ainda+n%C3%A3o+sei%29+Brasil+2024+passo+a+passo 200", "level": "INFO", "name": "primp", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:55.119729+00:00"}
+/home/runner/workspace/agents/worker.py:1626: RuntimeWarning: This package (`duckduckgo_search`) has been renamed to `ddgs`! Use `pip install ddgs` instead.
+  return list(DDGS().text(query, max_results=4, region="br-pt"))
+INFO:primp:response: https://www.bing.com/search?q=Abertura+de+Empresa+%28ainda+n%C3%A3o+sei%29+custos+taxas+portais+oficiais 200
+INFO:primp:response: https://www.bing.com/search?q=Abertura+de+Empresa+%28ainda+n%C3%A3o+sei%29+custos+taxas+portais+oficiais 200
+{"message": "response: https://www.bing.com/search?q=Abertura+de+Empresa+%28ainda+n%C3%A3o+sei%29+custos+taxas+portais+oficiais 200", "level": "INFO", "name": "primp", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:55.275274+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:55.641908+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:55.642956+00:00"}
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "failed to send binary stream message\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "WARNING", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:56.078361+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:56.079021+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:56.080049+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:56.080362+00:00"}
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "failed to send binary stream message\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "WARNING", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:56.080672+00:00"}
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "failed to send binary stream message\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "WARNING", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:56.082263+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:56.083027+00:00"}
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "failed to send binary stream message\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "WARNING", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:56.084372+00:00"}
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "failed to send binary stream message\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "WARNING", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:56.746839+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:56.747111+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:56.748288+00:00"}
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "failed to send binary stream message\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "WARNING", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:56.748946+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:56.750991+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:56.751177+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:56.751332+00:00"}
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "failed to send binary stream message\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "WARNING", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:56.751675+00:00"}
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "failed to send binary stream message\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "WARNING", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:56.753733+00:00"}
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "failed to send binary stream message\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "WARNING", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:56.754135+00:00"}
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "failed to send binary stream message\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "WARNING", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:57.327670+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:57.327878+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:57.329225+00:00"}
+WARNING:livekit.agents:failed to publish agent transcription to room
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py", line 449, in capture_text
+    self._writer = await self._create_text_writer()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py", line 425, in _create_text_writer
+    return await self._room.local_participant.stream_text(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 603, in stream_text
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+WARNING:livekit.agents:failed to publish agent transcription to room
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py", line 449, in capture_text
+    self._writer = await self._create_text_writer()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py", line 425, in _create_text_writer
+    return await self._room.local_participant.stream_text(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 603, in stream_text
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py", line 449, in capture_text
+    self._writer = await self._create_text_writer()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py", line 425, in _create_text_writer
+    return await self._room.local_participant.stream_text(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 603, in stream_text
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "failed to publish agent transcription to room\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py\", line 449, in capture_text\n    self._writer = await self._create_text_writer()\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py\", line 425, in _create_text_writer\n    return await self._room.local_participant.stream_text(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 603, in stream_text\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "WARNING", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py\", line 449, in capture_text\n    self._writer = await self._create_text_writer()\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/room_io/_output.py\", line 425, in _create_text_writer\n    return await self._room.local_participant.stream_text(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 603, in stream_text\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:57.330040+00:00"}
+ERROR:livekit.agents:Error in _audio_forwarding_task
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py", line 17, in async_fn_logs
+    return await fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py", line 430, in _audio_forwarding_task
+    await audio_output.capture_frame(frame)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py", line 128, in capture_frame
+    self._stream_writer = await self._room.local_participant.stream_bytes(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit.agents:Error in _audio_forwarding_task
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py", line 17, in async_fn_logs
+    return await fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py", line 430, in _audio_forwarding_task
+    await audio_output.capture_frame(frame)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py", line 128, in capture_frame
+    self._stream_writer = await self._room.local_participant.stream_bytes(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py", line 17, in async_fn_logs
+    return await fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py", line 430, in _audio_forwarding_task
+    await audio_output.capture_frame(frame)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py", line 128, in capture_frame
+    self._stream_writer = await self._room.local_participant.stream_bytes(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "Error in _audio_forwarding_task\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py\", line 17, in async_fn_logs\n    return await fn(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py\", line 430, in _audio_forwarding_task\n    await audio_output.capture_frame(frame)\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py\", line 128, in capture_frame\n    self._stream_writer = await self._room.local_participant.stream_bytes(\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py\", line 17, in async_fn_logs\n    return await fn(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py\", line 430, in _audio_forwarding_task\n    await audio_output.capture_frame(frame)\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py\", line 128, in capture_frame\n    self._stream_writer = await self._room.local_participant.stream_bytes(\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:57.693364+00:00"}
+ERROR:livekit.agents:Error in _read_messages
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py", line 17, in async_fn_logs
+    return await fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/agent_activity.py", line 3100, in _read_messages
+    await asyncio.gather(*forward_tasks)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py", line 17, in async_fn_logs
+    return await fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py", line 430, in _audio_forwarding_task
+    await audio_output.capture_frame(frame)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py", line 128, in capture_frame
+    self._stream_writer = await self._room.local_participant.stream_bytes(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:57.693647+00:00"}
+ERROR:livekit.agents:Error in _read_messages
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py", line 17, in async_fn_logs
+    return await fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/agent_activity.py", line 3100, in _read_messages
+    await asyncio.gather(*forward_tasks)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py", line 17, in async_fn_logs
+    return await fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py", line 430, in _audio_forwarding_task
+    await audio_output.capture_frame(frame)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py", line 128, in capture_frame
+    self._stream_writer = await self._room.local_participant.stream_bytes(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py", line 17, in async_fn_logs
+    return await fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/agent_activity.py", line 3100, in _read_messages
+    await asyncio.gather(*forward_tasks)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py", line 17, in async_fn_logs
+    return await fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py", line 430, in _audio_forwarding_task
+    await audio_output.capture_frame(frame)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py", line 128, in capture_frame
+    self._stream_writer = await self._room.local_participant.stream_bytes(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "Error in _read_messages\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py\", line 17, in async_fn_logs\n    return await fn(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/agent_activity.py\", line 3100, in _read_messages\n    await asyncio.gather(*forward_tasks)\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py\", line 17, in async_fn_logs\n    return await fn(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py\", line 430, in _audio_forwarding_task\n    await audio_output.capture_frame(frame)\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py\", line 128, in capture_frame\n    self._stream_writer = await self._room.local_participant.stream_bytes(\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py\", line 17, in async_fn_logs\n    return await fn(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/agent_activity.py\", line 3100, in _read_messages\n    await asyncio.gather(*forward_tasks)\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/utils/log.py\", line 17, in async_fn_logs\n    return await fn(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/generation.py\", line 430, in _audio_forwarding_task\n    await audio_output.capture_frame(frame)\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py\", line 128, in capture_frame\n    self._stream_writer = await self._room.local_participant.stream_bytes(\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:22:57.694393+00:00"}
+ERROR:asyncio:Task exception was never retrieved
+future: <Task finished name='Task-5884' coro=<LocalParticipant.publish_data() done, defined at /home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py:200> exception=PublishDataError('engine: connection error: could not establish publisher connection: timeout')>
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 244, in publish_data
+    raise PublishDataError(cb.publish_data.error)
+livekit.rtc.participant.PublishDataError: engine: connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:asyncio:Task exception was never retrieved
+future: <Task finished name='Task-5884' coro=<LocalParticipant.publish_data() done, defined at /home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py:200> exception=PublishDataError('engine: connection error: could not establish publisher connection: timeout')>
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 244, in publish_data
+    raise PublishDataError(cb.publish_data.error)
+livekit.rtc.participant.PublishDataError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 244, in publish_data
+    raise PublishDataError(cb.publish_data.error)
+livekit.rtc.participant.PublishDataError: engine: connection error: could not establish publisher connection: timeout
+{"message": "Task exception was never retrieved\nfuture: <Task finished name='Task-5884' coro=<LocalParticipant.publish_data() done, defined at /home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py:200> exception=PublishDataError('engine: connection error: could not establish publisher connection: timeout')>\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 244, in publish_data\n    raise PublishDataError(cb.publish_data.error)\nlivekit.rtc.participant.PublishDataError: engine: connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "asyncio", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 244, in publish_data\n    raise PublishDataError(cb.publish_data.error)\nlivekit.rtc.participant.PublishDataError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:23:09.935875+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:23:09.936069+00:00"}
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "failed to send binary stream message\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "WARNING", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:23:10.567390+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:23:10.569619+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:23:10.569900+00:00"}
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "failed to send binary stream message\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "WARNING", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:23:10.571947+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:23:10.643504+00:00"}
+WARNING:livekit.plugins.google:Gemini server indicates disconnection soon. Time left: 50s
+WARNING:livekit.plugins.google:Gemini server indicates disconnection soon. Time left: 50s
+{"message": "Gemini server indicates disconnection soon. Time left: 50s", "level": "WARNING", "name": "livekit.plugins.google", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:23:20.373976+00:00"}
+/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/plugins/google/realtime/realtime_api.py:824: DeprecationWarning: Setting `LiveConnectConfig.generation_config` is deprecated, please set the fields on `LiveConnectConfig` directly. This will become an error in a future version (not before Q3 2025)
+  async with self._client.aio.live.connect(
+/home/runner/workspace/agents/worker.py:1626: RuntimeWarning: This package (`duckduckgo_search`) has been renamed to `ddgs`! Use `pip install ddgs` instead.
+  return list(DDGS().text(query, max_results=4, region="br-pt"))
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:23:24.937816+00:00"}
+INFO:primp:response: https://www.bing.com/search?q=Registro+de+marca+e+patente+no+INPI+e+Abertura+de+Empresa%2FEnquadramento+inicial+Brasil+2024+passo+a+passo 200
+INFO:primp:response: https://www.bing.com/search?q=Registro+de+marca+e+patente+no+INPI+e+Abertura+de+Empresa%2FEnquadramento+inicial+Brasil+2024+passo+a+passo 200
+{"message": "response: https://www.bing.com/search?q=Registro+de+marca+e+patente+no+INPI+e+Abertura+de+Empresa%2FEnquadramento+inicial+Brasil+2024+passo+a+passo 200", "level": "INFO", "name": "primp", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:23:25.064708+00:00"}
+/home/runner/workspace/agents/worker.py:1626: RuntimeWarning: This package (`duckduckgo_search`) has been renamed to `ddgs`! Use `pip install ddgs` instead.
+  return list(DDGS().text(query, max_results=4, region="br-pt"))
+INFO:primp:response: https://www.bing.com/search?q=Registro+de+marca+e+patente+no+INPI+e+Abertura+de+Empresa%2FEnquadramento+inicial+custos+taxas+portais+oficiais 200
+INFO:primp:response: https://www.bing.com/search?q=Registro+de+marca+e+patente+no+INPI+e+Abertura+de+Empresa%2FEnquadramento+inicial+custos+taxas+portais+oficiais 200
+{"message": "response: https://www.bing.com/search?q=Registro+de+marca+e+patente+no+INPI+e+Abertura+de+Empresa%2FEnquadramento+inicial+custos+taxas+portais+oficiais 200", "level": "INFO", "name": "primp", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:23:25.223158+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:23:35.631940+00:00"}
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: could not establish publisher connection: timeout
+{"message": "failed to send binary stream message\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "level": "WARNING", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:23:35.632434+00:00"}
+WARNING:livekit.plugins.google:Gemini server indicates disconnection soon. Time left: 50s
+WARNING:livekit.plugins.google:Gemini server indicates disconnection soon. Time left: 50s
+{"message": "Gemini server indicates disconnection soon. Time left: 50s", "level": "WARNING", "name": "livekit.plugins.google", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:23:36.741420+00:00"}
+/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/plugins/google/realtime/realtime_api.py:824: DeprecationWarning: Setting `LiveConnectConfig.generation_config` is deprecated, please set the fields on `LiveConnectConfig` directly. This will become an error in a future version (not before Q3 2025)
+  async with self._client.aio.live.connect(
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:23:39.938857+00:00"}
+INFO:google_genai.models:AFC is enabled with max remote calls: 10.
+INFO:google_genai.models:AFC is enabled with max remote calls: 10.
+{"message": "AFC is enabled with max remote calls: 10.", "level": "INFO", "name": "google_genai.models", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:23:39.960427+00:00"}
+WARNING:livekit.plugins.google:Gemini server indicates disconnection soon. Time left: 50s
+WARNING:livekit.plugins.google:Gemini server indicates disconnection soon. Time left: 50s
+{"message": "Gemini server indicates disconnection soon. Time left: 50s", "level": "WARNING", "name": "livekit.plugins.google", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:23:40.104578+00:00"}
+/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/plugins/google/realtime/realtime_api.py:824: DeprecationWarning: Setting `LiveConnectConfig.generation_config` is deprecated, please set the fields on `LiveConnectConfig` directly. This will become an error in a future version (not before Q3 2025)
+  async with self._client.aio.live.connect(
+WARNING:livekit.plugins.google:Gemini server indicates disconnection soon. Time left: 50s
+WARNING:livekit.plugins.google:Gemini server indicates disconnection soon. Time left: 50s
+{"message": "Gemini server indicates disconnection soon. Time left: 50s", "level": "WARNING", "name": "livekit.plugins.google", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:23:43.469633+00:00"}
+/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/plugins/google/realtime/realtime_api.py:824: DeprecationWarning: Setting `LiveConnectConfig.generation_config` is deprecated, please set the fields on `LiveConnectConfig` directly. This will become an error in a future version (not before Q3 2025)
+  async with self._client.aio.live.connect(
+WARNING:livekit.plugins.google:Gemini server indicates disconnection soon. Time left: 50s
+WARNING:livekit.plugins.google:Gemini server indicates disconnection soon. Time left: 50s
+{"message": "Gemini server indicates disconnection soon. Time left: 50s", "level": "WARNING", "name": "livekit.plugins.google", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:23:46.732960+00:00"}
+/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/plugins/google/realtime/realtime_api.py:824: DeprecationWarning: Setting `LiveConnectConfig.generation_config` is deprecated, please set the fields on `LiveConnectConfig` directly. This will become an error in a future version (not before Q3 2025)
+  async with self._client.aio.live.connect(
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:23:54.940403+00:00"}
+INFO:google_genai.models:AFC is enabled with max remote calls: 10.
+INFO:google_genai.models:AFC is enabled with max remote calls: 10.
+{"message": "AFC is enabled with max remote calls: 10.", "level": "INFO", "name": "google_genai.models", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:23:54.958246+00:00"}
+INFO:mentoria-ai:[Room] Pedido de encerramento recebido do frontend.
+INFO:mentoria-ai:[Room] Pedido de encerramento recebido do frontend.
+{"message": "[Room] Pedido de encerramento recebido do frontend.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:24:09.002156+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:24:24.010340+00:00"}
+ERROR:asyncio:Task exception was never retrieved
+future: <Task finished name='Task-5946' coro=<_run_entrypoint.<locals>._on_data_received.<locals>._end_session_flow() done, defined at /home/runner/workspace/agents/worker.py:3345> exception=PublishDataError('engine: connection error: could not establish publisher connection: timeout')>
+Traceback (most recent call last):
+  File "/home/runner/workspace/agents/worker.py", line 3357, in _end_session_flow
+    await ctx.room.local_participant.publish_data(
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 244, in publish_data
+    raise PublishDataError(cb.publish_data.error)
+livekit.rtc.participant.PublishDataError: engine: connection error: could not establish publisher connection: timeout
+ERROR:asyncio:Task exception was never retrieved
+future: <Task finished name='Task-5946' coro=<_run_entrypoint.<locals>._on_data_received.<locals>._end_session_flow() done, defined at /home/runner/workspace/agents/worker.py:3345> exception=PublishDataError('engine: connection error: could not establish publisher connection: timeout')>
+Traceback (most recent call last):
+  File "/home/runner/workspace/agents/worker.py", line 3357, in _end_session_flow
+    await ctx.room.local_participant.publish_data(
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 244, in publish_data
+    raise PublishDataError(cb.publish_data.error)
+livekit.rtc.participant.PublishDataError: engine: connection error: could not establish publisher connection: timeout
+Traceback (most recent call last):
+  File "/home/runner/workspace/agents/worker.py", line 3357, in _end_session_flow
+    await ctx.room.local_participant.publish_data(
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 244, in publish_data
+    raise PublishDataError(cb.publish_data.error)
+livekit.rtc.participant.PublishDataError: engine: connection error: could not establish publisher connection: timeout
+{"message": "Task exception was never retrieved\nfuture: <Task finished name='Task-5946' coro=<_run_entrypoint.<locals>._on_data_received.<locals>._end_session_flow() done, defined at /home/runner/workspace/agents/worker.py:3345> exception=PublishDataError('engine: connection error: could not establish publisher connection: timeout')>\nTraceback (most recent call last):\n  File \"/home/runner/workspace/agents/worker.py\", line 3357, in _end_session_flow\n    await ctx.room.local_participant.publish_data(\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 244, in publish_data\n    raise PublishDataError(cb.publish_data.error)\nlivekit.rtc.participant.PublishDataError: engine: connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "asyncio", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/agents/worker.py\", line 3357, in _end_session_flow\n    await ctx.room.local_participant.publish_data(\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 244, in publish_data\n    raise PublishDataError(cb.publish_data.error)\nlivekit.rtc.participant.PublishDataError: engine: connection error: could not establish publisher connection: timeout", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:24:24.010727+00:00"}
+INFO:mentoria-ai:[Marco] Guia 'Abertura de Empresa (ainda não sei)' gerado: 18155 chars.
+INFO:mentoria-ai:[Marco] Guia 'Abertura de Empresa (ainda não sei)' gerado: 18155 chars.
+{"message": "[Marco] Guia 'Abertura de Empresa (ainda não sei)' gerado: 18155 chars.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:24:25.390222+00:00"}
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+ERROR:livekit:livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout
+{"message": "livekit::rtc_engine::rtc_session:2069:livekit::rtc_engine::rtc_session - connection error: could not establish publisher connection: timeout", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:24:40.392532+00:00"}
+INFO:mentoria-ai.pdf:PDF Hive Mind gerado com sucesso (95152 bytes)
+INFO:mentoria-ai.pdf:PDF Hive Mind gerado com sucesso (95152 bytes)
+{"message": "PDF Hive Mind gerado com sucesso (95152 bytes)", "level": "INFO", "name": "mentoria-ai.pdf", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:24:40.582229+00:00"}
+INFO:mentoria-ai:[Marco] PDF 'Guia: Abertura de Empresa — ainda não sei' gerado: 95152 bytes.
+INFO:mentoria-ai:[Marco] PDF 'Guia: Abertura de Empresa — ainda não sei' gerado: 95152 bytes.
+{"message": "[Marco] PDF 'Guia: Abertura de Empresa — ainda não sei' gerado: 95152 bytes.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:24:40.583257+00:00"}
+INFO:livekit.agents:closing agent session due to participant disconnect (disable via `RoomInputOptions.close_on_disconnect=False`)
+INFO:livekit.agents:closing agent session due to participant disconnect (disable via `RoomInputOptions.close_on_disconnect=False`)
+{"message": "closing agent session due to participant disconnect (disable via `RoomInputOptions.close_on_disconnect=False`)", "level": "INFO", "name": "livekit.agents", "room": "mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-b45320e7", "participant": "user-f6e6c76a-e2af-4426-8eb1-c29a87e81220-1776629655565", "reason": "CLIENT_INITIATED", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:24:47.421605+00:00"}
+INFO:mentoria-ai:[Room] Usuário principal user-f6e6c76a-e2af-4426-8eb1-c29a87e81220-1776629655565 desconectou. Disparando shutdown para liberar a sala.
+INFO:livekit.agents:closing agent session due to participant disconnect (disable via `RoomInputOptions.close_on_disconnect=False`)
+INFO:mentoria-ai:[Room] Usuário principal user-f6e6c76a-e2af-4426-8eb1-c29a87e81220-1776629655565 desconectou. Disparando shutdown para liberar a sala.
+INFO:mentoria-ai:[Job] Iniciando limpeza de recursos...
+{"message": "[Room] Usuário principal user-f6e6c76a-e2af-4426-8eb1-c29a87e81220-1776629655565 desconectou. Disparando shutdown para liberar a sala.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:24:47.424947+00:00"}
+INFO:livekit.agents:closing agent session due to participant disconnect (disable via `RoomInputOptions.close_on_disconnect=False`)
+{"message": "closing agent session due to participant disconnect (disable via `RoomInputOptions.close_on_disconnect=False`)", "level": "INFO", "name": "livekit.agents", "room": "mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-b45320e7", "participant": "user-f6e6c76a-e2af-4426-8eb1-c29a87e81220-1776629655565", "reason": "CLIENT_INITIATED", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:24:47.425220+00:00"}
+INFO:mentoria-ai:[Job] Iniciando limpeza de recursos...
+{"message": "[Job] Iniciando limpeza de recursos...", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:24:47.426013+00:00"}
+INFO:mentoria-ai:[Marco] Guia 'Registro de marca e patente no INPI e Abertura de Empresa/Enquadramento inicial' gerado: 23426 chars.
+INFO:mentoria-ai:[Marco] Guia 'Registro de marca e patente no INPI e Abertura de Empresa/Enquadramento inicial' gerado: 23426 chars.
+{"message": "[Marco] Guia 'Registro de marca e patente no INPI e Abertura de Empresa/Enquadramento inicial' gerado: 23426 chars.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:24:47.460789+00:00"}
+INFO:mentoria-ai:[Room] Room principal desconectado. Disparando shutdown.
+INFO:mentoria-ai:[Room] Room principal desconectado. Disparando shutdown.
+{"message": "[Room] Room principal desconectado. Disparando shutdown.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:24:48.492339+00:00"}
+WARNING:mentoria-ai:[Marco] Erro ao publicar document_ready para 'Guia: Abertura de Empresa — ainda não sei': engine: connection error: closed
+INFO:mentoria-ai:[Job] Sala principal forçadamente desconectada pelo agente Host.
+WARNING:mentoria-ai:[Marco] Erro ao publicar document_ready para 'Guia: Abertura de Empresa — ainda não sei': engine: connection error: closed
+{"message": "[Marco] Erro ao publicar document_ready para 'Guia: Abertura de Empresa — ainda não sei': engine: connection error: closed", "level": "WARNING", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:24:48.504422+00:00"}
+INFO:mentoria-ai:[Metrics] activations_total=3 succeeded=0 timeout=1 cancelled=1 avg_ack_ms=2708.4 avg_done_ms=25467.2
+INFO:mentoria-ai:[Job] Encerrado com sucesso para a sala 'mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-b45320e7'. Salas ativas: set()
+INFO:mentoria-ai:[Job] Sala principal forçadamente desconectada pelo agente Host.
+{"message": "[Job] Sala principal forçadamente desconectada pelo agente Host.", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:24:48.507755+00:00"}
+INFO:mentoria-ai:[Metrics] activations_total=3 succeeded=0 timeout=1 cancelled=1 avg_ack_ms=2708.4 avg_done_ms=25467.2
+{"message": "[Metrics] activations_total=3 succeeded=0 timeout=1 cancelled=1 avg_ack_ms=2708.4 avg_done_ms=25467.2", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:24:48.521579+00:00"}
+INFO:mentoria-ai:[Guard] Sala 'mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-b45320e7' liberada do guard após encerramento global da task. Salas ativas após limpeza: set()
+INFO:mentoria-ai:[Job] Encerrado com sucesso para a sala 'mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-b45320e7'. Salas ativas: set()
+{"message": "[Job] Encerrado com sucesso para a sala 'mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-b45320e7'. Salas ativas: set()", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:24:48.523859+00:00"}
+ERROR:livekit:livekit::room::participant::local_participant:887:livekit::room::participant::local_participant - Failed to publish RPC request: engine: connection error: closed
+INFO:mentoria-ai:[Guard] Sala 'mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-b45320e7' liberada do guard após encerramento global da task. Salas ativas após limpeza: set()
+{"message": "[Guard] Sala 'mentoria-f6aedab4-603a-4b60-9a13-eda8cc4832b9-b45320e7' liberada do guard após encerramento global da task. Salas ativas após limpeza: set()", "level": "INFO", "name": "mentoria-ai", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:24:48.531749+00:00"}
+ERROR:livekit:livekit::room::participant::local_participant:887:livekit::room::participant::local_participant - Failed to publish RPC request: engine: connection error: closed
+{"message": "livekit::room::participant::local_participant:887:livekit::room::participant::local_participant - Failed to publish RPC request: engine: connection error: closed", "level": "ERROR", "name": "livekit", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:24:48.535736+00:00"}
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: closed
+WARNING:livekit.agents:failed to send binary stream message
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: closed
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py", line 120, in send_message
+    writer = await self._room.local_participant.stream_bytes(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 656, in stream_bytes
+    await writer._send_header()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py", line 189, in _send_header
+    raise ConnectionError(cb.send_stream_header.error)
+ConnectionError: engine: connection error: closed
+{"message": "failed to send binary stream message\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: closed", "level": "WARNING", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/remote_session.py\", line 120, in send_message\n    writer = await self._room.local_participant.stream_bytes(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 656, in stream_bytes\n    await writer._send_header()\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/data_stream.py\", line 189, in _send_header\n    raise ConnectionError(cb.send_stream_header.error)\nConnectionError: engine: connection error: closed", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:24:48.547411+00:00"}
+ERROR:livekit.agents:failed to perform clear buffer rpc
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py", line 179, in _clear_buffer_task
+    await self._room.local_participant.perform_rpc(
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 353, in perform_rpc
+    raise RpcError._from_proto(cb.perform_rpc.error)
+livekit.rtc.rpc.RpcError: Failed to send
+WARNING:livekit.agents:didn't receive playback finished event after clear buffer, marking playout as done arbitrarily
+ERROR:livekit.agents:failed to perform clear buffer rpc
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py", line 179, in _clear_buffer_task
+    await self._room.local_participant.perform_rpc(
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 353, in perform_rpc
+    raise RpcError._from_proto(cb.perform_rpc.error)
+livekit.rtc.rpc.RpcError: Failed to send
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py", line 179, in _clear_buffer_task
+    await self._room.local_participant.perform_rpc(
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py", line 353, in perform_rpc
+    raise RpcError._from_proto(cb.perform_rpc.error)
+livekit.rtc.rpc.RpcError: Failed to send
+{"message": "failed to perform clear buffer rpc\nTraceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py\", line 179, in _clear_buffer_task\n    await self._room.local_participant.perform_rpc(\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 353, in perform_rpc\n    raise RpcError._from_proto(cb.perform_rpc.error)\nlivekit.rtc.rpc.RpcError: Failed to send", "level": "ERROR", "name": "livekit.agents", "exc_info": "Traceback (most recent call last):\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/agents/voice/avatar/_datastream_io.py\", line 179, in _clear_buffer_task\n    await self._room.local_participant.perform_rpc(\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/livekit/rtc/participant.py\", line 353, in perform_rpc\n    raise RpcError._from_proto(cb.perform_rpc.error)\nlivekit.rtc.rpc.RpcError: Failed to send", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:24:48.548259+00:00"}
+WARNING:livekit.agents:didn't receive playback finished event after clear buffer, marking playout as done arbitrarily
+{"message": "didn't receive playback finished event after clear buffer, marking playout as done arbitrarily", "level": "WARNING", "name": "livekit.agents", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:24:48.549030+00:00"}
+ERROR:livekit.agents:speech not done in time after interruption, cancelling the speech arbitrarily.
+ERROR:livekit.agents:speech not done in time after interruption, cancelling the speech arbitrarily.
+{"message": "speech not done in time after interruption, cancelling the speech arbitrarily.", "level": "ERROR", "name": "livekit.agents", "speech_id": "speech_c5015f951b01", "timeout": 5.0, "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:24:52.428855+00:00"}
+INFO:livekit.agents:process exiting
+{"message": "process exiting", "level": "INFO", "name": "livekit.agents", "reason": "", "pid": 5257, "job_id": "AJ_YzQuuVXspduH", "room_id": "RM_f9bFzekxuE3X", "timestamp": "2026-04-19T20:24:52.531203+00:00"}

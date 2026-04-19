@@ -151,7 +151,7 @@ ACTIVATION_ACK_TIMEOUT_SECONDS = 8.0
 ACTIVATION_DONE_TIMEOUT_SECONDS = 300.0
 ACTIVATION_DEBOUNCE_SECONDS = 0.8
 SPECIALIST_GENERATION_TIMEOUT_SECONDS = 60.0
-SPECIALIST_SILENCE_TIMEOUT_SECONDS = 180.0
+SPECIALIST_SILENCE_TIMEOUT_SECONDS = 60.0
 SPECIALIST_MAX_TURN_TIMEOUT_SECONDS = 1800.0
 HOST_GENERATE_REPLY_TIMEOUT_SECONDS = 60.0   # Timeout para cada generate_reply da Nathália
 CONTEXT_RECENT_WINDOW = 12
@@ -574,96 +574,56 @@ def _normalize_handoff_text(text: str) -> str:
 def classify_user_handoff_intent(text: str) -> Optional[str]:
     """
     Classifica se a mensagem do usuário indica fim da conversa com o especialista atual.
-
-    IMPORTANTE: Esta função deve ser chamada APENAS com mensagens recebidas APÓS
-    o especialista ser ativado. Nunca com mensagens do histórico anterior.
-
-    Retorna:
-    - "user_confirmed_done"  → usuário confirmou explicitamente que não tem mais dúvidas
-    - "user_requested_host"  → usuário pediu para voltar à Nathália
-    - "topic_change"         → usuário quer mudar de assunto completamente
-    - None                   → usuário ainda está interagindo, NÃO devolver
+    
+    Usa padrões RegEx baseados em expressões regulares para maior cobertura 
+    linguística de intenções e detecção robusta de frases de encerramento.
     """
     normalized = _normalize_handoff_text(text)
     if not normalized:
         return None
 
-    # ── Marcadores de CONCLUSÃO EXPLÍCITA ─────────────────────────────────────
-    # ATENÇÃO: Apenas expressões que claramente indicam FIM — sem ambiguidade.
-    # "entendi" sozinho NÃO está aqui pois o usuário pode dizer "entendi, mas..."
-    explicit_done_markers = (
-        # Sem dúvidas
-        "nao tenho mais duvidas",
-        "não tenho mais dúvidas",
-        "sem mais duvidas",
-        "sem mais dúvidas",
-        "nao tenho mais perguntas",
-        "não tenho mais perguntas",
-        "nao tenho mais questoes",
-        "não tenho mais questões",
-        # Satisfação / conclusão explícita
-        "ficou bem claro",
-        "agora ficou claro",
-        "tudo claro",
-        "ficou tudo claro",
-        "tudo certo por enquanto",
-        "era exatamente isso",
-        "era isso mesmo",
-        "isso responde minha pergunta",
-        "isso responde tudo",
-        "respondeu tudo",
-        # "obrigado/a" + encerramento
-        "obrigado, era isso",
-        "obrigada, era isso",
-        "obrigado por tudo",
-        "obrigada por tudo",
-        "obrigado, ficou claro",
-        "obrigada, ficou claro",
-        # Autorizações explícitas de troca
-        "pode seguir para o proximo",
-        "pode seguir para o próximo",
-        "pode passar para outro",
-        "pode prosseguir",
-        "podemos prosseguir",
-        "pode continuar com a nathalia",
-        # Perfeito + término
-        "perfeito, era isso",
-        "perfeito entendi tudo",
-        "ja entendi tudo",
-        "já entendi tudo",
-        "entendi tudo",
-        "entendido, pode continuar",
-    )
-    if any(marker in normalized for marker in explicit_done_markers):
+    # 1. Padrões de conclusão explícita (expressões amplas de fim de dúvida e satisfação)
+    done_patterns = [
+        r"n[aã]o\s+tenho\s+(mais\s+)?(d[uú]vida|pergunta|quest)",
+        r"sem\s+(mais\s+)?(d[uú]vida|pergunta)",
+        r"(ficou|est[aá])\s+(bem\s+)?claro",
+        r"tudo\s+(claro|certo|ok|entendido)",
+        r"era\s+(exatamente\s+)?isso",
+        r"respondeu\s+(tudo|minha\s+pergunta)",
+        r"obrigad[oa]\s*,?\s*(era\s+isso|ficou\s+claro|por\s+tudo|t[aá]\s+[oó]timo|t[aá]\s+bom|pode)",
+        r"pode\s+(seguir|passar|prosseguir|continuar)",
+        r"(j[aá]\s+)?entendi\s+tudo",
+        r"entendido\s*,?\s*pode\s+continuar",
+        r"estou\s+satisfeit[oa]",
+        r"satisfez\s+minha\s+d[uú]vida",
+        r"n[aã]o\s+preciso\s+de\s+mais\s+nada",
+        r"por\s+enquanto\s+[ée]\s+s[oó]"
+    ]
+    if any(re.search(p, normalized) for p in done_patterns):
         return "user_confirmed_done"
 
-    # ── Pedidos EXPLÍCITOS de voltar à Nathália ───────────────────────────────
-    host_request_markers = (
-        "pode voltar pra nathalia",
-        "pode voltar para nathalia",
-        "pode voltar para a nathalia",
-        "quero falar com a nathalia",
-        "chama a nathalia",
-        "passa para a nathalia",
-        "volta para a nathalia",
-        "fala com a nathalia",
-        "quero a nathalia",
-    )
-    if any(marker in normalized for marker in host_request_markers):
+    # 2. Padrões de retorno direto para a Nathália
+    host_patterns = [
+        r"pode\s+voltar\s+p(r|ar)a\s+a?\s*nath[aá]lia",
+        r"quero\s+falar\s+com\s+a?\s*nath[aá]lia",
+        r"chama\s+a?\s*nath[aá]lia",
+        r"passa\s+p(r|ar)a\s+a?\s*nath[aá]lia",
+        r"volta\s+p(r|ar)a\s+a?\s*nath[aá]lia",
+        r"quero\s+a?\s*nath[aá]lia",
+        r"fala\s+com\s+a\s+nath[aá]lia"
+    ]
+    if any(re.search(p, normalized) for p in host_patterns):
         return "user_requested_host"
 
-    # ── Pedidos EXPLÍCITOS de mudança de assunto ──────────────────────────────
-    topic_change_markers = (
-        "vamos mudar de assunto",
-        "quero mudar de assunto",
-        "vamos para outro assunto",
-        "vamos falar de outra coisa",
-        "quero falar de outro tema",
-        "outro tema agora",
-        "muda de assunto",
-        "fala de outra coisa",
-    )
-    if any(marker in normalized for marker in topic_change_markers):
+    # 3. Padrões de mudança radical de assunto
+    topic_patterns = [
+        r"(vamos|quero)\s+mudar\s+de\s+assunto",
+        r"vamos\s+(falar|ir)\s+p(r|ar)a\s+outro\s+(assunto|tema|ponto)",
+        r"(falar|pensar)\s+de\s+outra\s+coisa",
+        r"outro\s+tema\s+agora",
+        r"muda\s+de\s+assunto"
+    ]
+    if any(re.search(p, normalized) for p in topic_patterns):
         return "topic_change"
 
     return None
@@ -681,6 +641,19 @@ def get_specialist_timeout_reason(
     if (now - started_at) > SPECIALIST_MAX_TURN_TIMEOUT_SECONDS:
         return "turn_timeout"
     return None
+
+async def _safe_publish_data(participant: rtc.LocalParticipant, payload: dict, max_retries: int = 3) -> None:
+    """Publica data packets de forma segura com sistema de retries automatizado."""
+    data_bytes = json.dumps(payload).encode()
+    for attempt in range(max_retries):
+        try:
+            await participant.publish_data(data_bytes, reliable=True)
+            return
+        except Exception as e:
+            if attempt < max_retries - 1:
+                await asyncio.sleep(0.5)
+            else:
+                logger.error(f"Falha critica ao publicar data packet {payload.get('type')}: {e}")
 
 async def _query_documents_with_llm(pergunta: str, documentos: list[str]) -> str:
     from google import genai
@@ -803,6 +776,7 @@ class SpecialistAgent(Agent):
     async def devolver_para_nathalia(
         self,
         context: RunContext,
+        resumo_interacao: str,
     ) -> str:
         """
         Devolve a palavra à Nathália (apresentadora) para que ela retome a condução da sessão.
@@ -810,6 +784,9 @@ class SpecialistAgent(Agent):
         - O usuário confirmou EXPLICITAMENTE que não tem mais dúvidas com você.
         - O usuário pediu para falar com a Nathália ou mudar completamente de assunto.
         NUNCA use após apenas uma resposta. Aguarde o usuário confirmar o encerramento.
+        
+        Parâmetros:
+        - resumo_interacao: Breve resumo (1-2 frases) do que foi resolvido ou combinado, para contextualizar a Nathália.
         """
         # ── GUARDA 1: O usuário precisa ter enviado ao menos 1 mensagem após ativação ─
         # Isso impede que o especialista retorne antes de ouvir o usuário mesmo uma vez.
@@ -855,11 +832,12 @@ class SpecialistAgent(Agent):
             f"[{self._name}] ✅ Handoff aprovado → Nathália. "
             f"Motivo: {handoff_reason} | Última fala: '{last_user_message[:60]}'"
         )
-        self._blackboard.add_message(self._name, "Pronto, Nathália! Pode continuar.")
+        self._blackboard.add_message(self._name, f"Pronto, Nathália! Pode continuar. Resumo do meu atendimento: {resumo_interacao}")
         self._handover_result = {
             "type": "nathalia",
             "reason": handoff_reason,
             "last_user_message": last_user_message,
+            "summary": resumo_interacao,
         }
         self._handover_event.set()
         return "Palavra devolvida à Nathália com sucesso. Aguarde em silêncio absoluto."
@@ -995,10 +973,7 @@ class HostAgent(Agent):
             "sent_at": monotonic(),
             **payload,
         }
-        await self._room.local_participant.publish_data(
-            json.dumps(base_payload).encode(),
-            reliable=True,
-        )
+        await _safe_publish_data(self._room.local_participant, base_payload)
 
     def handle_specialist_signal(self, msg: dict) -> None:
         turn_id = msg.get("turn_id")
@@ -1163,12 +1138,14 @@ class HostAgent(Agent):
             }:
                 spec_name = SPECIALIST_NAMES[spec_id]
                 user_name = self._blackboard.user_name or "você"
+                summary = status_payload.get("summary", "")
+                summary_prompt = f" Resumo deixado pelo especialista para te contextualizar: '{summary}'." if summary else ""
                 try:
                     await asyncio.wait_for(
                         host_session.generate_reply(
                             instructions=(
-                                f"ESPECIALISTA_DEVOLVEU: {spec_name} acabou de devolver a palavra para você. "
-                                f"Retome a condução com 1-2 frases de transição. "
+                                f"ESPECIALISTA_DEVOLVEU: {spec_name} acabou de devolver a palavra para você.{summary_prompt} "
+                                f"Retome a condução com 1-2 frases de transição abordando o que foi falado. "
                                 f"Pergunte a {user_name} se ficou claro ou se quer explorar outro tema. "
                                 f"Seja breve e calorosa."
                             ),
@@ -2607,11 +2584,8 @@ async def _start_specialist_in_room(
                 }
                 if extra:
                     payload.update(extra)
-                await room.local_participant.publish_data(
-                    json.dumps(payload).encode(),
-                    reliable=True,
-                )
-
+                await _safe_publish_data(room.local_participant, payload)
+            
             try:
                 ctx_summary = msg.get("transcript_summary", "")
                 context_text = msg.get("context", "")
