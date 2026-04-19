@@ -150,9 +150,10 @@ DATA_PACKET_SCHEMA_VERSION = "1.0"
 ACTIVATION_ACK_TIMEOUT_SECONDS = 8.0
 ACTIVATION_DONE_TIMEOUT_SECONDS = 300.0
 ACTIVATION_DEBOUNCE_SECONDS = 0.8
-SPECIALIST_GENERATION_TIMEOUT_SECONDS = 35.0
+SPECIALIST_GENERATION_TIMEOUT_SECONDS = 60.0
 SPECIALIST_SILENCE_TIMEOUT_SECONDS = 180.0
 SPECIALIST_MAX_TURN_TIMEOUT_SECONDS = 1800.0
+HOST_GENERATE_REPLY_TIMEOUT_SECONDS = 60.0   # Timeout para cada generate_reply da Nathália
 CONTEXT_RECENT_WINDOW = 12
 
 # Vozes por agente (Gemini TTS nativo)
@@ -2886,7 +2887,7 @@ async def _run_entrypoint(ctx: JobContext) -> None:
         import urllib.request
         import json
 
-        api_url = os.getenv("NEXT_API_URL", "http://localhost:3000").rstrip("/") + f"/api/projects/{project_id}/resume-context"
+        api_url = os.getenv("NEXT_API_URL", "http://localhost:5000").rstrip("/") + f"/api/projects/{project_id}/resume-context"
 
         def _get():
             try:
@@ -2936,7 +2937,7 @@ async def _run_entrypoint(ctx: JobContext) -> None:
     async def fetch_docs():
         import urllib.request
         import json
-        api_url = os.getenv("NEXT_API_URL", "http://localhost:3000").rstrip("/") + f"/api/projects/{project_id}/documents"
+        api_url = os.getenv("NEXT_API_URL", "http://localhost:5000").rstrip("/") + f"/api/projects/{project_id}/documents"
         def _get():
             try:
                 logger.info(f"[Docs] Tentando buscar documentos em: {api_url}")
@@ -3033,7 +3034,7 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                             f"Contexto da sessão anterior para você: {resumption_context}"
                         ),
                     ),
-                    timeout=30.0,
+                    timeout=HOST_GENERATE_REPLY_TIMEOUT_SECONDS,
                 )
             except Exception as e:
                 logger.warning(
@@ -3111,10 +3112,10 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                             f"Encerre sua fala após a apresentação."
                         ),
                     ),
-                    timeout=30.0,
+                    timeout=HOST_GENERATE_REPLY_TIMEOUT_SECONDS,
                 )
             except asyncio.TimeoutError:
-                logger.warning("[Host] Timeout (30s) ao gerar reply inicial.")
+                logger.warning(f"[Host] Timeout ({HOST_GENERATE_REPLY_TIMEOUT_SECONDS:.0f}s) ao gerar reply inicial.")
             except Exception as e:
                 logger.warning(f"[Host] Erro ao gerar reply inicial: {type(e).__name__}: {e}", exc_info=True)
 
@@ -3153,7 +3154,7 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                                     f"Apenas e unicamente se apresente e conclua a fala."
                                 ),
                             ),
-                            timeout=30.0,
+                            timeout=HOST_GENERATE_REPLY_TIMEOUT_SECONDS,
                         )
                         logger.info(f"[Apresentação] {spec_name} concluiu.")
                         await asyncio.sleep(POST_INTRO_WAIT)
@@ -3190,7 +3191,7 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                     host_session.generate_reply(
                         instructions=f"Faça a seguinte pergunta de forma calorosa e natural: {closing}",
                     ),
-                    timeout=30.0,
+                    timeout=HOST_GENERATE_REPLY_TIMEOUT_SECONDS,
                 )
             except Exception as e:
                 logger.warning(f"[Host] Erro na pergunta inicial: {e}")
@@ -3425,7 +3426,7 @@ async def _run_entrypoint(ctx: JobContext) -> None:
             if not transcript_snapshot:
                 return
 
-            api_url = os.getenv("NEXT_API_URL", "http://localhost:3000") + f"/api/projects/{project_id}/resume-context"
+            api_url = os.getenv("NEXT_API_URL", "http://localhost:5000") + f"/api/projects/{project_id}/resume-context"
             payload = json.dumps({"transcript": transcript_snapshot}).encode("utf-8")
 
             def _post():
