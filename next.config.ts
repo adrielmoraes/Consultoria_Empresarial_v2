@@ -1,20 +1,23 @@
 import type { NextConfig } from "next";
 
+const replitDevDomain = process.env.REPLIT_DEV_DOMAIN;
+
+const allowedDevOrigins = [
+  "*.replit.dev",
+  "*.repl.co",
+  "*.replit.app",
+];
+
+if (replitDevDomain) {
+  allowedDevOrigins.push(replitDevDomain);
+}
+
 const nextConfig: NextConfig = {
   reactCompiler: true,
-  allowedDevOrigins: [
-    "*.replit.dev",
-    "*.repl.co",
-    "*.replit.app",
-    "*.picard.replit.dev",
-    "*.kirk.replit.dev",
-  ],
-  // Desativa cache automático em desenvolvimento
+  allowedDevOrigins,
   experimental: {
-    // Para páginas client-side, não faz sentido ter PPR
     ppr: false,
   },
-  // Garante que não há revalidação automática
   staticPageGenerationTimeout: 180,
 };
 

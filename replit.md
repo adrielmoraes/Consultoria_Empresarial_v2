@@ -49,12 +49,18 @@ A multi-agent AI business mentorship platform built with Next.js and Python Live
 - `AUTH_SECRET` — NextAuth.js session secret
 - `LIVEKIT_API_KEY` — LiveKit API key
 - `LIVEKIT_API_SECRET` — LiveKit API secret
-- `NEXT_PUBLIC_LIVEKIT_URL` — LiveKit server WebSocket URL
+- `LIVEKIT_URL` — LiveKit server WebSocket URL (used by both Next.js and the Python worker)
+- `NEXT_PUBLIC_LIVEKIT_URL` — LiveKit server WebSocket URL (public, for the browser client)
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` — Stripe publishable key
 - `STRIPE_SECRET_KEY` — Stripe secret key
 - `STRIPE_WEBHOOK_SECRET` — Stripe webhook secret
-- `GEMINI_API_KEY` — Google Gemini API key (aliased to `GOOGLE_API_KEY` in worker)
-- `DATABASE_URL` — PostgreSQL connection string
+- `GEMINI_API_KEY` — Google Gemini API key
+- `DATABASE_URL` — PostgreSQL connection string (provided automatically by Replit)
+
+## Replit Setup Notes
+- Python packages installed to `.pythonlibs/` via `pip install --user`
+- `next.config.ts` uses `process.env.REPLIT_DEV_DOMAIN` to allow HMR through the Replit proxy
+- Both workflows run in parallel under the "Project" run button
 
 ## Agent Communication Flow
 1. User joins room → LiveKit worker picks up job
