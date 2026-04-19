@@ -1,0 +1,18 @@
+Analise detalhadamente o sistema de conversação multi-agente onde a agente Nathalia realiza a transferência da interação para outro agente especializado. O objetivo principal é implementar um fluxo onde o agente chamado permaneça ativamente escutando o usuário, mantendo uma conversação natural e contínua até que o usuário manifeste explicitamente que não possui mais dúvidas. 
+
+O problema crítico identificado é que, atualmente, quando a Nathalia transfere para outro agente, este realiza apenas uma única interação antes de encerrar prematuramente a conversação, fazendo com que a Nathalia retorne imediatamente ao controle. O comportamento esperado exige que o agente chamado assuma completamente o controle da conversa, permanecendo como o interlocutor principal até receber uma indicação clara de finalização por parte do usuário.
+
+Implemente as seguintes correções e melhorias no sistema:
+
+1. **Mecanismo de Escuta Contínua**: Desenvolva um loop de escuta persistente que mantenha o agente ativo, processando cada mensagem do usuário em tempo real, sem timeouts automáticos ou interrupções prematuras.
+
+2. **Lógica de Finalização Inteligente**: Programe o agente para identificar sinais linguísticos de conclusão (exemplos: "não tenho mais dúvidas", "já entendi", "obrigado, era isso") e, apenas após essa confirmação, solicitar permissão ao usuário para retornar à Nathalia ou transferir para outro agente específico.
+
+3. **Protocolo de Transferência de Controle**: Estabeleça um sistema formal onde o agente atual somente libera o controle após: (a) confirmar que o usuário não possui mais questões, (b) obter consentimento explícito para transferência, e (c) executar o handoff apropriado com contexto completo da conversa.
+
+4. **Gestão de Estado de Conversação**: Implemente um registro persistente que mantenha o histórico completo da interação, permitindo que qualquer agente retomando o controle compreenda o contexto anterior sem que o usuário necessite repetir informações.
+
+
+5. **Monitoramento e Logs**: Adicione funcionalidade de logging detalhado que registre cada transferência entre agentes, identificando pontos de falha e garantindo rastreabilidade completa das interações.
+
+A implementação resultante deve garantir que o agente chamado permaneça como o único ponto de contato com o usuário, criando uma experiência de conversação fluida e natural, sem interrupções indevidas ou retornos automáticos à Nathalia.

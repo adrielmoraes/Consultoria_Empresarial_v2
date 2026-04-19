@@ -80,3 +80,41 @@ All agents share a `Blackboard` Python object that accumulates:
 
 ## Language
 All agents speak Brazilian Portuguese (pt-BR).
+
+## Bug Fixes Applied (April 2026)
+
+### Specialist Premature Handoff Fix
+**Root cause**: `devolver_para_nathalia` called `get_last_user_message()` on the ENTIRE transcript,
+including stale messages from Nathália's conversation (e.g., "entendi"). If the user said "entendi"
+to Nathália before the specialist was activated, the very first `devolver_para_nathalia` call would
+see it and immediately approve the handoff — causing the specialist to exit after just one reply.
+
+**Fixes applied to `agents/worker.py`**:
+
+1. **Module-level transcript helpers** — `_extract_transcribed_text`, `_should_ignore_user_transcript`
+   extracted to module scope so both `_start_specialist_in_room` and `_run_entrypoint` share them
+   without duplication or NameErrors.
+
+2. **`SpecialistAgent._activation_transcript_len`** — new field set to `len(blackboard.transcript)`
+   at the moment of activation in `_handle_activation`. All handoff checks now only consider
+   messages at indices `>= _activation_transcript_len`.
+
+3. **`SpecialistAgent._user_messages_since_activation`** — counter reset to 0 on each activation,
+   incremented when a real (non-noise) user utterance is received. Acts as a minimum-turns gate.
+
+4. **`devolver_para_nathalia` guards**:
+   - Guard 1: Blocks if `_user_messages_since_activation < 1` (user hasn't spoken yet).
+   - Guard 2: Reads only `transcript[_activation_transcript_len:]` for handoff intent, not the
+     full history. Returns "CONTINUE_COM_USUARIO" if last new user message doesn't confirm done.
+
+5. **`transferir_para_especialista` guard** — same minimum-turns check applied.
+
+6. **`classify_user_handoff_intent` hardened** — removed ambiguous "entendi" alone (user may say
+   "entendi, mas..." and still have questions). Only unambiguous multi-word phrases trigger handoff.
+
+7. **Activation prompts** — both `from_agent` and Nathália activation prompts now explicitly list
+   the exact phrases the user must say to trigger handoff and note that the tool auto-blocks early
+   calls.
+
+8. **Specialist system prompts** — all four specialist prompts updated with the exact exit phrases
+   and the auto-blocking note.

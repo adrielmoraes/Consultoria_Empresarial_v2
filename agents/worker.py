@@ -311,8 +311,10 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "- Sempre termine com uma pergunta ou insight que aprofunde a análise.\n"
         "- VOCÊ PODE conversar LIVREMENTE com o usuário por múltiplos turnos. Não precisa se limitar a 1 resposta.\n"
         "\nHANDOVER — REGRAS DE DEVOLUÇÃO:\n"
-        "- IMPORTANTE: NÃO devolva rapidamente para a Nathália! Converse com o usuário.\n"
-        "- Somente use a ferramenta `devolver_para_nathalia` se o usuário disser e confirmar explicitamente que não tem mais dúvidas ou se ele próprio pedir para mudar de assunto.\n"
+        "- IMPORTANTE: NÃO devolva rapidamente para a Nathália! Converse com o usuário por múltiplos turnos.\n"
+        "- Somente use `devolver_para_nathalia` quando o usuário disser EXPLICITAMENTE uma dessas frases: "
+        "'não tenho mais dúvidas', 'entendi tudo', 'ficou tudo claro', 'pode voltar para a Nathália', "
+        "'pode continuar', 'obrigado, era isso'. A ferramenta BLOQUEIA automaticamente se o usuário não confirmou.\n"
         "- Nas suas primeiras respostas, sempre termine perguntando algo (ex: 'Ficou claro?', 'Tem alguma dúvida sobre essa parte?').\n"
         "- EXCEÇÃO: Se o usuário fizer uma pergunta que pertence CLARAMENTE à área de outro especialista "
         "(ex: jurídico, marketing, tecnologia), você pode usar `transferir_para_especialista` passando o ID do colega e o contexto da pergunta. "
@@ -334,8 +336,10 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "- Sempre sinalize os riscos e como mitigá-los.\n"
         "- VOCÊ PODE conversar LIVREMENTE com o usuário por múltiplos turnos. Não precisa se limitar a 1 resposta.\n"
         "\nHANDOVER — REGRAS DE DEVOLUÇÃO:\n"
-        "- IMPORTANTE: NÃO devolva rapidamente para a Nathália! Converse com o usuário.\n"
-        "- Somente use a ferramenta `devolver_para_nathalia` se o usuário disser e confirmar explicitamente que não tem mais dúvidas ou se ele próprio pedir para mudar de assunto.\n"
+        "- IMPORTANTE: NÃO devolva rapidamente para a Nathália! Converse com o usuário por múltiplos turnos.\n"
+        "- Somente use `devolver_para_nathalia` quando o usuário disser EXPLICITAMENTE uma dessas frases: "
+        "'não tenho mais dúvidas', 'entendi tudo', 'ficou tudo claro', 'pode voltar para a Nathália', "
+        "'pode continuar', 'obrigado, era isso'. A ferramenta BLOQUEIA automaticamente se o usuário não confirmou.\n"
         "- Nas suas primeiras respostas, sempre termine perguntando algo (ex: 'Ficou claro?', 'Tem alguma dúvida sobre essa parte?').\n"
         "- EXCEÇÃO: Se o usuário fizer uma pergunta que pertence CLARAMENTE à área de outro especialista "
         "(ex: finanças, marketing, tecnologia), você pode usar `transferir_para_especialista` passando o ID do colega e o contexto da pergunta. "
@@ -357,8 +361,10 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "- Termine com um insight acionável que o usuário possa aplicar imediatamente.\n"
         "- VOCÊ PODE conversar LIVREMENTE com o usuário por múltiplos turnos. Não precisa se limitar a 1 resposta.\n"
         "\nHANDOVER — REGRAS DE DEVOLUÇÃO:\n"
-        "- IMPORTANTE: NÃO devolva rapidamente para a Nathália! Converse com o usuário.\n"
-        "- Somente use a ferramenta `devolver_para_nathalia` se o usuário disser e confirmar explicitamente que não tem mais dúvidas ou se ele próprio pedir para mudar de assunto.\n"
+        "- IMPORTANTE: NÃO devolva rapidamente para a Nathália! Converse com o usuário por múltiplos turnos.\n"
+        "- Somente use `devolver_para_nathalia` quando o usuário disser EXPLICITAMENTE uma dessas frases: "
+        "'não tenho mais dúvidas', 'entendi tudo', 'ficou tudo claro', 'pode voltar para a Nathália', "
+        "'pode continuar', 'obrigado, era isso'. A ferramenta BLOQUEIA automaticamente se o usuário não confirmou.\n"
         "- Nas suas primeiras respostas, sempre termine perguntando algo (ex: 'Ficou claro?', 'Tem alguma dúvida sobre essa parte?').\n"
         "- EXCEÇÃO: Se o usuário fizer uma pergunta que pertence CLARAMENTE à área de outro especialista "
         "(ex: finanças, jurídico, tecnologia), você pode usar `transferir_para_especialista` passando o ID do colega e o contexto da pergunta. "
@@ -381,8 +387,10 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "- Sempre avalie custo-benefício de cada decisão tecnológica.\n"
         "- VOCÊ PODE conversar LIVREMENTE com o usuário por múltiplos turnos. Não precisa se limitar a 1 resposta.\n"
         "\nHANDOVER — REGRAS DE DEVOLUÇÃO:\n"
-        "- IMPORTANTE: NÃO devolva rapidamente para a Nathália! Converse com o usuário.\n"
-        "- Somente use a ferramenta `devolver_para_nathalia` se o usuário disser e confirmar explicitamente que não tem mais dúvidas ou se ele próprio pedir para mudar de assunto.\n"
+        "- IMPORTANTE: NÃO devolva rapidamente para a Nathália! Converse com o usuário por múltiplos turnos.\n"
+        "- Somente use `devolver_para_nathalia` quando o usuário disser EXPLICITAMENTE uma dessas frases: "
+        "'não tenho mais dúvidas', 'entendi tudo', 'ficou tudo claro', 'pode voltar para a Nathália', "
+        "'pode continuar', 'obrigado, era isso'. A ferramenta BLOQUEIA automaticamente se o usuário não confirmou.\n"
         "- Nas suas primeiras respostas, sempre termine perguntando algo (ex: 'Ficou claro?', 'Tem alguma dúvida sobre essa parte?').\n"
         "- EXCEÇÃO: Se o usuário fizer uma pergunta que pertence CLARAMENTE à área de outro especialista "
         "(ex: finanças, jurídico, marketing), você pode usar `transferir_para_especialista` passando o ID do colega e o contexto da pergunta. "
@@ -563,34 +571,72 @@ def _normalize_handoff_text(text: str) -> str:
 
 
 def classify_user_handoff_intent(text: str) -> Optional[str]:
+    """
+    Classifica se a mensagem do usuário indica fim da conversa com o especialista atual.
+
+    IMPORTANTE: Esta função deve ser chamada APENAS com mensagens recebidas APÓS
+    o especialista ser ativado. Nunca com mensagens do histórico anterior.
+
+    Retorna:
+    - "user_confirmed_done"  → usuário confirmou explicitamente que não tem mais dúvidas
+    - "user_requested_host"  → usuário pediu para voltar à Nathália
+    - "topic_change"         → usuário quer mudar de assunto completamente
+    - None                   → usuário ainda está interagindo, NÃO devolver
+    """
     normalized = _normalize_handoff_text(text)
     if not normalized:
         return None
 
+    # ── Marcadores de CONCLUSÃO EXPLÍCITA ─────────────────────────────────────
+    # ATENÇÃO: Apenas expressões que claramente indicam FIM — sem ambiguidade.
+    # "entendi" sozinho NÃO está aqui pois o usuário pode dizer "entendi, mas..."
     explicit_done_markers = (
+        # Sem dúvidas
         "nao tenho mais duvidas",
         "não tenho mais dúvidas",
         "sem mais duvidas",
         "sem mais dúvidas",
         "nao tenho mais perguntas",
         "não tenho mais perguntas",
-        "ficou claro",
+        "nao tenho mais questoes",
+        "não tenho mais questões",
+        # Satisfação / conclusão explícita
         "ficou bem claro",
         "agora ficou claro",
-        "entendi",
-        "perfeito entendi",
-        "era isso",
-        "isso responde",
-        "pode seguir",
-        "pode prosseguir",
-        "podemos seguir",
-        "podemos prosseguir",
+        "tudo claro",
+        "ficou tudo claro",
+        "tudo certo por enquanto",
+        "era exatamente isso",
+        "era isso mesmo",
+        "isso responde minha pergunta",
+        "isso responde tudo",
+        "respondeu tudo",
+        # "obrigado/a" + encerramento
         "obrigado, era isso",
         "obrigada, era isso",
+        "obrigado por tudo",
+        "obrigada por tudo",
+        "obrigado, ficou claro",
+        "obrigada, ficou claro",
+        # Autorizações explícitas de troca
+        "pode seguir para o proximo",
+        "pode seguir para o próximo",
+        "pode passar para outro",
+        "pode prosseguir",
+        "podemos prosseguir",
+        "pode continuar com a nathalia",
+        # Perfeito + término
+        "perfeito, era isso",
+        "perfeito entendi tudo",
+        "ja entendi tudo",
+        "já entendi tudo",
+        "entendi tudo",
+        "entendido, pode continuar",
     )
     if any(marker in normalized for marker in explicit_done_markers):
         return "user_confirmed_done"
 
+    # ── Pedidos EXPLÍCITOS de voltar à Nathália ───────────────────────────────
     host_request_markers = (
         "pode voltar pra nathalia",
         "pode voltar para nathalia",
@@ -599,10 +645,13 @@ def classify_user_handoff_intent(text: str) -> Optional[str]:
         "chama a nathalia",
         "passa para a nathalia",
         "volta para a nathalia",
+        "fala com a nathalia",
+        "quero a nathalia",
     )
     if any(marker in normalized for marker in host_request_markers):
         return "user_requested_host"
 
+    # ── Pedidos EXPLÍCITOS de mudança de assunto ──────────────────────────────
     topic_change_markers = (
         "vamos mudar de assunto",
         "quero mudar de assunto",
@@ -610,6 +659,8 @@ def classify_user_handoff_intent(text: str) -> Optional[str]:
         "vamos falar de outra coisa",
         "quero falar de outro tema",
         "outro tema agora",
+        "muda de assunto",
+        "fala de outra coisa",
     )
     if any(marker in normalized for marker in topic_change_markers):
         return "topic_change"
@@ -725,6 +776,13 @@ class SpecialistAgent(Agent):
         self._handover_event: asyncio.Event = asyncio.Event()
         # Resultado do handover: "nathalia" ou {"target": spec_id, "context": str}
         self._handover_result: Optional[dict] = None
+        # Tamanho do transcript no momento em que este especialista foi ativado.
+        # CRÍTICO: garante que a verificação de handoff só considere mensagens
+        # recebidas DEPOIS da ativação, nunca mensagens do histórico anterior.
+        self._activation_transcript_len: int = 0
+        # Conta quantas mensagens do usuário foram recebidas APÓS ativação.
+        # Exigimos ao menos 1 mensagem real do usuário antes de permitir handoff.
+        self._user_messages_since_activation: int = 0
 
     @function_tool
     async def consultar_documento_empresa(
@@ -747,27 +805,55 @@ class SpecialistAgent(Agent):
     ) -> str:
         """
         Devolve a palavra à Nathália (apresentadora) para que ela retome a condução da sessão.
-        Use esta ferramenta quando:
-        - A dúvida da sua área de especialidade foi completamente respondida.
-        - O usuário indicou que quer mudar de assunto.
-        - Você sente que é hora de a Nathália continuar mediando.
-        PRIORIDADE: Esta é a forma PADRÃO de encerrar seu turno.
+        Use esta ferramenta SOMENTE quando:
+        - O usuário confirmou EXPLICITAMENTE que não tem mais dúvidas com você.
+        - O usuário pediu para falar com a Nathália ou mudar completamente de assunto.
+        NUNCA use após apenas uma resposta. Aguarde o usuário confirmar o encerramento.
         """
-        last_user_message = self._blackboard.get_last_user_message()
+        # ── GUARDA 1: O usuário precisa ter enviado ao menos 1 mensagem após ativação ─
+        # Isso impede que o especialista retorne antes de ouvir o usuário mesmo uma vez.
+        if self._user_messages_since_activation < 1:
+            logger.info(
+                f"[{self._name}] Devolução BLOQUEADA — usuário ainda não enviou nenhuma "
+                f"mensagem desde a ativação. Continuando a conversa."
+            )
+            return (
+                "CONTINUE_COM_USUARIO: o usuário ainda não respondeu nada para você. "
+                "Aguarde a fala do usuário. Termine sua resposta com uma pergunta direta "
+                "para engajá-lo na conversa."
+            )
+
+        # ── GUARDA 2: Só verifica mensagens APÓS a ativação deste especialista ────────
+        # CRÍTICO: ignorar o histórico anterior evita o bug onde "entendi" dito à Nathália
+        # antes da ativação libera o handoff prematuramente.
+        messages_since_activation = self._blackboard.transcript[self._activation_transcript_len:]
+        user_messages_since = [
+            m for m in messages_since_activation if m.get("role") == "Usuário"
+        ]
+
+        last_user_message = (
+            user_messages_since[-1].get("content", "").strip()
+            if user_messages_since else ""
+        )
         handoff_reason = classify_user_handoff_intent(last_user_message)
 
         if not handoff_reason:
             logger.info(
-                f"[{self._name}] Devolução bloqueada — usuário ainda não confirmou fim da dúvida. "
-                f"Última fala: {last_user_message or '<vazia>'}"
+                f"[{self._name}] Devolução BLOQUEADA — última mensagem do usuário desde ativação "
+                f"não indica encerramento: '{last_user_message[:80] or '<vazia>'}'. "
+                f"Mensagens do usuário desde ativação: {len(user_messages_since)}."
             )
             return (
                 "CONTINUE_COM_USUARIO: o usuário ainda não confirmou explicitamente "
-                "que não tem mais dúvidas com você. Continue ajudando, aprofunde a resposta "
-                "e termine com uma pergunta objetiva de acompanhamento."
+                "que não tem mais dúvidas com você. Continue ajudando na sua área, "
+                "aprofunde a resposta e termine com uma pergunta objetiva de acompanhamento. "
+                "Somente devolva quando o usuário disser claramente que terminou."
             )
 
-        logger.info(f"[{self._name}] Devolvendo palavra para Nathália.")
+        logger.info(
+            f"[{self._name}] ✅ Handoff aprovado → Nathália. "
+            f"Motivo: {handoff_reason} | Última fala: '{last_user_message[:60]}'"
+        )
         self._blackboard.add_message(self._name, "Pronto, Nathália! Pode continuar.")
         self._handover_result = {
             "type": "nathalia",
@@ -775,7 +861,7 @@ class SpecialistAgent(Agent):
             "last_user_message": last_user_message,
         }
         self._handover_event.set()
-        return "Palavra devolvida à Nathália com sucesso. Aguarde em silêncio."
+        return "Palavra devolvida à Nathália com sucesso. Aguarde em silêncio absoluto."
 
     @function_tool
     async def transferir_para_especialista(
@@ -786,19 +872,34 @@ class SpecialistAgent(Agent):
     ) -> str:
         """
         Transfere a palavra diretamente para outro especialista da equipe SEM passar pela Nathália.
-        Use SOMENTE quando o usuário fizer uma pergunta que pertence CLARAMENTE à área de outro colega.
+        Use SOMENTE quando o usuário fizer uma pergunta que pertence CLARAMENTE à área de outro colega
+        E você já respondeu sua parte.
         ANTES de usar esta ferramenta, FALE em voz alta para o usuário que vai repassar.
 
         Parâmetros:
         - colega_id: ID do colega destino. Valores válidos: carlos_cfo, daniel_advogado, rodrigo_cmo, ana_cto
-        - contexto_pergunta: a pergunta ou contexto que deve ser repassado ao colega (para ele já iniciar respondendo)
+        - contexto_pergunta: a pergunta ou contexto que deve ser repassado ao colega
         """
         target_spec_id = LATERAL_TRANSFER_MAP.get(colega_id)
         if not target_spec_id:
             return f"ID de colega inválido: {colega_id}. Use carlos_cfo, daniel_advogado, rodrigo_cmo ou ana_cto."
 
+        # Guarda: ao menos 1 mensagem do usuário deve ter sido recebida após ativação
+        if self._user_messages_since_activation < 1:
+            logger.info(
+                f"[{self._name}] Transferência BLOQUEADA para {colega_id} — "
+                f"usuário ainda não respondeu nada desde a ativação."
+            )
+            return (
+                f"CONTINUE_COM_USUARIO: você ainda não ouviu o usuário responder nada. "
+                f"Aguarde a resposta do usuário antes de transferir para {SPECIALIST_NAMES.get(target_spec_id, colega_id)}."
+            )
+
         target_name = SPECIALIST_NAMES.get(target_spec_id, colega_id)
-        logger.info(f"[{self._name}] Transferindo palavra para {target_name} com contexto: {contexto_pergunta[:100]}")
+        logger.info(
+            f"[{self._name}] ✅ Transferência lateral para {target_name}. "
+            f"Contexto: {contexto_pergunta[:100]}"
+        )
         self._blackboard.add_message("Sistema", f"{self._name} transferiu a palavra para {target_name}.")
         self._handover_result = {
             "type": "transfer",
@@ -807,7 +908,7 @@ class SpecialistAgent(Agent):
             "from_name": self._name,
         }
         self._handover_event.set()
-        return f"Transferência para {target_name} registrada. Aguarde em silêncio."
+        return f"Transferência para {target_name} registrada. Aguarde em silêncio absoluto."
 
 class HostAgent(Agent):
     """
@@ -2115,6 +2216,58 @@ def _prefetch_avatar_session(
         name=f"avatar-prefetch-{spec_id}",
     )
 
+# ── Helpers de transcrição (módulo-nível) ─────────────────────────────────────
+# Definidos aqui para serem acessíveis tanto por _start_specialist_in_room
+# quanto por _run_entrypoint sem duplicação de código.
+
+_NON_LATIN_RE = re.compile(
+    r"[\u0e00-\u0e7f\u0600-\u06ff\u0980-\u09ff\u0e80-\u0eff\uac00-\ud7af]"
+)
+_COMMON_PT_MONOS = frozenset({
+    "oi", "é", "o", "a", "um", "eu", "se", "ir", "da", "do",
+    "no", "na", "te", "me", "vc", "bj", "obg",
+})
+
+
+def _extract_transcribed_text(event) -> str:
+    """Extrai texto de um evento de transcrição de forma segura."""
+    if hasattr(event, "transcript"):
+        return (event.transcript or "").strip()
+    if hasattr(event, "text"):
+        return (event.text or "").strip()
+    return str(event).strip()
+
+
+def _should_ignore_user_transcript(text: str) -> bool:
+    """
+    Retorna True quando o texto é ruído, eco do agente ou alucinação de idioma,
+    e portanto deve ser descartado do transcript do usuário.
+    """
+    lower_text = text.lower()
+
+    if lower_text in {"<noise>", "[noise]", "silence", "noise", "ruído", "interruption", "breath"}:
+        logger.info(f"[Filtro] Ruído explícito descartado: {text}")
+        return True
+
+    if _NON_LATIN_RE.search(text):
+        logger.info(f"[Filtro] Alucinação de idioma detectada e descartada: {text}")
+        return True
+
+    if len(text) <= 3 and not any(v in lower_text for v in "aeiouáéíóúâêôãõ"):
+        logger.info(f"[Filtro] Fragmento curto sem vogais (ruído) descartado: {text}")
+        return True
+
+    if len(text) <= 2 and lower_text not in _COMMON_PT_MONOS:
+        logger.info(f"[Filtro] Monossílabo suspeito descartado: {text}")
+        return True
+
+    if lower_text.startswith("entendido") or lower_text.startswith("perfeito") or lower_text.startswith("claro"):
+        logger.info(f"[Filtro] Possível eco de agente descartado: {text}")
+        return True
+
+    return False
+
+
 async def _start_specialist_in_room(
     spec_id: str,
     blackboard: Blackboard,
@@ -2390,7 +2543,36 @@ async def _start_specialist_in_room(
             if not getattr(event, "is_final", True):
                 return
 
-            _record_user_transcript(_extract_transcribed_text(event))
+            text = _extract_transcribed_text(event)
+            text = text.strip()
+            if not text or _should_ignore_user_transcript(text):
+                return
+
+            # Registra no blackboard compartilhado (o host_room publica o transcript)
+            logger.info(f"[{name}] Usuário fala: {text}")
+            blackboard.add_message("Usuário", text)
+            if not blackboard.user_query:
+                blackboard.user_query = text
+            # Publica transcrição no host_room para o frontend receber
+            asyncio.create_task(
+                host_room.local_participant.publish_data(
+                    json.dumps({
+                        "version": DATA_PACKET_SCHEMA_VERSION,
+                        "type": "transcript",
+                        "speaker": "Você",
+                        "text": text,
+                    }).encode(),
+                    reliable=True,
+                )
+            )
+            # Incrementa o contador de mensagens do usuário desde a ativação deste especialista.
+            # Este contador é usado como guarda mínima em devolver_para_nathalia e
+            # transferir_para_especialista para evitar handoff imediato após a primeira fala.
+            agent._user_messages_since_activation += 1
+            logger.debug(
+                f"[{name}] Msg do usuário #{agent._user_messages_since_activation} "
+                f"desde ativação: '{text[:60]}'"
+            )
 
         @session.on("input_speech_started")
         def _on_specialist_input_speech_started(_event) -> None:
@@ -2451,6 +2633,15 @@ async def _start_specialist_in_room(
                 await _emit("agent_activated", {"activated_in_ms": int((monotonic() - started_at) * 1000)})
                 _subscribe_user_audio()
 
+                # ── CRÍTICO: registra o comprimento do transcript no momento da ativação ──
+                # Toda verificação de handoff usará APENAS mensagens após este ponto.
+                agent._activation_transcript_len = len(blackboard.transcript)
+                agent._user_messages_since_activation = 0
+                logger.info(
+                    f"[{name}] Ativado. Transcript atual: {agent._activation_transcript_len} msgs. "
+                    f"Contador de msgs do usuário zerado."
+                )
+
                 # Determina o prompt baseado no tipo de ativação
                 from_agent = msg.get("from_name")
                 if from_agent:
@@ -2458,21 +2649,27 @@ async def _start_specialist_in_room(
                     prompt = (
                         f"{from_agent} acabou de transferir a palavra para você. "
                         f"O contexto da pergunta do usuário é: {context_text}. "
-                        f"Inicie sua fala reconhecendo o colega e respondendo diretamente à pergunta do usuário. "
-                        f"REGRAS DE PEER-TO-PEER OBRIGATÓRIAS:\n"
-                        f"1. Você acaba de assumir o palco. NUNCA DEVOLVA para a Nathália na sua primeira reposta!\n"
-                        f"2. Você DEVE terminar a fala com uma pergunta para manter a conversa com o usuário e ouvi-lo.\n"
-                        f"3. Somente acione ferramentas de transferência QUANDO o usuário disser explicitamente que não tem mais dúvidas com você."
+                        f"Inicie sua fala reconhecendo o colega e respondendo diretamente à pergunta do usuário.\n"
+                        f"REGRAS ABSOLUTAS (violá-las vai causar erro):\n"
+                        f"1. NUNCA acione ferramentas de handoff na sua PRIMEIRA fala. Responda e faça uma pergunta.\n"
+                        f"2. Mantenha a conversa: ouça o usuário, aprofunde, pergunte.\n"
+                        f"3. Somente use `devolver_para_nathalia` ou `transferir_para_especialista` DEPOIS que o usuário "
+                        f"disser EXPLICITAMENTE que não tem mais perguntas para você (ex: 'entendi tudo', 'não tenho mais dúvidas', "
+                        f"'pode voltar para a Nathália'). Se tentar antes, a ferramenta bloqueará automaticamente.\n"
+                        f"4. Enquanto o usuário estiver interagindo (fazendo perguntas, comentando), CONTINUE a conversa."
                     )
                 else:
                     # Ativação normal pela Nathália
                     prompt = (
                         f"Nathália acabou de te acionar. O contexto da pergunta do usuário é: {context_text}. "
-                        f"Responda a questão do usuário detalhando sua visão e experiência.\n"
-                        f"REGRAS DE PEER-TO-PEER OBRIGATÓRIAS:\n"
-                        f"1. Você acaba de assumir a mentoria. NUNCA DEVOLVA para a Nathália na sua primeira resposta!\n"
-                        f"2. Você DEVE terminar a fala com uma pergunta para continuar a conversa livremente com o usuário e ouvir o que ele tem a dizer.\n"
-                        f"3. Somente devolva a palavra para a Nathália usando a ferramenta se o usuário não tiver mais dúvidas com a sua especialidade."
+                        f"Responda a questão do usuário detalhando sua visão e experiência na sua área.\n"
+                        f"REGRAS ABSOLUTAS (violá-las vai causar erro):\n"
+                        f"1. NUNCA acione ferramentas de handoff na sua PRIMEIRA fala. Responda e faça uma pergunta.\n"
+                        f"2. Mantenha a conversa por múltiplos turnos: escute o usuário, aprofunde, pergunte.\n"
+                        f"3. Somente use `devolver_para_nathalia` DEPOIS que o usuário disser EXPLICITAMENTE que não tem "
+                        f"mais perguntas para você (ex: 'entendi tudo', 'não tenho mais dúvidas', 'ficou tudo claro', "
+                        f"'pode continuar'). A ferramenta bloqueará automaticamente se tentar muito cedo.\n"
+                        f"4. Enquanto o usuário estiver interagindo, CONTINUE. Não encerre antes de ele autorizar."
                     )
 
                 # Gera resposta inicial
@@ -3018,40 +3215,8 @@ async def _run_entrypoint(ctx: JobContext) -> None:
             # Convidados podem sair sem afetar a sessão
             logger.info(f"[Room] Convidado {participant.identity} saiu da sala. Sessão continua normalmente.")
 
-    def _extract_transcribed_text(event) -> str:
-        if hasattr(event, "transcript"):
-            return (event.transcript or "").strip()
-        if hasattr(event, "text"):
-            return (event.text or "").strip()
-        return str(event).strip()
-
-    def _should_ignore_user_transcript(text: str) -> bool:
-        lower_text = text.lower()
-
-        if lower_text in ["<noise>", "[noise]", "silence", "noise", "ruído", "interruption", "breath"]:
-            logger.info(f"[Filtro] Ruído explícito descartado: {text}")
-            return True
-
-        non_latin_pattern = re.compile(r"[\u0e00-\u0e7f\u0600-\u06ff\u0980-\u09ff\u0e80-\u0eff\uac00-\ud7af]")
-        if non_latin_pattern.search(text):
-            logger.info(f"[Filtro] Alucinação de idioma detectada e descartada: {text}")
-            return True
-
-        if len(text) <= 3 and not any(v in lower_text for v in "aeiouáéíóúâêôãõ"):
-            logger.info(f"[Filtro] Fragmento curto sem vogais (ruído) descartado: {text}")
-            return True
-
-        common_pt_monos = {"oi", "é", "o", "a", "um", "eu", "se", "ir", "da", "do", "no", "na", "te", "me", "vc", "bj", "obg"}
-        if len(text) <= 2 and lower_text not in common_pt_monos:
-            logger.info(f"[Filtro] Monossílabo suspeito descartado: {text}")
-            return True
-
-        if lower_text.startswith("entendido") or lower_text.startswith("perfeito") or lower_text.startswith("claro"):
-            logger.info(f"[Filtro] Possível eco de agente descartado: {text}")
-            return True
-
-        return False
-
+    # _extract_transcribed_text e _should_ignore_user_transcript são módulo-nível.
+    # Aqui apenas definimos _record_user_transcript que precisa do contexto local (ctx, blackboard).
     def _record_user_transcript(text: str, speaker_label: str = "Você") -> None:
         text = text.strip()
         if not text or _should_ignore_user_transcript(text):
