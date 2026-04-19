@@ -151,6 +151,8 @@ ACTIVATION_ACK_TIMEOUT_SECONDS = 8.0
 ACTIVATION_DONE_TIMEOUT_SECONDS = 300.0
 ACTIVATION_DEBOUNCE_SECONDS = 0.8
 SPECIALIST_GENERATION_TIMEOUT_SECONDS = 35.0
+SPECIALIST_SILENCE_TIMEOUT_SECONDS = 180.0
+SPECIALIST_MAX_TURN_TIMEOUT_SECONDS = 1800.0
 CONTEXT_RECENT_WINDOW = 12
 
 # Vozes por agente (Gemini TTS nativo)
@@ -446,6 +448,7 @@ class Blackboard:
     specialist_rooms: list[rtc.Room] = field(default_factory=list)
     documentos_disponiveis: list[str] = field(default_factory=list)
     last_interaction_at: float = 0.0
+    user_currently_speaking: bool = False
     marco_triggered: bool = False
     orchestration_metrics: dict[str, float] = field(default_factory=lambda: {
         "activations_total": 0,
@@ -461,6 +464,13 @@ class Blackboard:
         self.transcript.append({"role": role, "content": content})
         self._update_memory(role, content)
         logger.debug(f"[Blackboard] [{role}]: {content[:80]}...")
+
+    def mark_user_activity(self) -> None:
+        self.last_interaction_at = monotonic()
+
+    def set_user_speaking(self, speaking: bool) -> None:
+        self.user_currently_speaking = speaking
+        self.last_interaction_at = monotonic()
 
     def _append_unique(self, bucket: list[str], value: str, max_size: int = 10) -> None:
         normalized = value.strip()
@@ -604,6 +614,20 @@ def classify_user_handoff_intent(text: str) -> Optional[str]:
     if any(marker in normalized for marker in topic_change_markers):
         return "topic_change"
 
+    return None
+
+
+def get_specialist_timeout_reason(
+    *,
+    started_at: float,
+    last_interaction_at: float,
+    user_currently_speaking: bool,
+    now: float,
+) -> Optional[str]:
+    if not user_currently_speaking and (now - last_interaction_at) > SPECIALIST_SILENCE_TIMEOUT_SECONDS:
+        return "silence_timeout"
+    if (now - started_at) > SPECIALIST_MAX_TURN_TIMEOUT_SECONDS:
+        return "turn_timeout"
     return None
 
 async def _query_documents_with_llm(pergunta: str, documentos: list[str]) -> str:
@@ -2362,18 +2386,29 @@ async def _start_specialist_in_room(
         def _on_specialist_user_speech(event) -> None:
             if not blackboard.is_active or not _audio_subscribed:
                 return
+            blackboard.mark_user_activity()
             if not getattr(event, "is_final", True):
                 return
 
             _record_user_transcript(_extract_transcribed_text(event))
+
+        @session.on("input_speech_started")
+        def _on_specialist_input_speech_started(_event) -> None:
+            if not blackboard.is_active or not _audio_subscribed:
+                return
+            blackboard.set_user_speaking(True)
+
+        @session.on("input_speech_stopped")
+        def _on_specialist_input_speech_stopped(_event) -> None:
+            if not blackboard.is_active or not _audio_subscribed:
+                return
+            blackboard.set_user_speaking(False)
 
         # C5: Handler assíncrono para ativação de especialista.
         # REFATORADO PARA HANDOVER PEER-TO-PEER:
         # O especialista gera a resposta inicial e mantém o áudio aberto,
         # conversando livremente com o usuário. O turno só encerra quando
         # a IA aciona devolver_para_nathalia ou transferir_para_especialista.
-        HANDOVER_TIMEOUT_SECONDS = 300.0  # 5 minutos máximo por turno livre
-
         async def _handle_activation(msg: dict) -> None:
             """Processa ativação deste especialista de forma assíncrona (Peer-to-Peer)."""
             turn_id = msg.get("turn_id")
@@ -2455,7 +2490,7 @@ async def _start_specialist_in_room(
                 agent._handover_result = None
 
                 # Inicia tracking de inatividade (reseta agora para o tempo de fala não explodir)
-                agent._blackboard.last_interaction_at = monotonic()
+                agent._blackboard.set_user_speaking(False)
                 try:
                     while not agent._handover_event.is_set():
                         try:
@@ -2463,17 +2498,26 @@ async def _start_specialist_in_room(
                             break
                         except asyncio.TimeoutError:
                             pass
-                            
-                        # Fallback 1: inatividade/silêncio absoluto (60s)
-                        if monotonic() - agent._blackboard.last_interaction_at > 60.0:
-                            logger.warning(f"[{name}] Silêncio prolongado detectado (>60s). Devolvendo para Nathália.")
-                            agent._handover_result = {"type": "nathalia", "reason": "silence_timeout"}
+
+                        timeout_reason = get_specialist_timeout_reason(
+                            started_at=started_at,
+                            last_interaction_at=agent._blackboard.last_interaction_at,
+                            user_currently_speaking=agent._blackboard.user_currently_speaking,
+                            now=monotonic(),
+                        )
+                        if timeout_reason == "silence_timeout":
+                            logger.warning(
+                                f"[{name}] Silêncio prolongado detectado (>{SPECIALIST_SILENCE_TIMEOUT_SECONDS:.0f}s). "
+                                "Devolvendo para Nathália."
+                            )
+                            agent._handover_result = {"type": "nathalia", "reason": timeout_reason}
                             break
-                            
-                        # Fallback 2: limite máximo absoluto de turno (HANDOVER_TIMEOUT_SECONDS = 300s)
-                        if monotonic() - started_at > HANDOVER_TIMEOUT_SECONDS:
-                            logger.warning(f"[{name}] Limite do turno excedido ({HANDOVER_TIMEOUT_SECONDS}s). Devolvendo para Nathália.")
-                            agent._handover_result = {"type": "nathalia", "reason": "turn_timeout"}
+                        if timeout_reason == "turn_timeout":
+                            logger.warning(
+                                f"[{name}] Limite do turno excedido ({SPECIALIST_MAX_TURN_TIMEOUT_SECONDS:.0f}s). "
+                                "Devolvendo para Nathália."
+                            )
+                            agent._handover_result = {"type": "nathalia", "reason": timeout_reason}
                             break
                 except Exception as handover_err:
                     logger.warning(f"[{name}] Erro ao monitorar handover: {handover_err}")

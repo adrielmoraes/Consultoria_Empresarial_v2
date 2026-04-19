@@ -19,7 +19,10 @@ from worker import (
     HOST_PROMPT,
     GEMINI_REALTIME_MODEL,
     GEMINI_REALTIME_CONFIG,
+    SPECIALIST_SILENCE_TIMEOUT_SECONDS,
+    SPECIALIST_MAX_TURN_TIMEOUT_SECONDS,
     classify_user_handoff_intent,
+    get_specialist_timeout_reason,
 )
 
 
@@ -138,6 +141,19 @@ class TestBlackboardDefaults(unittest.TestCase):
         self.assertTrue(bb.is_active)
         bb.is_active = False
         self.assertFalse(bb.is_active)
+
+    def test_user_activity_tracking_helpers(self):
+        bb = Blackboard()
+        bb.set_user_speaking(True)
+        self.assertTrue(bb.user_currently_speaking)
+        speaking_ts = bb.last_interaction_at
+        self.assertGreater(speaking_ts, 0)
+
+        bb.mark_user_activity()
+        self.assertGreaterEqual(bb.last_interaction_at, speaking_ts)
+
+        bb.set_user_speaking(False)
+        self.assertFalse(bb.user_currently_speaking)
 
 
 class TestConstantsAlignment(unittest.TestCase):
@@ -258,6 +274,37 @@ class TestHandoffIntentClassification(unittest.TestCase):
         self.assertIsNone(
             classify_user_handoff_intent("Mas no meu caso a multa contratual continua valendo?")
         )
+
+
+class TestSpecialistTurnTimeouts(unittest.TestCase):
+    """Garante que fala longa não seja tratada como silêncio do usuário."""
+
+    def test_does_not_timeout_while_user_is_still_speaking(self):
+        reason = get_specialist_timeout_reason(
+            started_at=0.0,
+            last_interaction_at=0.0,
+            user_currently_speaking=True,
+            now=SPECIALIST_SILENCE_TIMEOUT_SECONDS + 30.0,
+        )
+        self.assertIsNone(reason)
+
+    def test_silence_timeout_only_when_user_is_not_speaking(self):
+        reason = get_specialist_timeout_reason(
+            started_at=0.0,
+            last_interaction_at=0.0,
+            user_currently_speaking=False,
+            now=SPECIALIST_SILENCE_TIMEOUT_SECONDS + 1.0,
+        )
+        self.assertEqual(reason, "silence_timeout")
+
+    def test_absolute_turn_timeout_remains_as_last_resort(self):
+        reason = get_specialist_timeout_reason(
+            started_at=0.0,
+            last_interaction_at=SPECIALIST_MAX_TURN_TIMEOUT_SECONDS - 10.0,
+            user_currently_speaking=False,
+            now=SPECIALIST_MAX_TURN_TIMEOUT_SECONDS + 1.0,
+        )
+        self.assertEqual(reason, "turn_timeout")
 
 
 if __name__ == "__main__":
