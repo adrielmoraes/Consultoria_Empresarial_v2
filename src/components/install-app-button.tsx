@@ -13,8 +13,10 @@ export function InstallAppButton() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (window.matchMedia("(display-mode: standalone)").matches) {
       setIsInstalled(true);
     }
@@ -59,6 +61,8 @@ export function InstallAppButton() {
       setIsInstallable(false);
     }
   };
+
+  if (!mounted) return null;
 
   if (isInstalled) {
     return (

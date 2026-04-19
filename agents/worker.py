@@ -2966,10 +2966,10 @@ async def _run_entrypoint(ctx: JobContext) -> None:
         Nathália retoma sem repetir apresentações.
         Caso contrário, executa o fluxo completo de boas-vindas.
 
-        Estratégia de inicialização sequencial:
-        - Cada especialista é conectado UM POR VEZ com delay entre conexões.
-        - Evita rate limiting 429 nos handshakes simultâneos ao Gemini.
-        - Em produção com N usuários, reduz a carga de 6N para picos menores.
+        Estratégia de inicialização paralela:
+        - Nathália fala enquanto os especialistas conectam em paralelo (asyncio.gather).
+        - Quando Nathália terminar, todos os especialistas já estão prontos.
+        - Apresentações ocorrem imediatamente em sequência, sem delay de conexão.
         """
         await resume_task
         is_resuming = len(blackboard.transcript) > 0
@@ -3036,8 +3036,10 @@ async def _run_entrypoint(ctx: JobContext) -> None:
 
         else:
             # ── MODO INICIAL ───────────────────────────────────────────
-            # Fluxo: Nathália apresenta (sem perguntas) → 5s depois especialistas
-            # começam a conectar → apresentações sequenciais → pergunta inicial.
+            # Fluxo: Nathália e especialistas conectam em PARALELO desde o início.
+            # Enquanto Nathália fala, os especialistas já estão prontos.
+            # Assim que Nathália terminar, cada especialista se apresenta
+            # imediatamente em sequência — sem delay de conexão.
             host_greeting = (
                 "Olá! Seja muito bem-vindo ao Hive Mind! "
                 "Sou a Nathália, sua apresentadora e mentora líder desta sessão. "
@@ -3049,34 +3051,29 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                 "Eles vão se apresentar um a um agora. Fique à vontade!"
             )
 
-            # Conecta especialistas 5s após Nathália INICIAR a fala (sequencialmente)
-            async def _connect_specialists_delayed():
-                await asyncio.sleep(5.0)
+            # Conecta TODOS os especialistas em paralelo imediatamente,
+            # enquanto Nathália já começa a falar.
+            async def _connect_one(sid: str):
                 if not blackboard.is_active:
-                    return []
-                logger.info("[Apresentação] Conectando especialistas sequencialmente (5s após início da fala)...")
-                sessions_result = []
-                for sid in SPECIALIST_ORDER:
-                    if not blackboard.is_active:
-                        break
-                    res = await _start_specialist_in_room(
-                        spec_id=sid,
-                        blackboard=blackboard,
-                        ws_url=ws_url,
-                        lk_api_key=lk_api_key,
-                        lk_api_secret=lk_api_secret,
-                        room_name=ctx.room.name,
-                        host_room=ctx.room,
-                        auto_introduce=False,
-                    )
-                    sessions_result.append(res)
-                    await asyncio.sleep(1.0)  # Delay para respeitar rate limits
-                return sessions_result
+                    return None
+                return await _start_specialist_in_room(
+                    spec_id=sid,
+                    blackboard=blackboard,
+                    ws_url=ws_url,
+                    lk_api_key=lk_api_key,
+                    lk_api_secret=lk_api_secret,
+                    room_name=ctx.room.name,
+                    host_room=ctx.room,
+                    auto_introduce=False,
+                )
 
-            # Dispara Nathália falando E conexão dos especialistas concorrentemente
+            logger.info("[Apresentação] Conectando todos os especialistas em paralelo...")
+            # Dispara conexão de todos os especialistas e fala de Nathália ao mesmo tempo
+            connect_task = asyncio.create_task(
+                asyncio.gather(*[_connect_one(sid) for sid in SPECIALIST_ORDER], return_exceptions=True)
+            )
+
             logger.info("[Host] Nathália enviando apresentação inicial (sem perguntas)...")
-            connect_task = asyncio.create_task(_connect_specialists_delayed())
-
             try:
                 await asyncio.wait_for(
                     host_session.generate_reply(
@@ -3093,15 +3090,16 @@ async def _run_entrypoint(ctx: JobContext) -> None:
             except Exception as e:
                 logger.warning(f"[Host] Erro ao gerar reply inicial: {type(e).__name__}: {e}", exc_info=True)
 
-            # Aguarda especialistas terminarem de conectar
+            # Aguarda as conexões (já devem estar prontas, pois conectam em ~2s)
             if not blackboard.is_active:
                 connect_task.cancel()
                 return
-            sessions = await connect_task
+            sessions_raw = await connect_task
+            sessions = list(sessions_raw)
             if not blackboard.is_active:
                 return
 
-            logger.info("[Apresentação] Conexões concluídas. Apresentando-se agora...")
+            logger.info("[Apresentação] Todos conectados. Iniciando apresentações imediatamente...")
 
             # Executa as apresentações sequencialmente — um por vez
             for sid, spec_session in zip(SPECIALIST_ORDER, sessions):
