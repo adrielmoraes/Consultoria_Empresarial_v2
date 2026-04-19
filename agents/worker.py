@@ -1155,6 +1155,27 @@ class HostAgent(Agent):
                 except Exception as e:
                     logger.warning(f"[Host] Erro ao gerar retomada pós-especialista: {e}")
 
+            elif host_session and status_type in ("agent_timeout", "agent_error", None):
+                # Especialista não respondeu a tempo ou teve erro. Nathália precisa retomar
+                # explicitamente porque sua sessão LLM ainda carrega a instrução de silêncio.
+                spec_name = SPECIALIST_NAMES.get(spec_id, spec_id)
+                user_name = self._blackboard.user_name or "você"
+                try:
+                    await asyncio.wait_for(
+                        host_session.generate_reply(
+                            instructions=(
+                                f"RETOMADA_FORÇADA: O especialista {spec_name} não conseguiu responder a tempo. "
+                                f"Você está de volta no controle da conversa. PODE E DEVE FALAR normalmente. "
+                                f"Peça desculpas de forma natural pelo silêncio, como se fosse uma pequena instabilidade técnica, "
+                                f"e pergunte a {user_name} como pode ajudar ou se quer continuar o tema anterior. "
+                                f"Seja breve, calorosa e mantenha a fluidez da conversa."
+                            ),
+                        ),
+                        timeout=15.0,
+                    )
+                except Exception as e:
+                    logger.warning(f"[Host] Erro ao gerar retomada pós-timeout de especialista: {e}")
+
     # ------------------------------------------------------------------
     # Function tools – chamados pelo LLM da Nathália quando necessário
     # ------------------------------------------------------------------
