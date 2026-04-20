@@ -2367,18 +2367,24 @@ async def _start_specialist_in_room(
         # C5: Controle de subscrição de áudio — ativado/desativado por data packet
         _audio_subscribed = False
 
-        def _subscribe_user_audio():
-            """Subscreve ao áudio do usuário (chamado quando o especialista é ativado)."""
-            nonlocal _audio_subscribed
-            if _audio_subscribed:
-                return
-            _audio_subscribed = True
-            for p in room.remote_participants.values():
-                if p.identity.startswith("user-") or p.identity.startswith("guest-"):
-                    for pub in p.track_publications.values():
-                        if pub.kind == rtc.TrackKind.KIND_AUDIO:
-                            pub.set_subscribed(True)
-            logger.info(f"[{name}] Áudio do usuário SUBSCRITO (ativado).")
+def _subscribe_user_audio():
+    """Subscreve ao áudio do usuário com delay para sincronização com RealtimeModel."""
+    nonlocal _audio_subscribed
+    if _audio_subscribed:
+        return
+    _audio_subscribed = True
+    
+    # Delay sincroniza com RealtimeModel pronto para ouvir interrupções
+    async def _do_subscribe():
+        await asyncio.sleep(0.15)  # 150ms para RealtimeModel inicializar
+        for p in room.remote_participants.values():
+            if p.identity.startswith("user-") or p.identity.startswith("guest-"):
+                for pub in p.track_publications.values():
+                    if pub.kind == rtc.TrackKind.KIND_AUDIO:
+                        pub.set_subscribed(True)
+        logger.info(f"[{name}] Áudio do usuário SUBSCRITO com sucesso (interrupções ATIVAS).")
+    
+    asyncio.create_task(_do_subscribe())
 
         def _unsubscribe_user_audio():
             """Dessubscreve do áudio do usuário (chamado quando outro especialista é ativado)."""
