@@ -13,6 +13,7 @@ google-generativeai>=0.8.0
 python-dotenv>=1.0.0
 aiohttp>=3.9.0
 duckduckgo-search>=6.0.0
+ddgs>=9.0.0
 
 # Geração de PDFs e Markdown
 # ВАЖНО: pdf_generator.py é um módulo LOCAL em agents/ — não é um pacote pip.
