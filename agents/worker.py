@@ -302,6 +302,16 @@ TOM E ESTILO:
 - Use o nome do usuário com frequência para criar conexão.
 - Ao encaminhar para um especialista, apresente-o brevemente antes de acionar.
 
+RESPONSABILIDADE E REALISMO:
+- Trate cada projeto com seriedade e responsabilidade profissional absoluta.
+- NUNCA faça promessas milagrosas ou gere expectativas irreais de resultados.
+- Seja honesta sobre desafios, riscos e a complexidade real de empreender.
+- Baseie orientações em dados, evidências e experiências reais de mercado.
+- Se não souber algo com certeza, reconheça a limitação e sugira fontes confiáveis.
+- Valorize o esforço do usuário sem criar ilusões de sucesso garantido.
+- Aborde cada negócio com a mesma diligência que um conselho administrativo faria.
+- Alerte sobre custos reais, prazos realistas e a complexidade de cada decisão.
+
 Fale sempre em português do Brasil."""
 
 SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
@@ -328,6 +338,13 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "\nÁREAS DE DOMÍNIO: estrutura de custos, precificação (cost-plus, value-based, freemium), "
         "projeções de receita (MRR, ARR, LTV, CAC), ponto de equilíbrio, fontes de capital "
         "(bootstrapping, angel, venture, crédito), unit economics, fluxo de caixa e burn rate.\n"
+        "\nRESPONSABILIDADE E REALISMO:\n"
+        "- Não prometa retornos financeiros específicos nem garanta viabilidade sem dados concretos.\n"
+        "- Apresente cenários (otimista, realista, pessimista) com premissas claras e transparentes.\n"
+        "- Sempre alerte sobre riscos financeiros reais, custos ocultos e armadilhas comuns de cada modelo.\n"
+        "- Use benchmarks de mercado quando disponíveis, não números inventados ou otimistas demais.\n"
+        "- Se faltar informação para uma projeção confiável, peça os dados ao usuário antes de estimar.\n"
+        "- Trate o negócio do usuário com a mesma seriedade que trataria um investimento próprio.\n"
         "\nFale em português do Brasil."
     ),
     "legal": LANGUAGE_ENFORCEMENT + (
@@ -353,6 +370,13 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "\nÁREAS DE DOMÍNIO: tipos societários (MEI, EIRELI, LTDA, SA), vesting e acordos de sócios, "
         "contratos de prestação de serviço, LGPD e tratamento de dados, propriedade intelectual e registro de marca, "
         "compliance fiscal e trabalhista, termos de uso e políticas de privacidade.\n"
+        "\nRESPONSABILIDADE E REALISMO:\n"
+        "- Sempre reforce que suas orientações são educativas e NÃO substituem consultoria jurídica formal.\n"
+        "- Alerte sobre riscos legais concretos e suas consequências reais (multas, processos, bloqueios).\n"
+        "- Não minimize a complexidade de processos burocráticos — seja transparente sobre prazos e custos.\n"
+        "- Recomende SEMPRE que o usuário valide decisões jurídicas críticas com um advogado presencial.\n"
+        "- Cite legislação real e atualizada sempre que possível (Código Civil, CLT, LGPD, etc.).\n"
+        "- Trate a segurança jurídica do usuário como prioridade máxima em cada orientação.\n"
         "\nFale em português do Brasil."
     ),
     "cmo": LANGUAGE_ENFORCEMENT + (
@@ -379,6 +403,13 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "funil de aquisição (topo/meio/fundo), estratégia de conteúdo, SEO e performance, "
         "growth hacking, branding e identidade visual, pricing psicológico, "
         "go-to-market para B2B e B2C, parcerias e canais de distribuição.\n"
+        "\nRESPONSABILIDADE E REALISMO:\n"
+        "- Não prometa crescimento explosivo sem justificar com dados e benchmarks reais do setor.\n"
+        "- Apresente estratégias com estimativas de custo, tempo e esforço necessários para execução.\n"
+        "- Alerte sobre os riscos de cada canal (dependência de plataforma, custos de CAC crescentes, etc.).\n"
+        "- Diferencie entre táticas de curto prazo e estratégias sustentáveis de longo prazo.\n"
+        "- Seja honesto quando uma estratégia exigir investimento significativo ou equipe dedicada.\n"
+        "- Trate o posicionamento do negócio do usuário com rigor e profundidade analítica.\n"
         "\nFale em português do Brasil."
     ),
     "cto": LANGUAGE_ENFORCEMENT + (
@@ -406,6 +437,13 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "planejamento de MVP (mínimo viável e iterável), infraestrutura cloud (AWS, GCP, Azure), "
         "segurança e performance, estimativas de desenvolvimento, "
         "ferramentas no-code/low-code vs desenvolvimento customizado.\n"
+        "\nRESPONSABILIDADE E REALISMO:\n"
+        "- Não subestime a complexidade de desenvolvimento — seja transparente sobre prazos reais.\n"
+        "- Apresente trade-offs claros entre custo, velocidade e qualidade de cada solução técnica.\n"
+        "- Alerte sobre dívida técnica, manutenção contínua e custos de infraestrutura recorrentes.\n"
+        "- Recomende soluções proporcionais ao estágio do negócio (não sugira sistemas enterprise para MVPs).\n"
+        "- Se a tecnologia sugerida exigir expertise específica, informe sobre o custo de contratação.\n"
+        "- Trate cada decisão técnica com o rigor de quem construirá e manterá o sistema.\n"
         "\nFale em português do Brasil."
     ),
     "plan": LANGUAGE_ENFORCEMENT + (
@@ -434,7 +472,14 @@ SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
         "- Adequação LGPD: ANPD, encarregado, ROPA, base legal\n"
         "- Nota Fiscal: NFS-e, NF-e, regras por município\n"
         "- Crédito público: BNDES, Pronampe, Finep, Inova Simples\n"
-        "\nFale em português do Brasil. Seja profundo, detalhado e inspirador."
+        "\nRESPONSABILIDADE E REALISMO:\n"
+        "- Gere documentos com dados realistas e embasados, nunca com projeções fantasiosas.\n"
+        "- Inclua sempre seções de riscos e contingências com cenários adversos concretos.\n"
+        "- Cronogramas devem ter prazos alcançáveis, não otimistas demais.\n"
+        "- Orçamentos devem incluir margens de segurança e custos frequentemente esquecidos.\n"
+        "- Pesquisas de mercado devem citar fontes e reconhecer limitações dos dados disponíveis.\n"
+        "- Trate cada documento como se fosse apresentado a um conselho de investidores exigente.\n"
+        "\nFale em português do Brasil. Seja profundo, detalhado e realista."
     ),
 }
 
@@ -2367,24 +2412,24 @@ async def _start_specialist_in_room(
         # C5: Controle de subscrição de áudio — ativado/desativado por data packet
         _audio_subscribed = False
 
-def _subscribe_user_audio():
-    """Subscreve ao áudio do usuário com delay para sincronização com RealtimeModel."""
-    nonlocal _audio_subscribed
-    if _audio_subscribed:
-        return
-    _audio_subscribed = True
-    
-    # Delay sincroniza com RealtimeModel pronto para ouvir interrupções
-    async def _do_subscribe():
-        await asyncio.sleep(0.15)  # 150ms para RealtimeModel inicializar
-        for p in room.remote_participants.values():
-            if p.identity.startswith("user-") or p.identity.startswith("guest-"):
-                for pub in p.track_publications.values():
-                    if pub.kind == rtc.TrackKind.KIND_AUDIO:
-                        pub.set_subscribed(True)
-        logger.info(f"[{name}] Áudio do usuário SUBSCRITO com sucesso (interrupções ATIVAS).")
-    
-    asyncio.create_task(_do_subscribe())
+        def _subscribe_user_audio():
+            """Subscreve ao áudio do usuário com delay para sincronização com RealtimeModel."""
+            nonlocal _audio_subscribed
+            if _audio_subscribed:
+                return
+            _audio_subscribed = True
+
+            # Delay sincroniza com RealtimeModel pronto para ouvir interrupções
+            async def _do_subscribe():
+                await asyncio.sleep(0.15)  # 150ms para RealtimeModel inicializar
+                for p in room.remote_participants.values():
+                    if p.identity.startswith("user-") or p.identity.startswith("guest-"):
+                        for pub in p.track_publications.values():
+                            if pub.kind == rtc.TrackKind.KIND_AUDIO:
+                                pub.set_subscribed(True)
+                logger.info(f"[{name}] Áudio do usuário SUBSCRITO com sucesso (interrupções ATIVAS).")
+
+            asyncio.create_task(_do_subscribe())
 
         def _unsubscribe_user_audio():
             """Dessubscreve do áudio do usuário (chamado quando outro especialista é ativado)."""
@@ -2448,6 +2493,17 @@ def _subscribe_user_audio():
         logger.info(f"[{name}] Room conectado.")
         blackboard.specialist_rooms.append(room)
 
+        # ── MICRO-SUBSCRIÇÃO TEMPORÁRIA (Pré-aquecimento do Pipeline de Áudio) ──
+        # O Gemini Realtime precisa "ver" tracks de áudio durante session.start()
+        # para acoplar corretamente os pinos VAD internos. Sem isso, o especialista
+        # fica "surdo" quando ativado posteriormente via _subscribe_user_audio().
+        logger.info(f"[{name}] Micro-subscrição: ativando áudio temporário para boot do pipeline...")
+        for p in room.remote_participants.values():
+            if p.identity.startswith("user-") or p.identity.startswith("guest-"):
+                for pub in p.track_publications.values():
+                    if pub.kind == rtc.TrackKind.KIND_AUDIO:
+                        pub.set_subscribed(True)
+
         # C2: Instancia agent + sessão com retry no start()
         agent = SpecialistAgent(spec_id, blackboard)
         session = AgentSession()
@@ -2498,6 +2554,16 @@ def _subscribe_user_audio():
         # Aguarda o RealtimeModel inicializar
         await asyncio.sleep(2.0)
         logger.info(f"[{name}] RealtimeModel inicializado.")
+
+        # ── DESATIVA MICRO-SUBSCRIÇÃO (Retorno ao modo dormente) ──────────────
+        # Pipeline inicializado com sucesso. Desliga o áudio para o especialista
+        # ficar em silêncio até ser explicitamente ativado pela Nathália.
+        for p in room.remote_participants.values():
+            if p.identity.startswith("user-") or p.identity.startswith("guest-"):
+                for pub in p.track_publications.values():
+                    if pub.kind == rtc.TrackKind.KIND_AUDIO:
+                        pub.set_subscribed(False)
+        logger.info(f"[{name}] Micro-subscrição ENCERRADA. Especialista dormente até ativação.")
 
         # ATUALIZAÇÃO: Para evitar crash e estouro do limite grátis da Beyond Presence,
         # Nós DESATIVAMOS os avatares 3D dos especialistas (Eles viram Voice/Podcast).
@@ -3147,27 +3213,37 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                 "Eles vão se apresentar um a um agora. Fique à vontade!"
             )
 
-            # Conecta TODOS os especialistas em paralelo imediatamente,
-            # enquanto Nathália já começa a falar.
-            async def _connect_one(sid: str):
-                if not blackboard.is_active:
-                    return None
-                return await _start_specialist_in_room(
-                    spec_id=sid,
-                    blackboard=blackboard,
-                    ws_url=ws_url,
-                    lk_api_key=lk_api_key,
-                    lk_api_secret=lk_api_secret,
-                    room_name=ctx.room.name,
-                    host_room=ctx.room,
-                    auto_introduce=False,
-                )
+            # Conecta os especialistas em CASCATA (1-2s entre cada) enquanto
+            # Nathália já começa a falar. Evita rate limits do Gemini API
+            # causados por múltiplos handshakes WebSocket simultâneos.
+            async def _connect_sequentially() -> list:
+                results = []
+                for i, sid in enumerate(SPECIALIST_ORDER):
+                    if not blackboard.is_active:
+                        results.append(None)
+                        continue
+                    try:
+                        result = await _start_specialist_in_room(
+                            spec_id=sid,
+                            blackboard=blackboard,
+                            ws_url=ws_url,
+                            lk_api_key=lk_api_key,
+                            lk_api_secret=lk_api_secret,
+                            room_name=ctx.room.name,
+                            host_room=ctx.room,
+                            auto_introduce=False,
+                        )
+                        results.append(result)
+                    except Exception as e:
+                        logger.warning(f"[Apresentação] Erro ao conectar {SPECIALIST_NAMES.get(sid, sid)}: {e}")
+                        results.append(e)
+                    # Delay escalonado (1.5s) para dar respiro ao Gemini API entre conexões
+                    if i < len(SPECIALIST_ORDER) - 1:
+                        await asyncio.sleep(1.5)
+                return results
 
-            logger.info("[Apresentação] Conectando todos os especialistas em paralelo...")
-            # Dispara conexão de todos os especialistas e fala de Nathália ao mesmo tempo
-            connect_task = asyncio.create_task(
-                asyncio.gather(*[_connect_one(sid) for sid in SPECIALIST_ORDER], return_exceptions=True)
-            )
+            logger.info("[Apresentação] Conectando especialistas em cascata (1-2s entre cada)...")
+            connect_task = asyncio.create_task(_connect_sequentially())
 
             logger.info("[Host] Nathália enviando apresentação inicial (sem perguntas)...")
             try:
