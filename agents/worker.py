@@ -47,13 +47,16 @@ from time import monotonic
 from typing import Optional
 
 try:
-    from duckduckgo_search import DDGS
-except Exception as e:
-    DDGS = None  # type: ignore
-    import logging as _tmp_log
-    _tmp_log.getLogger(__name__).warning(
-        f"[worker] O Duckduckgo_search recusou carregar. Motivo da library subjacente: {e} — ferramenta de internet desativada."
-    )
+    from ddgs import DDGS
+except ImportError:
+    try:
+        from duckduckgo_search import DDGS  # type: ignore
+    except Exception as e:
+        DDGS = None  # type: ignore
+        import logging as _tmp_log
+        _tmp_log.getLogger(__name__).warning(
+            f"[worker] ddgs/duckduckgo_search recusou carregar: {e} — ferramenta de internet desativada."
+        )
 
 from dotenv import load_dotenv
 
@@ -155,6 +158,7 @@ SPECIALIST_SILENCE_TIMEOUT_SECONDS = 60.0
 SPECIALIST_MAX_TURN_TIMEOUT_SECONDS = 1800.0
 HOST_GENERATE_REPLY_TIMEOUT_SECONDS = 60.0   # Timeout para cada generate_reply da Nathália
 CONTEXT_RECENT_WINDOW = 12
+SPECIALIST_READY_WAIT_SECONDS = 70.0  # Tempo máximo aguardando agent_ready (especialistas levam até ~60s na retomada)
 
 # Vozes por agente (Gemini TTS nativo)
 AGENT_VOICES: dict[str, str] = {
@@ -939,6 +943,11 @@ class HostAgent(Agent):
         self._last_activation_at: dict[str, float] = {}
         self._host_audio_muted = False  # Controle de mute do áudio para silenciar durante turno de especialista
         self._host_session: Optional[AgentSession] = None  # Referência ao host_session (definida após start)
+        # Rastreia quais especialistas já publicaram agent_ready (prontos para ativação)
+        self._ready_specialists: set[str] = set()
+        self._specialist_ready_events: dict[str, asyncio.Event] = {
+            sid: asyncio.Event() for sid in ["cfo", "legal", "cmo", "cto"]
+        }
 
     # ------------------------------------------------------------------
     # Controle de áudio da Nathália — silencia durante turno de especialista
@@ -1016,6 +1025,31 @@ class HostAgent(Agent):
         O monitoramento do turno (done/timeout) é feito em background.
         Isso libera o Gemini da Nathália para ficar em silêncio (em vez de travar).
         """
+        # ── READINESS GATE ──────────────────────────────────────────────────
+        # Aguarda o especialista publicar agent_ready antes de tentar ativar.
+        # Crítico na retomada de sessão, onde Nathália pode tentar ativar um
+        # especialista antes do processo de reconexão sequencial terminar.
+        # Este wait está FORA do turn_lock para não bloquear outras ativações.
+        if spec_id not in self._ready_specialists:
+            event = self._specialist_ready_events.get(spec_id)
+            if event is not None:
+                logger.info(
+                    f"[Host] {SPECIALIST_NAMES.get(spec_id, spec_id)} ainda reconectando — "
+                    f"aguardando agent_ready (máx {SPECIALIST_READY_WAIT_SECONDS:.0f}s)..."
+                )
+                try:
+                    await asyncio.wait_for(event.wait(), timeout=SPECIALIST_READY_WAIT_SECONDS)
+                    logger.info(f"[Host] {SPECIALIST_NAMES.get(spec_id, spec_id)} ficou pronto. Prosseguindo com ativação.")
+                except asyncio.TimeoutError:
+                    logger.warning(
+                        f"[Host] Timeout aguardando agent_ready de {spec_id} "
+                        f"({SPECIALIST_READY_WAIT_SECONDS:.0f}s). Abortando ativação."
+                    )
+                    return (
+                        f"{SPECIALIST_NAMES.get(spec_id, spec_id)} ainda está reconectando. "
+                        f"Por favor, aguarde um instante e tente novamente."
+                    )
+        # ────────────────────────────────────────────────────────────────────
         async with self._turn_lock:
             now = monotonic()
             last_activation = self._last_activation_at.get(spec_id, 0.0)
@@ -1237,9 +1271,11 @@ class HostAgent(Agent):
         logger.info("[Marco] Acionando LLM (Gemini 2.5 Pro + Search) para gerar Plano de Execução...")
         self._blackboard.add_message("Sistema", f"Marco iniciou a pesquisa e o processamento do Plano para {user_name}...")
 
+        await self._emit_marco_working("Marco iniciou as pesquisas de mercado...", 5)
         await asyncio.sleep(2.0)
         markdown_plan = await self._generate_markdown_plan_with_agent(user_name, project_name)
 
+        await self._emit_marco_working("Convertendo Plano de Execução para PDF...", 88)
         pdf_base64: str | None = None
         try:
             from pdf_generator import generate_pdf
@@ -1255,6 +1291,7 @@ class HostAgent(Agent):
             if pdf_base64:
                 packet["pdf_base64"] = pdf_base64
             await self._publish_packet(packet)
+            await self._emit_marco_working("Plano de Execução pronto! ✅", 100)
             logger.info("[Marco] Plano de Execução publicado (bastidores).")
         except Exception as e:
             logger.warning(f"[Marco] Erro ao publicar plano: {e}")
@@ -1671,11 +1708,15 @@ class HostAgent(Agent):
                 return client.models.generate_content(
                     model="gemini-2.5-flash",
                     contents=search_query_prompt,
-                    config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=30),
+                    config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=60),
                 )
             q_resp = await loop.run_in_executor(None, _get_query)
-            search_q = q_resp.text.strip().replace('"', "").replace("'", "")[:100]
-            logger.info(f"[Marco] Web search query para {doc_type}: {search_q}")
+            search_q = q_resp.text.strip().replace('"', "").replace("'", "").strip()[:100]
+            if len(search_q) < 10:
+                search_q = f"{project_name} {doc_title} mercado Brasil"
+                logger.warning(f"[Marco] Query muito curta para {doc_type} — usando fallback: {search_q}")
+            else:
+                logger.info(f"[Marco] Web search query para {doc_type}: {search_q}")
             web_context = await self._run_web_search(search_q)
         except Exception as e:
             logger.warning(f"[Marco] Erro ao gerar query de pesquisa: {e}")
@@ -1902,6 +1943,7 @@ class HostAgent(Agent):
 
         # ── PESQUISA DE MERCADO VIA DUCKDUCKGO ───────────────────────────────
         logger.info("[Marco] Obtendo query de pesquisa de mercado para DDGS...")
+        await self._emit_marco_working("Marco pesquisando dados de mercado na web...", 15)
         client = genai.Client(api_key=get_gemini_api_key())
         
         web_context = ""
@@ -1913,13 +1955,18 @@ class HostAgent(Agent):
                 return client.models.generate_content(
                     model="gemini-2.5-flash",
                     contents=query_prompt,
-                    config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=30)
+                    config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=60)
                 )
                 
             loop = asyncio.get_running_loop()
             query_resp = await loop.run_in_executor(None, _call_query)
-            search_query = query_resp.text.strip().replace("\"", "").replace("'", "")
-            logger.info(f"[Marco] Query gerada para web search: {search_query}")
+            search_query = query_resp.text.strip().replace("\"", "").replace("'", "").strip()
+            # Fallback se a query gerada for muito curta ou inválida
+            if len(search_query) < 10:
+                search_query = f"{project_name} mercado tendências Brasil 2024"
+                logger.warning(f"[Marco] Query muito curta — usando fallback: {search_query}")
+            else:
+                logger.info(f"[Marco] Query gerada para web search: {search_query}")
             
             # 2. Pesquisar na Web com fallback para sincrono em thread
             logger.info("[Marco] Consultando DuckDuckGo...")
@@ -1942,6 +1989,7 @@ class HostAgent(Agent):
             
         # ── ETAPA 1: Geração do Draft ──────────────────────────────────────────
         logger.info("[Marco] ETAPA 1 — Gerando Draft com Gemini 3.1 flash-lite-preview + Google Search...")
+        await self._emit_marco_working("Marco redigindo o Plano de Execução com IA...", 40)
 
         draft_prompt = SUMMARIZATION_PROMPT.format(
             transcript=(
@@ -1984,6 +2032,7 @@ class HostAgent(Agent):
 
         # ── ETAPA 2: Revisão de Completude ────────────────────────────────────
         logger.info("[Marco] ETAPA 2 — Executando revisão de completude e coerência...")
+        await self._emit_marco_working("Marco revisando e enriquecendo o plano...", 68)
 
         VALIDATION_SECTIONS = [
             "Objetivos SMART (Específicos, Mensuráveis, Atingíveis, Relevantes, com Prazo)",
@@ -3021,6 +3070,39 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                 f"Estávamos falando sobre: {blackboard.user_query or 'seu projeto'}. "
                 f"Como você gostaria de continuar?"
             )
+
+            # ── RECONEXÃO EM PARALELO COM O GREETING ──────────────────
+            # CRÍTICO: A reconexão dos especialistas começa ANTES do generate_reply
+            # para evitar deadlock: Nathália pode chamar _activate_specialist()
+            # (como tool call) DURANTE generate_reply. O Readiness Gate aguardará
+            # o evento de prontidão, que só é definido quando o especialista conecta.
+            # Se a reconexão rodasse DEPOIS de generate_reply, haveria deadlock.
+            async def _reconnect_sequentially():
+                logger.info("[Retomada] Conectando especialistas sequencialmente para evitar rate limits...")
+                for sid in SPECIALIST_ORDER:
+                    if not blackboard.is_active:
+                        break
+                    await _start_specialist_in_room(
+                        spec_id=sid,
+                        blackboard=blackboard,
+                        ws_url=ws_url,
+                        lk_api_key=lk_api_key,
+                        lk_api_secret=lk_api_secret,
+                        room_name=ctx.room.name,
+                        host_room=ctx.room,
+                        auto_introduce=False,
+                    )
+                    # Sinaliza prontidão em-processo — desbloqueia o Readiness Gate.
+                    host_agent._ready_specialists.add(sid)
+                    ev = host_agent._specialist_ready_events.get(sid)
+                    if ev is not None:
+                        ev.set()
+                    logger.info(f"[Retomada] {SPECIALIST_NAMES.get(sid, sid)} pronto e liberado para ativação.")
+                    await asyncio.sleep(5.0)  # Delay para respeitar rate limits do Gemini
+                logger.info("[Host] Retomada concluída. Todos os especialistas reconectados.")
+
+            reconnect_task = asyncio.create_task(_reconnect_sequentially())
+
             try:
                 await asyncio.wait_for(
                     host_session.generate_reply(
@@ -3037,23 +3119,10 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                     exc_info=True,
                 )
 
-            # Conecta especialistas SEQUENCIALMENTE (evita Rate Limit do Beyond/Gemini)
-            logger.info("[Retomada] Conectando especialistas sequencialmente para evitar rate limits...")
-            for sid in SPECIALIST_ORDER:
-                if not blackboard.is_active:
-                    break
-                await _start_specialist_in_room(
-                    spec_id=sid,
-                    blackboard=blackboard,
-                    ws_url=ws_url,
-                    lk_api_key=lk_api_key,
-                    lk_api_secret=lk_api_secret,
-                    room_name=ctx.room.name,
-                    host_room=ctx.room,
-                    auto_introduce=False,
-                )
-                await asyncio.sleep(1.0)  # Delay para respeitar rate limits
-            logger.info("[Host] Retomada concluída. Todos os especialistas reconectados.")
+            # Aguarda a reconexão terminar (caso o greeting tenha sido mais rápido)
+            if not reconnect_task.done():
+                logger.info("[Retomada] Aguardando reconexão dos especialistas restantes...")
+                await reconnect_task
 
         else:
             # ── MODO INICIAL ───────────────────────────────────────────
@@ -3120,6 +3189,13 @@ async def _run_entrypoint(ctx: JobContext) -> None:
             if not blackboard.is_active:
                 return
 
+            # Sinaliza prontidão para todos os especialistas conectados com sucesso
+            for sid, result in zip(SPECIALIST_ORDER, sessions):
+                if not isinstance(result, Exception) and result is not None:
+                    host_agent._ready_specialists.add(sid)
+                    ev = host_agent._specialist_ready_events.get(sid)
+                    if ev is not None:
+                        ev.set()
             logger.info("[Apresentação] Todos conectados. Iniciando apresentações imediatamente...")
 
             # Executa as apresentações sequencialmente — um por vez
