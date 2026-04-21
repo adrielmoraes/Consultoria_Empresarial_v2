@@ -185,16 +185,10 @@ def _worker_full_document_pipeline(
 
         result["markdown"] = final_text
 
-        # 5. PDF
-        pdf_bytes = _worker_generate_pdf(
-            final_text, project_name, user_name,
-            doc_type=doc_type, doc_title=doc_title,
-        )
-        if pdf_bytes:
-            result["pdf_base64"] = (
-                "data:application/pdf;base64,"
-                + base64.b64encode(pdf_bytes).decode("utf-8")
-            )
+        # 5. O PDF agora será gerado no Backend ou via Frontend renderizando markdown,
+        # portanto removemos a carga massiva de Base64 daqui para não violar o 
+        # MTU limit do LiveKit DataChannel (1008 policy violation).
+        result["pdf_base64"] = None
 
     except Exception as e:
         result["error"] = str(e)
@@ -356,7 +350,7 @@ class MarcoStrategist:
 
         await self._emit_progress("Convertendo para PDF...", 88)
 
-        # Publica resultado
+        # Publica resultado apenas em MARKDOWN leve (DataChannel seguro)
         markdown_plan = result.get("markdown", "")
         try:
             packet: dict = {
@@ -364,11 +358,9 @@ class MarcoStrategist:
                 "plan": markdown_plan,
                 "text": markdown_plan,
             }
-            if result.get("pdf_base64"):
-                packet["pdf_base64"] = result["pdf_base64"]
             await self._publish_packet(packet)
             await self._emit_progress("Plano de Execução pronto! ✅", 100)
-            logger.info("[Marco] Plano de Execução publicado.")
+            logger.info("[Marco] Plano de Execução publicado (Marketing only).")
         except Exception as e:
             logger.warning(f"[Marco] Erro ao publicar plano: {e}")
 
@@ -480,11 +472,9 @@ class MarcoStrategist:
             }
             if doc_type == "execution_plan":
                 packet["type"] = "execution_plan"
-            if result.get("pdf_base64"):
-                packet["pdf_base64"] = result["pdf_base64"]
             await self._publish_packet(packet)
             await self._emit_progress(f"{doc_title} pronto! ✅", 100)
-            logger.info(f"[Marco] {doc_title} publicado.")
+            logger.info(f"[Marco] {doc_title} publicado (Marketing only).")
         except Exception as e:
             logger.warning(f"[Marco] Erro ao publicar {doc_title}: {e}")
 

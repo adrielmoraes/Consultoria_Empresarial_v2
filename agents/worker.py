@@ -596,37 +596,36 @@ class HostAgent(Agent):
             
             logger.info(f"[Host] Acionando especialista: {spec_id} | turno={turn_id} | contexto: {context} | lateral_from={_lateral_from_name or 'Nathália'}")
             
-            # Delay para garantir que a Nathália termine de falar a frase de
-            # apresentação do especialista antes que ele assuma o microfone.
-            # 5s dá margem para frases longas sem cortar a Nathália.
-            await asyncio.sleep(5)
+            # Transforma a publicação do pacote e a espera do ACK em uma task separada,
+            # para que a tool_call retorne IMEDIATAMENTE e a Nathália possa gerar e 
+            # de fato falar a frase de transição completa SEM que o especialista já
+            # comece a falar por cima dela.
+            async def _deferred_activation():
+                # Delay de 8.5s permite que a Nathália termine de ler a frase ("Vou chamar o Daniel...")
+                # no TTS antes de ativarmos o microfone do Daniel.
+                await asyncio.sleep(8.5)
+                
+                # SILENCIA a Nathália garantindo que ela não ouça o eco ou a fala do Especialista
+                self._mute_host_audio()
+                await self._publish_packet(packet)
 
-            # SILENCIA a Nathália ANTES de enviar o packet
-            # Impede que o Gemini da Nathália intercepte o áudio do usuário
-            # enquanto o especialista está conversando
-            self._mute_host_audio()
+                try:
+                    await asyncio.wait_for(
+                        self._turn_events[turn_id]["activated"].wait(),
+                        timeout=ACTIVATION_ACK_TIMEOUT_SECONDS,
+                    )
+                    ack_latency = (monotonic() - start_ts) * 1000
+                    self._blackboard.orchestration_metrics["activation_ack_latency_ms_total"] += ack_latency
+                    logger.info(f"[Host] ACK recebido de {spec_id} em {ack_latency:.0f}ms. Especialista ATIVO.")
+                except asyncio.TimeoutError:
+                    self._blackboard.orchestration_metrics["activations_timeout"] += 1
+                    self._blackboard.active_agent = None
+                    self._turn_events.pop(turn_id, None)
+                    self._turn_status.pop(turn_id, None)
+                    self._unmute_host_audio()  # Reativa áudio em caso de falha
+                    logger.warning(f"[Host] Timeout aguardando ACK de {spec_id} no turno {turn_id}.")
 
-            await self._publish_packet(packet)
-
-            try:
-                await asyncio.wait_for(
-                    self._turn_events[turn_id]["activated"].wait(),
-                    timeout=ACTIVATION_ACK_TIMEOUT_SECONDS,
-                )
-                ack_latency = (monotonic() - start_ts) * 1000
-                self._blackboard.orchestration_metrics["activation_ack_latency_ms_total"] += ack_latency
-                logger.info(f"[Host] ACK recebido de {spec_id} em {ack_latency:.0f}ms. Especialista ATIVO.")
-            except asyncio.TimeoutError:
-                self._blackboard.orchestration_metrics["activations_timeout"] += 1
-                self._blackboard.active_agent = None
-                self._turn_events.pop(turn_id, None)
-                self._turn_status.pop(turn_id, None)
-                self._unmute_host_audio()  # Reativa áudio em caso de falha
-                logger.warning(f"[Host] Timeout aguardando ACK de {spec_id} no turno {turn_id}.")
-                return (
-                    f"{SPECIALIST_NAMES[spec_id]} não respondeu a tempo. "
-                    f"Tente reformular a pergunta ou seguir com outro especialista."
-                )
+            asyncio.create_task(_deferred_activation())
 
             # NON-BLOCKING: Lança task em background para monitorar o turno
             # e NÃO espera o especialista terminar dentro da tool call.
@@ -635,9 +634,9 @@ class HostAgent(Agent):
             # Retorna IMEDIATAMENTE para o Gemini da Nathália.
             # A mensagem instrui o LLM a ficar em silêncio absoluto.
             return (
-                f"ESPECIALISTA_ATIVADO: {SPECIALIST_NAMES[spec_id]} está agora conversando diretamente com o usuário. "
-                f"FIQUE EM SILÊNCIO TOTAL. NÃO fale nada. NÃO comente. NÃO faça transições. "
-                f"O especialista vai devolver a palavra quando terminar."
+                f"ESPECIALISTA_ATIVADO: {SPECIALIST_NAMES[spec_id]} está assumindo. "
+                f"Você (Nathália) deve fazer UMA ÚNICA FRASE CURTA (ex: Vou transferir para o Daniel. Daniel, é com você!) "
+                f"e depois FIQUE EM SILÊNCIO TOTAL. NÃO escute mais nada."
             )
 
     async def _monitor_specialist_turn(self, spec_id: str, turn_id: int, start_ts: float, host_session: Optional[AgentSession] = None) -> None:
@@ -1517,17 +1516,10 @@ async def _start_specialist_in_room(
                 context_state_str = json.dumps(context_state, ensure_ascii=False)
 
                 if ctx_summary or context_state:
-                    new_instructions = (
-                        SPECIALIST_SYSTEM_PROMPTS[spec_id]
-                        + f"\n\n--- CONTEXTO ATUAL DA SESSÃO ---\n{ctx_summary}"
-                        + f"\n\n--- ESTADO ESTRUTURADO DA SESSÃO ---\n{context_state_str}"
-                    )
-                    try:
-                        result = agent.update_instructions(new_instructions)
-                        if asyncio.iscoroutine(result):
-                            await result
-                    except Exception as ui_err:
-                        logger.warning(f"[{name}] Erro ao atualizar instruções: {ui_err}")
+                    # REMOVIDO: agent.update_instructions() causava fechamento do WebSocket (Erro 1007 WebRTC Gemini Native)
+                    # devido à injeção abrupta de tokens gigantes na camada sistêmica de áudio.
+                    # As instruções agora seguem via PROMPT simples do turno (generate_reply).
+                    pass
 
                 await _emit("agent_activated", {"activated_in_ms": int((monotonic() - started_at) * 1000)})
                 _subscribe_user_audio()
@@ -1541,13 +1533,14 @@ async def _start_specialist_in_room(
                     f"Contador de msgs do usuário zerado."
                 )
 
-                # Determina o prompt baseado no tipo de ativação
+                # Determina o prompt baseado no tipo de ativação injetando todo o contexto sem quebrar a VAD API
                 from_agent = msg.get("from_name")
                 if from_agent:
                     # Transferência lateral: outro especialista repassou
                     prompt = (
                         f"{from_agent} acabou de transferir a palavra para você. "
                         f"O contexto da pergunta do usuário é: {context_text}. "
+                        f"O Resumo da conversa até agora é: {ctx_summary}. "
                         f"Inicie sua fala reconhecendo o colega e respondendo diretamente à pergunta do usuário.\n"
                         f"REGRAS ABSOLUTAS (violá-las vai causar erro):\n"
                         f"1. NUNCA acione ferramentas de handoff na sua PRIMEIRA fala. Responda e faça uma pergunta.\n"
@@ -1561,6 +1554,7 @@ async def _start_specialist_in_room(
                     # Ativação normal pela Nathália
                     prompt = (
                         f"Nathália acabou de te acionar. O contexto da pergunta do usuário é: {context_text}. "
+                        f"O Resumo da conversa até agora é: {ctx_summary}. "
                         f"Responda a questão do usuário detalhando sua visão e experiência na sua área.\n"
                         f"REGRAS ABSOLUTAS (violá-las vai causar erro):\n"
                         f"1. NUNCA acione ferramentas de handoff na sua PRIMEIRA fala. Responda e faça uma pergunta.\n"
