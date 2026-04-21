@@ -198,6 +198,63 @@ async def _query_documents_with_llm(pergunta: str, documentos: list[str]) -> str
         logger.error(f"[Docs RAG] Erro ao consultar documentos: {e}")
         return "Erro técnico ao tentar ler os documentos da empresa."
 
+
+async def _query_transcript_with_llm(pergunta: str, transcript: list[dict]) -> str:
+    """
+    Busca informações no histórico completo da mentoria (todas as sessões)
+    usando o Gemini Flash como motor de extração. Permite que os agentes de voz
+    acessem dados de sessões anteriores sem sobrecarregar sua janela de contexto
+    de áudio em tempo real.
+    """
+    from google import genai
+    from google.genai import types
+
+    if not transcript:
+        return "Nenhum histórico de mentoria encontrado para este projeto."
+
+    # Monta o histórico formatado (limita a ~100k caracteres para caber no contexto do Flash)
+    formatted_lines = []
+    for msg in transcript:
+        role = msg.get("role", "Desconhecido")
+        content = msg.get("content", "")
+        if content.strip():
+            formatted_lines.append(f"[{role}]: {content}")
+    
+    full_history = "\n".join(formatted_lines)
+    # Limita para não ultrapassar o contexto do modelo
+    if len(full_history) > 100000:
+        full_history = full_history[-100000:]
+
+    prompt = (
+        f"Você é um assistente de memória de longo prazo de uma sessão de mentoria empresarial. "
+        f"Abaixo está o HISTÓRICO COMPLETO de todas as sessões de mentoria deste projeto. "
+        f"Usando EXCLUSIVAMENTE este histórico, responda à pergunta de forma precisa e detalhada.\n\n"
+        f"Pergunta: {pergunta}\n\n"
+        f"--- HISTÓRICO COMPLETO DA MENTORIA ---\n{full_history}\n--- FIM DO HISTÓRICO ---\n\n"
+        f"Se a informação não estiver no histórico, diga claramente que não encontrou registros sobre o tema nas sessões anteriores. "
+        f"Responda em português brasileiro de forma concisa mas completa."
+    )
+
+    try:
+        client = genai.Client(api_key=get_gemini_api_key())
+
+        def _call_gemini():
+            return client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    temperature=0.2,
+                    max_output_tokens=2000,
+                )
+            )
+
+        loop = asyncio.get_running_loop()
+        response = await loop.run_in_executor(None, _call_gemini)
+        return response.text.strip()
+    except Exception as e:
+        logger.error(f"[Histórico RAG] Erro ao consultar histórico: {e}")
+        return "Erro técnico ao tentar buscar informações no histórico da mentoria."
+
 # ============================================================
 # Mapeamento de IDs amigáveis para spec_ids internos (Lateral Transfer)
 LATERAL_TRANSFER_MAP: dict[str, str] = {
@@ -219,7 +276,7 @@ class SpecialistAgent(Agent):
     - Um asyncio.Event (_handover_event) sinaliza o fim do turno para o loop de ativação.
     """
 
-    def __init__(self, spec_id: str, blackboard: Blackboard) -> None:
+    def __init__(self, spec_id: str, blackboard: Blackboard, marco: MarcoStrategist = None) -> None:
         name = SPECIALIST_NAMES[spec_id]
 
         super().__init__(
@@ -254,6 +311,7 @@ class SpecialistAgent(Agent):
         self._spec_id = spec_id
         self._name = name
         self._blackboard = blackboard
+        self._marco = marco
         # Handover: evento para sinalizar fim do turno livre
         self._handover_event: asyncio.Event = asyncio.Event()
         # Resultado do handover: "nathalia" ou {"target": spec_id, "context": str}
@@ -279,6 +337,25 @@ class SpecialistAgent(Agent):
         """
         logger.info(f"[{self._name}] Consultando documentos: {pergunta}")
         return await _query_documents_with_llm(pergunta, self._blackboard.documentos_disponiveis)
+
+    @function_tool
+    async def consultar_historico_mentoria(
+        self,
+        context: RunContext,
+        pergunta: str,
+    ) -> str:
+        """
+        Busca informações no histórico completo de TODAS as sessões de mentoria deste projeto.
+        Use esta ferramenta quando o usuário perguntar sobre algo que foi discutido em sessões
+        anteriores, ou quando precisar relembrar decisões, recomendações ou contextos passados.
+        Exemplos: "o que conversamos sobre marketing?", "qual foi a recomendação do Daniel?",
+        "quanto tempo atrás discutimos o pricing?"
+
+        Parâmetros:
+        - pergunta: A pergunta ou tema que deseja buscar no histórico
+        """
+        logger.info(f"[{self._name}] Consultando histórico da mentoria: {pergunta}")
+        return await _query_transcript_with_llm(pergunta, self._blackboard.transcript)
 
     @function_tool
     async def devolver_para_nathalia(
@@ -396,6 +473,265 @@ class SpecialistAgent(Agent):
         }
         self._handover_event.set()
         return f"Transferência para {target_name} registrada. Aguarde em silêncio absoluto."
+
+    # ------------------------------------------------------------------
+    # FERRAMENTAS DO MARCO → Delegação ao MarcoStrategist
+    # ------------------------------------------------------------------
+
+    async def gerar_plano_forcado(self, user_name: str, project_name: str):
+        """Aciona a geração do Plano de Execução pelo Marco (non-blocking via ProcessPool)."""
+        self._blackboard.marco_triggered = True
+        logger.info("[Marco] Delegando geração do Plano ao ProcessPool via MarcoStrategist...")
+        if self._marco: await self._marco.gerar_plano_execucao(user_name, project_name)
+
+    @function_tool
+    async def gerar_plano_execucao(
+        self,
+        context: RunContext,
+    ) -> str:
+        """
+        Aciona Marco (Estrategista) nos bastidores para gerar o Plano de Execução final.
+        Use quando o usuário quiser encerrar a sessão ou solicitar um plano estruturado.
+        Marco não fala — ele trabalha silenciosamente e envia o documento.
+        """
+        user_name = self._blackboard.user_name or "empreendedor"
+        project_name = self._blackboard.project_name or "seu projeto"
+
+        asyncio.create_task(self.gerar_plano_forcado(user_name, project_name))
+
+        return (
+            f"MARCO_ACIONADO: Você avisou ao Marco nos bastidores. ELE JÁ ESTA TRABALHANDO no Plano de Execução para {user_name}. "
+            f"Gere UMA NOVA FALA AVISANDO O USUÁRIO: diga exatamente que o Marco começou a redigir o plano nos bastidores, "
+            f"fazendo pesquisas e em instantes chegará pronto na tela dele. Seja natural."
+        )
+
+    @function_tool
+    async def gerar_documento_personalizado(
+        self,
+        context: RunContext,
+        tipo_documento: str,
+        descricao_contexto: str,
+    ) -> str:
+        """
+        Aciona o Marco (bastidores) para gerar um documento empresarial personalizado.
+        Use quando o usuário solicitar qualquer um destes documentos:
+        - 'swot': Análise SWOT estratégica completa
+        - 'canvas': Business Model Canvas (9 blocos)
+        - 'proposta_comercial': Proposta comercial profissional
+        - 'pesquisa_mercado': Relatório de pesquisa de mercado
+
+        Parâmetros:
+        - tipo_documento: Tipo do documento. Valores: swot, canvas, proposta_comercial, pesquisa_mercado
+        - descricao_contexto: Contexto adicional sobre o que o usuário quer no documento
+        """
+        user_name = self._blackboard.user_name or "empreendedor"
+        project_name = self._blackboard.project_name or "seu projeto"
+        tipo_lower = tipo_documento.lower().strip().replace(" ", "_")
+
+        tipo_map = {
+            "swot": "swot",
+            "analise_swot": "swot",
+            "canvas": "canvas",
+            "business_model_canvas": "canvas",
+            "proposta": "proposta_comercial",
+            "proposta_comercial": "proposta_comercial",
+            "pesquisa": "pesquisa_mercado",
+            "pesquisa_mercado": "pesquisa_mercado",
+        }
+        doc_type = tipo_map.get(tipo_lower, tipo_lower)
+
+        titulos = {
+            "swot": "Análise SWOT Estratégica",
+            "canvas": "Business Model Canvas",
+            "proposta_comercial": "Proposta Comercial",
+            "pesquisa_mercado": "Pesquisa de Mercado",
+        }
+        doc_title = titulos.get(doc_type, tipo_documento.replace("_", " ").title())
+
+        async def _bg():
+            if self._marco: await self._marco.gerar_documento_personalizado(
+                doc_type=doc_type, doc_title=doc_title,
+                user_name=user_name, project_name=project_name,
+                extra_context=descricao_contexto,
+            )
+        asyncio.create_task(_bg())
+
+        return (
+            f"MARCO_ACIONADO: Você acionou o Marco para preparar: {doc_title}. "
+            f"Diga que ele já esta pesquisando e gerando o PDF nos bastidores e em instantes chegará para {user_name}."
+        )
+
+    @function_tool
+    async def pesquisar_mercado_setor(
+        self,
+        context: RunContext,
+        setor: str,
+        pergunta_especifica: str,
+    ) -> str:
+        """
+        Aciona o Marco para pesquisar dados de mercado em tempo real sobre um setor específico.
+        Use quando o usuário quiser entender o mercado, concorrentes, tendências ou oportunidades.
+
+        Parâmetros:
+        - setor: Setor ou segmento de mercado a pesquisar (ex: 'SaaS B2B', 'e-commerce moda', 'healthtech')
+        - pergunta_especifica: A dúvida ou foco da pesquisa (ex: 'principais players e market share')
+        """
+        user_name = self._blackboard.user_name or "empreendedor"
+        project_name = self._blackboard.project_name or "seu projeto"
+
+        async def _bg():
+            extra_context = f"Setor pesquisado: {setor}\\nFoco da pesquisa: {pergunta_especifica}"
+            if self._marco: await self._marco.gerar_documento_personalizado(
+                doc_type="pesquisa_mercado", doc_title="Pesquisa de Mercado",
+                user_name=user_name, project_name=project_name,
+                extra_context=extra_context,
+            )
+        asyncio.create_task(_bg())
+
+        return (
+            f"MARCO_ACIONADO: A pesquisa sobre '{setor}' já está rodando em paralelo. "
+            f"Avise ao {user_name} que o Marco vai coletar os dados na Web e o relatório aparecerá na tela dele."
+        )
+
+    @function_tool
+    async def gerar_checklist_abertura_empresa(
+        self,
+        context: RunContext,
+        tipo_empresa: str,
+    ) -> str:
+        """
+        Aciona o Marco para gerar um guia completo de abertura de empresa no Brasil.
+        Use quando o usuário quiser formalizar seu negócio, abrir CNPJ ou escolher o tipo societário.
+
+        Parâmetros:
+        - tipo_empresa: Tipo de empresa desejado (ex: 'MEI', 'LTDA', 'SA', 'ainda não sei')
+        """
+        user_name = self._blackboard.user_name or "empreendedor"
+        project_name = self._blackboard.project_name or "seu projeto"
+
+        async def _bg():
+            orgao_processo = f"Abertura de Empresa ({tipo_empresa})"
+            if self._marco: await self._marco.gerar_orientacao_orgao_publico(
+                orgao_processo=orgao_processo,
+                contexto=f"Tipo de empresa: {tipo_empresa}. Contexto: {self._blackboard.get_context_summary()[:800]}",
+                user_name=user_name, project_name=project_name,
+            )
+        asyncio.create_task(_bg())
+
+        return (
+            f"MARCO_ACIONADO: Você avisou ao Marco para preparar o guia de Abertura ({tipo_empresa}). "
+            f"Diga que ele compilara com links, prazos e custos na web, gerando e enviando em background para a tela."
+        )
+
+    @function_tool
+    async def gerar_orientacao_orgao_publico(
+        self,
+        context: RunContext,
+        orgao_processo: str,
+        contexto_adicional: str,
+    ) -> str:
+        """
+        Aciona o Marco para gerar um guia PRÁTICO sobre qualquer processo em órgão público brasileiro.
+        Use quando o usuário perguntar sobre:
+        - Registro de marca no INPI
+        - Enquadramento tributário (Simples Nacional, MEI, Lucro Presumido)
+        - Adequação à LGPD / ANPD
+        - Emissão de Nota Fiscal (NFS-e, NF-e)
+        - Acesso a crédito público (BNDES, Pronampe, Finep)
+        - Outros processos burocráticos empresariais
+
+        IMPORTANTE: O Marco NÃO gera o documento oficial. Ele explica como o usuário deve fazer.
+
+        Parâmetros:
+        - orgao_processo: Descrição do processo ou órgão (ex: 'Registro de marca no INPI', 'Simples Nacional')
+        - contexto_adicional: Contexto específico do usuário para personalizar o guia
+        """
+        user_name = self._blackboard.user_name or "empreendedor"
+        project_name = self._blackboard.project_name or "seu projeto"
+
+        async def _bg():
+            if self._marco: await self._marco.gerar_orientacao_orgao_publico(
+                orgao_processo=orgao_processo, contexto=contexto_adicional,
+                user_name=user_name, project_name=project_name,
+            )
+        asyncio.create_task(_bg())
+
+        return (
+            f"MARCO_ACIONADO: Você avisou ao Marco sobre '{orgao_processo}' e ele está extraindo as orientais na rede em background. "
+            f"Diga que é bom o {user_name} aguardar pois o documento chegará pronto."
+        )
+
+    @function_tool
+    async def gerar_modelo_contrato(
+        self,
+        context: RunContext,
+        tipo_contrato: str,
+        partes_envolvidas: str,
+    ) -> str:
+        """
+        Aciona o Marco para gerar um modelo de contrato profissional adaptado ao contexto.
+        Use quando o usuário precisar de um contrato base para revisar com seu advogado.
+        Tipos comuns: prestação de serviços, parceria, confidencialidade (NDA), compra e venda,
+        distribuição, locação, influencer/marketing, SaaS/licença de software.
+
+        IMPORTANTE: Sempre reforce que o modelo deve ser revisado por advogado antes de assinar.
+
+        Parâmetros:
+        - tipo_contrato: Tipo do contrato (ex: 'prestação de serviços', 'parceria comercial', 'NDA')
+        - partes_envolvidas: Quem são as partes (ex: 'empresa contratante e freelancer PJ')
+        """
+        user_name = self._blackboard.user_name or "empreendedor"
+        project_name = self._blackboard.project_name or "seu projeto"
+
+        async def _bg():
+            extra_context = (
+                f"Tipo de contrato: {tipo_contrato}\\n"
+                f"Partes envolvidas: {partes_envolvidas}\\n"
+                f"Contexto do negócio: {self._blackboard.get_context_summary()[:600]}"
+            )
+            if self._marco: await self._marco.gerar_documento_personalizado(
+                doc_type="modelo_contrato",
+                doc_title=f"Modelo de Contrato — {tipo_contrato.title()}",
+                user_name=user_name, project_name=project_name,
+                extra_context=extra_context,
+                extra_vars={"tipo_contrato": tipo_contrato, "tipo_contrato_upper": tipo_contrato.upper(), "partes": partes_envolvidas},
+            )
+        asyncio.create_task(_bg())
+
+        return (
+            f"MARCO_ACIONADO: Você falou com Marco e ele já redigirá o modelo do contrato para os dados deste cenário. "
+            f"Fale que ele está no backstage adaptando e em instantes chegará para {user_name} revisar com advogados reais."
+        )
+
+    @function_tool
+    async def gerar_pitch_deck(
+        self,
+        context: RunContext,
+        publico_alvo: str,
+    ) -> str:
+        """
+        Aciona o Marco para criar um Pitch Deck profissional de 12 slides em formato documento.
+        Use quando o usuário quiser apresentar seu negócio para investidores, parceiros ou clientes.
+
+        Parâmetros:
+        - publico_alvo: Para quem será apresentado (ex: 'investidores angel', 'parceiros estratégicos', 'clientes enterprise')
+        """
+        user_name = self._blackboard.user_name or "empreendedor"
+        project_name = self._blackboard.project_name or "seu projeto"
+
+        async def _bg():
+            if self._marco: await self._marco.gerar_documento_personalizado(
+                doc_type="pitch_deck", doc_title="Pitch Deck",
+                user_name=user_name, project_name=project_name,
+                extra_context=f"Público-alvo da apresentação: {publico_alvo}",
+                extra_vars={"publico": publico_alvo},
+            )
+        asyncio.create_task(_bg())
+
+        return (
+            f"MARCO_ACIONADO: Marco começou a arquitetar o esquema do Pitch Deck em background. "
+            f"Avise que está no processo em andamento e gerando em PDF."
+        )
 
 class HostAgent(Agent):
     """
@@ -518,6 +854,25 @@ class HostAgent(Agent):
         """
         logger.info(f"[Host] Consultando documentos: {pergunta}")
         return await _query_documents_with_llm(pergunta, self._blackboard.documentos_disponiveis)
+
+    @function_tool
+    async def consultar_historico_mentoria(
+        self,
+        context: RunContext,
+        pergunta: str,
+    ) -> str:
+        """
+        Busca informações no histórico completo de TODAS as sessões de mentoria deste projeto.
+        Use esta ferramenta quando o usuário perguntar sobre algo que foi discutido em sessões
+        anteriores, ou quando precisar relembrar decisões, recomendações ou contextos passados.
+        Exemplos: "o que conversamos sobre marketing?", "qual foi a recomendação do Daniel?",
+        "quanto tempo atrás discutimos o pricing?"
+
+        Parâmetros:
+        - pergunta: A pergunta ou tema que deseja buscar no histórico
+        """
+        logger.info(f"[Host] Consultando histórico da mentoria: {pergunta}")
+        return await _query_transcript_with_llm(pergunta, self._blackboard.transcript)
 
     # ------------------------------------------------------------------
     # Método auxiliar: publica um data packet para ativar um especialista
@@ -1285,8 +1640,18 @@ async def _start_specialist_in_room(
                     if pub.kind == rtc.TrackKind.KIND_AUDIO:
                         pub.set_subscribed(True)
 
+        async def _publish_packet(payload: dict) -> None:
+            base_payload = {
+                "version": DATA_PACKET_SCHEMA_VERSION,
+                "sent_at": monotonic(),
+                **payload,
+            }
+            await _safe_publish_data(host_room.local_participant, base_payload)
+            
+        marco = MarcoStrategist(blackboard, _publish_packet)
+
         # C2: Instancia agent + sessão com retry no start()
-        agent = SpecialistAgent(spec_id, blackboard)
+        agent = SpecialistAgent(spec_id, blackboard, marco)
         session = AgentSession()
 
         session_started = False
@@ -1307,7 +1672,7 @@ async def _start_specialist_in_room(
                 if attempt < MAX_RETRIES:
                     await asyncio.sleep(retry_delay)
                     # Recria agent e session para nova tentativa
-                    agent = SpecialistAgent(spec_id, blackboard)
+                    agent = SpecialistAgent(spec_id, blackboard, marco)
                     session = AgentSession()
 
         if not session_started:
@@ -1399,8 +1764,8 @@ async def _start_specialist_in_room(
                 return
             
             role = getattr(item, "role", None)
-            if role != "assistant":
-                return  # Ignora mensagens do usuário transcritas (ECHO fix)
+            if role not in ("assistant", "user"):
+                return  # Ignora outras mensagens
 
             text = ""
             if hasattr(event, "item") and hasattr(event.item, "content"):
@@ -1423,18 +1788,48 @@ async def _start_specialist_in_room(
             text = text.strip()
             if not text:
                 return
-            blackboard.add_message(name, text)
-            asyncio.create_task(
-                host_room.local_participant.publish_data(
-                    json.dumps({
-                        "version": DATA_PACKET_SCHEMA_VERSION,
-                        "type": "transcript",
-                        "speaker": name,
-                        "text": text,
-                    }).encode(),
-                    reliable=True,
+
+            if role == "assistant":
+                blackboard.add_message(name, text)
+                asyncio.create_task(
+                    host_room.local_participant.publish_data(
+                        json.dumps({
+                            "version": DATA_PACKET_SCHEMA_VERSION,
+                            "type": "transcript",
+                            "speaker": name,
+                            "text": text,
+                        }).encode(),
+                        reliable=True,
+                    )
                 )
-            )
+            elif role == "user":
+                if not _audio_subscribed:
+                    return
+                blackboard.mark_user_activity()
+                if _should_ignore_user_transcript(text):
+                    return
+
+                logger.info(f"[{name}] Usuário fala (Gemini STT): {text}")
+                blackboard.add_message("Usuário", text)
+                if not blackboard.user_query:
+                    blackboard.user_query = text
+                
+                asyncio.create_task(
+                    host_room.local_participant.publish_data(
+                        json.dumps({
+                            "version": DATA_PACKET_SCHEMA_VERSION,
+                            "type": "transcript",
+                            "speaker": "Você",
+                            "text": text,
+                        }).encode(),
+                        reliable=True,
+                    )
+                )
+                agent._user_messages_since_activation += 1
+                logger.debug(
+                    f"[{name}] Msg do usuário #{agent._user_messages_since_activation} "
+                    f"desde ativação: '{text[:60]}'"
+                )
 
         @session.on("user_input_transcribed")
         def _on_specialist_user_speech(event) -> None:
@@ -1806,7 +2201,7 @@ async def _run_entrypoint(ctx: JobContext) -> None:
         if transcript:
             parsed_entries = _parse_transcript(transcript)
             if parsed_entries:
-                blackboard.transcript = parsed_entries[-250:]
+                blackboard.transcript = parsed_entries[-1500:]
                 for entry in blackboard.transcript:
                     role = (entry.get("role") or "").lower()
                     content = (entry.get("content") or "").strip()

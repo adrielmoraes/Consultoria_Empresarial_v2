@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { mentoringSessions, projects, users, executionPlans } from "@/lib/db/schema";
 
@@ -26,7 +26,9 @@ export async function GET(
       return NextResponse.json({ error: "Projeto não encontrado" }, { status: 404 });
     }
 
-    const [lastSessionWithTranscript] = await db
+    // Busca TODAS as sessões com transcript (ordenadas da mais antiga → mais recente)
+    // para montar o Histórico Mestre da mentoria com contexto completo.
+    const allSessionsWithTranscript = await db
       .select({
         sessionId: mentoringSessions.id,
         status: mentoringSessions.status,
@@ -41,8 +43,22 @@ export async function GET(
           isNotNull(mentoringSessions.transcript),
         ),
       )
-      .orderBy(desc(mentoringSessions.startedAt))
-      .limit(1);
+      .orderBy(asc(mentoringSessions.startedAt));
+
+    // Concatena todos os transcripts em um Histórico Mestre único
+    let lastSessionWithTranscript: typeof allSessionsWithTranscript[0] | null = null;
+    if (allSessionsWithTranscript.length > 0) {
+      const mergedTranscript = allSessionsWithTranscript
+        .map((s) => s.transcript)
+        .filter(Boolean)
+        .join("\n\n");
+      // Usa os metadados da sessão mais recente como envelope
+      const latest = allSessionsWithTranscript[allSessionsWithTranscript.length - 1];
+      lastSessionWithTranscript = {
+        ...latest,
+        transcript: mergedTranscript,
+      };
+    }
 
     // Buscar TODOS os documentos gerados pelo Marco nas sessões deste projeto
     const projectSessions = await db.select({ id: mentoringSessions.id }).from(mentoringSessions).where(eq(mentoringSessions.projectId, id));

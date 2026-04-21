@@ -37,7 +37,7 @@ SPECIALIST_GENERATION_TIMEOUT_SECONDS = 60.0
 SPECIALIST_SILENCE_TIMEOUT_SECONDS = 60.0
 SPECIALIST_MAX_TURN_TIMEOUT_SECONDS = 1800.0
 HOST_GENERATE_REPLY_TIMEOUT_SECONDS = 60.0   # Timeout para cada generate_reply da Nathália
-CONTEXT_RECENT_WINDOW = 12
+CONTEXT_RECENT_WINDOW = 40
 SPECIALIST_READY_WAIT_SECONDS = 70.0  # Tempo máximo aguardando agent_ready (especialistas levam até ~60s na retomada)
 
 # ── Vozes por agente (Gemini TTS nativo) ───────────────────────────────────────
