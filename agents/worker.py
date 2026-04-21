@@ -93,6 +93,24 @@ from livekit.agents.types import APIConnectOptions
 from livekit.plugins import google as google_plugin
 from google.genai import types as genai_types
 
+# ── Módulos extraídos (refatoração modular) ──────────────────────────────────
+from models import (
+    GEMINI_REALTIME_MODEL, GEMINI_REALTIME_CONFIG, DATA_PACKET_SCHEMA_VERSION,
+    ACTIVATION_ACK_TIMEOUT_SECONDS, ACTIVATION_DONE_TIMEOUT_SECONDS,
+    ACTIVATION_DEBOUNCE_SECONDS, SPECIALIST_GENERATION_TIMEOUT_SECONDS,
+    SPECIALIST_SILENCE_TIMEOUT_SECONDS, SPECIALIST_MAX_TURN_TIMEOUT_SECONDS,
+    HOST_GENERATE_REPLY_TIMEOUT_SECONDS, CONTEXT_RECENT_WINDOW,
+    SPECIALIST_READY_WAIT_SECONDS, AGENT_VOICES, SPECIALIST_NAMES,
+    SPECIALIST_IDENTITIES, AVATAR_IDS, SPECIALIST_ORDER, POST_INTRO_WAIT,
+    LATERAL_TRANSFER_MAP,
+)
+from prompts import (
+    LANGUAGE_ENFORCEMENT, HOST_PROMPT, SPECIALIST_SYSTEM_PROMPTS,
+    SPECIALIST_INTRODUCTIONS,
+)
+from blackboard import Blackboard, classify_user_handoff_intent, get_specialist_timeout_reason
+from marco_strategist import MarcoStrategist
+
 # Import condicional do plugin Beyond Presence (bey)
 # Degrada graciosamente se o pacote não estiver instalado.
 try:
@@ -131,565 +149,6 @@ logging.getLogger("root").addFilter(_IgnoringStreamFilter())
 
 # Rastreia salas que já possuem um job ativo para rejeitar dispatches duplicados.
 _active_rooms: set[str] = set()
-
-# Modelo Realtime nativo do Gemini (voz-para-voz)
-GEMINI_REALTIME_MODEL = "gemini-2.5-flash-native-audio-preview-12-2025"
-
-# Configurações avançadas do Gemini Realtime
-GEMINI_REALTIME_CONFIG = {
-    "media_resolution": "MEDIUM",
-    "compression_trigger": 104857,
-    "compression_sliding_window": 52428,
-    "speech_config": {
-        "voice_config": {
-            "prebuilt_voice_config": {
-                "voice_name": "Orus",
-            }
-        }
-    }
-}
-
-DATA_PACKET_SCHEMA_VERSION = "1.0"
-ACTIVATION_ACK_TIMEOUT_SECONDS = 8.0
-ACTIVATION_DONE_TIMEOUT_SECONDS = 300.0
-ACTIVATION_DEBOUNCE_SECONDS = 0.8
-SPECIALIST_GENERATION_TIMEOUT_SECONDS = 60.0
-SPECIALIST_SILENCE_TIMEOUT_SECONDS = 60.0
-SPECIALIST_MAX_TURN_TIMEOUT_SECONDS = 1800.0
-HOST_GENERATE_REPLY_TIMEOUT_SECONDS = 60.0   # Timeout para cada generate_reply da Nathália
-CONTEXT_RECENT_WINDOW = 12
-SPECIALIST_READY_WAIT_SECONDS = 70.0  # Tempo máximo aguardando agent_ready (especialistas levam até ~60s na retomada)
-
-# Vozes por agente (Gemini TTS nativo)
-AGENT_VOICES: dict[str, str] = {
-    "host":  "Aoede",    # Nathália – feminina suave
-    "cfo":   "Charon",   # Carlos   – masculina grave
-    "legal": "Orus",   # Daniel   – masculina formal
-    "cmo":   "Puck",     # Rodrigo  – masculina dinâmica
-    "cto":   "Kore",     # Ana      – feminina técnica
-    "plan":  "Fenrir",   # Marco    – masculina autoritativa (reusa Fenrir pois o Gemini tem 5 vozes)
-}
-
-# Nomes de exibição para cada agente
-SPECIALIST_NAMES: dict[str, str] = {
-    "cfo":   "Carlos (CFO & VC)",
-    "legal": "Daniel (CLO & Compliance)",
-    "cmo":   "Rodrigo (CMO & Growth)",
-    "cto":   "Ana (CTO & IA)",
-    "plan":  "Marco (Estrategista)",
-}
-
-# IDs de identity no LiveKit para cada especialista
-SPECIALIST_IDENTITIES: dict[str, str] = {
-    "cfo":   "agent-cfo",
-    "legal": "agent-legal",
-    "cmo":   "agent-cmo",
-    "cto":   "agent-cto",
-    "plan":  "agent-plan",
-}
-
-# IDs dos avatares Beyond Presence mapeados por agente.
-# Regra atual do produto: somente a Nathália usa avatar.
-# Os demais especialistas atuam por voz, e o Marco opera só nos bastidores.
-# Fonte: https://docs.livekit.io/agents/models/avatar/plugins/bey/
-AVATAR_IDS: dict[str, str] = {
-    "host": os.getenv("BEY_AVATAR_ID_HOST", ""),  # Nathália
-}
-
-# Frases de apresentação individual de cada specialist_id
-SPECIALIST_INTRODUCTIONS: dict[str, str] = {
-    "cfo": (
-        "Olá! Sou o Carlos, CFO e Especialista em Captação de Capital da equipe Hive Mind. "
-        "Meu trabalho é transformar números em clareza estratégica e atração de recursos: cuidarei das suas "
-        "projeções financeiras, estrutura de custos, precificação e viabilidade de investimentos. "
-        "Não se preocupe com planilhas — estou aqui para deixar tudo simples e alavancado."
-    ),
-    "legal": (
-        "Olá! Sou o Daniel, CLO e Especialista em Compliance. "
-        "Vou garantir que sua empresa cresça de forma blindada e inovadora: "
-        "desde a escolha do tipo societário ideal até contratos, LGPD e proteção intelectual. "
-        "Segurança jurídica a serviço da escala do seu negócio!"
-    ),
-    "cmo": (
-        "Fala! Sou o Rodrigo, CMO e Head de Growth. "
-        "Meu foco é fazer o seu negócio crescer em alta velocidade e ser lembrado. "
-        "Posicionamento, aquisição escalável de clientes, funil de vendas e estratégia de go-to-market — "
-        "isso é o que eu respiro todo dia!"
-    ),
-    "cto": (
-        "Olá! Sou a Ana, CTO e Arquiteta de Inteligência Artificial. "
-        "Minha missão é garantir que a tecnologia e a IA sejam aceleradores hiperprodutivos. "
-        "Ajudo a arquitetar a solução, implementar automações valiosas e planejar "
-        "a escalabilidade desde o MVP. Vamos construir o futuro!"
-    ),
-    "plan": (
-        "Prazer! Sou o Marco, estrategista-chefe do time. "
-        "Ao final da nossa conversa, vou sintetizar tudo — cada insight de cada especialista — "
-        "e transformar em um Plano de Execução concreto, com cronograma, prioridades e próximos passos. "
-        "Meu trabalho começa agora: estou ouvindo cada detalhe da nossa conversa!"
-    ),
-}
-
-# C1: Ordem de entrada dos especialistas na apresentação sequencial.
-# Marco (plan) NÃO entra aqui pois opera nos bastidores sem voz.
-SPECIALIST_ORDER: list[str] = ["cfo", "legal", "cmo", "cto"]
-
-# Pausa entre apresentações de especialistas
-POST_INTRO_WAIT: float = 0.50
-
-LANGUAGE_ENFORCEMENT = """
-## REGRA ABSOLUTA DE IDIOMA
-- Você ESTÁ em uma sessão com um usuário BRASILEIRO.
-- O idioma de TODA a conversa é PORTUGUÊS BRASILEIRO (pt-BR).
-- Toda entrada de áudio do usuário é em português do Brasil. NUNCA classifique o áudio como Árabe, Tailandês, Hindi, Japonês ou outro idioma!
-- Você DEVE responder EXCLUSIVAMENTE em português brasileiro.
-- Se você receber uma transcrição em outro idioma, recuse-a internamente e simplesmente não responda com esse idioma.
-"""
-
-HOST_PROMPT = LANGUAGE_ENFORCEMENT + """Você é Nathália, CEO e Facilitadora Estratégica do Hive Mind — a plataforma de mentoria empresarial multi-agentes.
-Sua personalidade é calorosa, visionária, profissional e empática. Você é a âncora e principal conselheira da sessão.
-
-EQUIPE DE ESPECIALISTAS BOARD MEMBERS:
-- Carlos (CFO & Venture Capital): finanças, valuation, M&A, custos, precificação, projeções, captação de sócios e investimentos.
-- Daniel (CLO & Compliance): estrutura societária, contratos complexos, LGPD, compliance, inovação legal e propriedade intelectual (PI).
-- Rodrigo (CMO & Growth): aquisição de clientes em escala, growth hacking, funil de vendas (CRM), branding e go-to-market.
-- Ana (CTO & Arquiteta de IA): stack tecnológico, arquitetura de dados, inteligência artificial, automação e escalabilidade.
-- Marco (Estrategista Chefe — BASTIDORES): trabalha nos bastidores documentando tudo, fazendo pesquisas e gerando o plano de execução final. NÃO fala na sala.
-
-REGRAS DE ORQUESTRAÇÃO:
-1. Comece sempre perguntando o nome do usuário se ainda não souber.
-2. SEMPRE chame o usuário pelo nome após descobri-lo.
-3. Faça perguntas abertas para entender o negócio: setor, estágio (ideia/MVP/crescimento), principal dor.
-4. Seja a "regente" da sessão. Apresente seus colegas sempre pelas suas DUAS atribuições de excelência.
-5. Mantenha suas falas curtas e diretas (máximo 3 frases por turno).
-6. NUNCA responda por um especialista — sempre acione-os via função.
-7. Quando o tema for financeiro, captação ou precificação → use acionar_carlos_cfo.
-8. Quando o tema for jurídico, sociedades ou LGPD → use acionar_daniel_advogado.
-9. Quando o tema for marketing, vendas, métricas CAC/LTV ou aquisição → use acionar_rodrigo_cmo.
-10. Quando o tema for tecnologia, IA, engenharia ou produto digital → use acionar_ana_cto.
-11. Quando o usuário pedir encerramento, resumo ou plano → use gerar_plano_execucao.
-12. Quando o usuário pedir análise SWOT, Canvas, pitch, proposta ou contrato → use gerar_documento_personalizado.
-13. Quando o usuário quiser dados do mercado, concorrência ou tendências → use pesquisar_mercado_setor.
-14. Quando o usuário quiser abrir empresa, regularizar, emitir nota fiscal → use gerar_checklist_abertura_empresa.
-15. Quando o usuário perguntar sobre INPI, CNPJ, LGPD, BNDES, NFS-e, tributos → use gerar_orientacao_orgao_publico.
-16. Quando o usuário precisar de um contrato de prestação de serviços, parceria, etc. → use gerar_modelo_contrato.
-17. Quando o usuário quiser apresentar o negocio para investidores ou parceiros → use gerar_pitch_deck.
-18. Se precisar cobrir múltiplos temas em sequencia, acione cada especialista separadamente.
-19. RETOMADA: Se você perceber que há histórico de conversa anterior, comece dizendo que está retomando.
-
-REGRAS CRÍTICAS DE SILÊNCIO DURANTE HANDOVER:
-20. ANTES de acionar uma ferramenta de especialista, diga UMA frase curta apresentando-o. Exemplo: "Vou chamar o Carlos para te ajudar com isso!". Depois acione a ferramenta IMEDIATAMENTE.
-21. Quando a ferramenta retornar com sucesso, NÃO FALE ABSOLUTAMENTE NADA. O especialista JÁ ESTÁ FALANDO com o usuário. Qualquer palavra sua vai ATROPELAR o especialista.
-22. Se a ferramenta retornar "ESPECIALISTA_ATIVADO", isso significa SUCESSO ABSOLUTO. O especialista está conversando com o usuário. Fique em SILÊNCIO TOTAL.
-23. NUNCA diga frases como "Enquanto o X resolve..." ou "Vou chamar outro enquanto isso" após o acionamento bem-sucedido. O especialista JÁ ESTÁ ATIVO.
-24. Você só deve voltar a falar quando o especialista DEVOLVER A PALAVRA para você (a ferramenta vai retornar "ESPECIALISTA_DEVOLVEU").
-25. Se a ferramenta retornar erro ou timeout, aí sim explique ao usuário e ofereça alternativa.
-26. HANDOVER: Quando você aciona um especialista, ele assumirá a conversa diretamente com o usuário por múltiplos turnos. Você ficará em SILÊNCIO ABSOLUTO esperando ele devolver a palavra. NÃO interrompa.
-27. MARCO NOS BASTIDORES: Quando acionar o Marco via qualquer ferramenta gerar_*, avise ao usuário que o Marco está preparando o documento nos bastidores e que chegará em instantes. Exemplo: "Vou pedir ao Marco para preparar isso agora nos bastidores!"
-28. PROATIVIDADE DOCUMENTAL: Se a mentoria render discussões muito produtivas, ou se passaram cerca de 20 minutos de sessão, tenha a iniciativa de dizer: "Vou pedir para nosso Estrategista Marco já documentar esses insights de agora num arquivo pra você ter na tela". E, em seguida, acione a ferramenta gerar_plano_execucao (ou a que for mais adequada).
-
-MODO OUVINTE (SALA COM MÚLTIPLOS HUMANOS):
-- A sala pode ter convidados (sócios, diretores) além do usuário principal.
-- Se os humanos estiverem debatendo ideias livremente entre si, assuma postura de OUVINTE SILENCIOSA.
-- NÃO interrompa debates humanos. Fale SOMENTE quando:
-  a) Alguém se dirigir diretamente a você ou à equipe ("Nathália...", "Pessoal...", "O que vocês acham?").
-  b) Houver um silêncio prolongado indicando que esperam sua intervenção.
-  c) Um especialista devolver a palavra para você.
-
-TOM E ESTILO:
-- Português do Brasil, informal mas profissional.
-- Seja encorajadora: valide as ideias do usuário antes de fazer perguntas.
-- Use o nome do usuário com frequência para criar conexão.
-- Ao encaminhar para um especialista, apresente-o brevemente antes de acionar.
-
-RESPONSABILIDADE E REALISMO:
-- Trate cada projeto com seriedade e responsabilidade profissional absoluta.
-- NUNCA faça promessas milagrosas ou gere expectativas irreais de resultados.
-- Seja honesta sobre desafios, riscos e a complexidade real de empreender.
-- Baseie orientações em dados, evidências e experiências reais de mercado.
-- Se não souber algo com certeza, reconheça a limitação e sugira fontes confiáveis.
-- Valorize o esforço do usuário sem criar ilusões de sucesso garantido.
-- Aborde cada negócio com a mesma diligência que um conselho administrativo faria.
-- Alerte sobre custos reais, prazos realistas e a complexidade de cada decisão.
-
-Fale sempre em português do Brasil."""
-
-SPECIALIST_SYSTEM_PROMPTS: dict[str, str] = {
-    "cfo": LANGUAGE_ENFORCEMENT + (
-        "Você é Carlos, CFO e Especialista em Captação de Capital (Venture Capital) do Hive Mind. "
-        "Sua personalidade: analítico, direto, confiante. Você transforma números em clareza estratégica e alavancagem de negócios. "
-        "\n\nREGRAS ABSOLUTAS:\n"
-        "- AGUARDE em silêncio total. Só fale quando Nathália te acionar explicitamente.\n"
-        "- Ao ser acionado, NÃO cumprimente longamente — vá direto ao ponto.\n"
-        "- Use SEMPRE o nome do usuário se souber (veja o contexto da sessão).\n"
-        "- Responda de forma objetiva e profissional.\n"
-        "- Sempre termine com uma pergunta ou insight que aprofunde a análise.\n"
-        "- VOCÊ PODE conversar LIVREMENTE com o usuário por múltiplos turnos. Não precisa se limitar a 1 resposta.\n"
-        "\nHANDOVER — REGRAS DE DEVOLUÇÃO:\n"
-        "- IMPORTANTE: NÃO devolva rapidamente para a Nathália! Converse com o usuário por múltiplos turnos.\n"
-        "- Somente use `devolver_para_nathalia` quando o usuário disser EXPLICITAMENTE uma dessas frases: "
-        "'não tenho mais dúvidas', 'entendi tudo', 'ficou tudo claro', 'pode voltar para a Nathália', "
-        "'pode continuar', 'obrigado, era isso'. A ferramenta BLOQUEIA automaticamente se o usuário não confirmou.\n"
-        "- Nas suas primeiras respostas, sempre termine perguntando algo (ex: 'Ficou claro?', 'Tem alguma dúvida sobre essa parte?').\n"
-        "- EXCEÇÃO: Se o usuário fizer uma pergunta que pertence CLARAMENTE à área de outro especialista "
-        "(ex: jurídico, marketing, tecnologia), você pode usar `transferir_para_especialista` passando o ID do colega e o contexto da pergunta. "
-        "Antes de transferir, FALE EM VOZ ALTA que vai repassar (ex: 'Vou repassar essa questão jurídica ao Daniel.').\n"
-        "- IDs dos colegas: daniel_advogado (jurídico), rodrigo_cmo (marketing), ana_cto (tecnologia).\n"
-        "\nÁREAS DE DOMÍNIO: estrutura de custos, precificação (cost-plus, value-based, freemium), "
-        "projeções de receita (MRR, ARR, LTV, CAC), ponto de equilíbrio, fontes de capital "
-        "(bootstrapping, angel, venture, crédito), unit economics, fluxo de caixa e burn rate.\n"
-        "\nRESPONSABILIDADE E REALISMO:\n"
-        "- Não prometa retornos financeiros específicos nem garanta viabilidade sem dados concretos.\n"
-        "- Apresente cenários (otimista, realista, pessimista) com premissas claras e transparentes.\n"
-        "- Sempre alerte sobre riscos financeiros reais, custos ocultos e armadilhas comuns de cada modelo.\n"
-        "- Use benchmarks de mercado quando disponíveis, não números inventados ou otimistas demais.\n"
-        "- Se faltar informação para uma projeção confiável, peça os dados ao usuário antes de estimar.\n"
-        "- Trate o negócio do usuário com a mesma seriedade que trataria um investimento próprio.\n"
-        "\nFale em português do Brasil."
-    ),
-    "legal": LANGUAGE_ENFORCEMENT + (
-        "Você é Daniel, CLO (Chief Legal Officer) e Especialista em Compliance do Hive Mind. "
-        "Sua personalidade: formal mas acessível, preciso, protetor. Você é o guardião jurídico e de conformidade do negócio. "
-        "\n\nREGRAS ABSOLUTAS:\n"
-        "- AGUARDE em silêncio total. Só fale quando Nathália te acionar explicitamente.\n"
-        "- Ao ser acionado, seja direto — explique o tema jurídico de forma simples e prática.\n"
-        "- Use SEMPRE o nome do usuário se souber (veja o contexto da sessão).\n"
-        "- Nunca use juridiquês desnecessário.\n"
-        "- Sempre sinalize os riscos e como mitigá-los.\n"
-        "- VOCÊ PODE conversar LIVREMENTE com o usuário por múltiplos turnos. Não precisa se limitar a 1 resposta.\n"
-        "\nHANDOVER — REGRAS DE DEVOLUÇÃO:\n"
-        "- IMPORTANTE: NÃO devolva rapidamente para a Nathália! Converse com o usuário por múltiplos turnos.\n"
-        "- Somente use `devolver_para_nathalia` quando o usuário disser EXPLICITAMENTE uma dessas frases: "
-        "'não tenho mais dúvidas', 'entendi tudo', 'ficou tudo claro', 'pode voltar para a Nathália', "
-        "'pode continuar', 'obrigado, era isso'. A ferramenta BLOQUEIA automaticamente se o usuário não confirmou.\n"
-        "- Nas suas primeiras respostas, sempre termine perguntando algo (ex: 'Ficou claro?', 'Tem alguma dúvida sobre essa parte?').\n"
-        "- EXCEÇÃO: Se o usuário fizer uma pergunta que pertence CLARAMENTE à área de outro especialista "
-        "(ex: finanças, marketing, tecnologia), você pode usar `transferir_para_especialista` passando o ID do colega e o contexto da pergunta. "
-        "Antes de transferir, FALE EM VOZ ALTA que vai repassar (ex: 'Essa questão financeira é com o Carlos, vou passar pra ele.').\n"
-        "- IDs dos colegas: carlos_cfo (finanças), rodrigo_cmo (marketing), ana_cto (tecnologia).\n"
-        "\nÁREAS DE DOMÍNIO: tipos societários (MEI, EIRELI, LTDA, SA), vesting e acordos de sócios, "
-        "contratos de prestação de serviço, LGPD e tratamento de dados, propriedade intelectual e registro de marca, "
-        "compliance fiscal e trabalhista, termos de uso e políticas de privacidade.\n"
-        "\nRESPONSABILIDADE E REALISMO:\n"
-        "- Sempre reforce que suas orientações são educativas e NÃO substituem consultoria jurídica formal.\n"
-        "- Alerte sobre riscos legais concretos e suas consequências reais (multas, processos, bloqueios).\n"
-        "- Não minimize a complexidade de processos burocráticos — seja transparente sobre prazos e custos.\n"
-        "- Recomende SEMPRE que o usuário valide decisões jurídicas críticas com um advogado presencial.\n"
-        "- Cite legislação real e atualizada sempre que possível (Código Civil, CLT, LGPD, etc.).\n"
-        "- Trate a segurança jurídica do usuário como prioridade máxima em cada orientação.\n"
-        "\nFale em português do Brasil."
-    ),
-    "cmo": LANGUAGE_ENFORCEMENT + (
-        "Você é Rodrigo, CMO e Head de Growth Hacking do Hive Mind. "
-        "Sua personalidade: energético, criativo, orientado a resultados. Você pensa em funil, conversão, escala e tração agressiva. "
-        "\n\nREGRAS ABSOLUTAS:\n"
-        "- AGUARDE em silêncio total. Só fale quando Nathália te acionar explicitamente.\n"
-        "- Ao ser acionado, seja prático e inspirador — fale em estratégias concretas.\n"
-        "- Use SEMPRE o nome do usuário se souber (veja o contexto da sessão).\n"
-        "- Use exemplos reais quando possível.\n"
-        "- Termine com um insight acionável que o usuário possa aplicar imediatamente.\n"
-        "- VOCÊ PODE conversar LIVREMENTE com o usuário por múltiplos turnos. Não precisa se limitar a 1 resposta.\n"
-        "\nHANDOVER — REGRAS DE DEVOLUÇÃO:\n"
-        "- IMPORTANTE: NÃO devolva rapidamente para a Nathália! Converse com o usuário por múltiplos turnos.\n"
-        "- Somente use `devolver_para_nathalia` quando o usuário disser EXPLICITAMENTE uma dessas frases: "
-        "'não tenho mais dúvidas', 'entendi tudo', 'ficou tudo claro', 'pode voltar para a Nathália', "
-        "'pode continuar', 'obrigado, era isso'. A ferramenta BLOQUEIA automaticamente se o usuário não confirmou.\n"
-        "- Nas suas primeiras respostas, sempre termine perguntando algo (ex: 'Ficou claro?', 'Tem alguma dúvida sobre essa parte?').\n"
-        "- EXCEÇÃO: Se o usuário fizer uma pergunta que pertence CLARAMENTE à área de outro especialista "
-        "(ex: finanças, jurídico, tecnologia), você pode usar `transferir_para_especialista` passando o ID do colega e o contexto da pergunta. "
-        "Antes de transferir, FALE EM VOZ ALTA que vai repassar (ex: 'Essa parte tecnológica é com a Ana, vou passar pra ela.').\n"
-        "- IDs dos colegas: carlos_cfo (finanças), daniel_advogado (jurídico), ana_cto (tecnologia).\n"
-        "\nÁREAS DE DOMÍNIO: posicionamento e proposta de valor, ICP (Ideal Customer Profile), "
-        "funil de aquisição (topo/meio/fundo), estratégia de conteúdo, SEO e performance, "
-        "growth hacking, branding e identidade visual, pricing psicológico, "
-        "go-to-market para B2B e B2C, parcerias e canais de distribuição.\n"
-        "\nRESPONSABILIDADE E REALISMO:\n"
-        "- Não prometa crescimento explosivo sem justificar com dados e benchmarks reais do setor.\n"
-        "- Apresente estratégias com estimativas de custo, tempo e esforço necessários para execução.\n"
-        "- Alerte sobre os riscos de cada canal (dependência de plataforma, custos de CAC crescentes, etc.).\n"
-        "- Diferencie entre táticas de curto prazo e estratégias sustentáveis de longo prazo.\n"
-        "- Seja honesto quando uma estratégia exigir investimento significativo ou equipe dedicada.\n"
-        "- Trate o posicionamento do negócio do usuário com rigor e profundidade analítica.\n"
-        "\nFale em português do Brasil."
-    ),
-    "cto": LANGUAGE_ENFORCEMENT + (
-        "Você é Ana, CTO e Arquiteta de Inteligência Artificial do Hive Mind. "
-        "Sua personalidade: técnica mas acessível, pragmática, focada em velocidade, automação de IA e escalabilidade. "
-        "\n\nREGRAS ABSOLUTAS:\n"
-        "- AGUARDE em silêncio total. Só fale quando Nathália te acionar explicitamente.\n"
-        "- Ao ser acionada, seja objetiva — traduza técnico em estratégico.\n"
-        "- Use SEMPRE o nome do usuário se souber (veja o contexto da sessão).\n"
-        "- Evite siglas sem explicar.\n"
-        "- Sempre avalie custo-benefício de cada decisão tecnológica.\n"
-        "- VOCÊ PODE conversar LIVREMENTE com o usuário por múltiplos turnos. Não precisa se limitar a 1 resposta.\n"
-        "\nHANDOVER — REGRAS DE DEVOLUÇÃO:\n"
-        "- IMPORTANTE: NÃO devolva rapidamente para a Nathália! Converse com o usuário por múltiplos turnos.\n"
-        "- Somente use `devolver_para_nathalia` quando o usuário disser EXPLICITAMENTE uma dessas frases: "
-        "'não tenho mais dúvidas', 'entendi tudo', 'ficou tudo claro', 'pode voltar para a Nathália', "
-        "'pode continuar', 'obrigado, era isso'. A ferramenta BLOQUEIA automaticamente se o usuário não confirmou.\n"
-        "- Nas suas primeiras respostas, sempre termine perguntando algo (ex: 'Ficou claro?', 'Tem alguma dúvida sobre essa parte?').\n"
-        "- EXCEÇÃO: Se o usuário fizer uma pergunta que pertence CLARAMENTE à área de outro especialista "
-        "(ex: finanças, jurídico, marketing), você pode usar `transferir_para_especialista` passando o ID do colega e o contexto da pergunta. "
-        "Antes de transferir, FALE EM VOZ ALTA que vai repassar (ex: 'Essa questão de custos é com o Carlos, vou passar pra ele.').\n"
-        "- IDs dos colegas: carlos_cfo (finanças), daniel_advogado (jurídico), rodrigo_cmo (marketing).\n"
-        "\nÁREAS DE DOMÍNIO: escolha de stack tecnológico (web, mobile, backend), "
-        "arquitetura de produto (monolito vs microsserviços, serverless), "
-        "planejamento de MVP (mínimo viável e iterável), infraestrutura cloud (AWS, GCP, Azure), "
-        "segurança e performance, estimativas de desenvolvimento, "
-        "ferramentas no-code/low-code vs desenvolvimento customizado.\n"
-        "\nRESPONSABILIDADE E REALISMO:\n"
-        "- Não subestime a complexidade de desenvolvimento — seja transparente sobre prazos reais.\n"
-        "- Apresente trade-offs claros entre custo, velocidade e qualidade de cada solução técnica.\n"
-        "- Alerte sobre dívida técnica, manutenção contínua e custos de infraestrutura recorrentes.\n"
-        "- Recomende soluções proporcionais ao estágio do negócio (não sugira sistemas enterprise para MVPs).\n"
-        "- Se a tecnologia sugerida exigir expertise específica, informe sobre o custo de contratação.\n"
-        "- Trate cada decisão técnica com o rigor de quem construirá e manterá o sistema.\n"
-        "\nFale em português do Brasil."
-    ),
-    "plan": LANGUAGE_ENFORCEMENT + (
-        "Você é Marco, Estrategista-Chefe e Documentador do Hive Mind. "
-        "Você opera EXCLUSIVAMENTE nos bastidores — NUNCA fala na sala de voz. "
-        "Sua personalidade: visionário, organizado, investigador e metódico. "
-        "\n\nSEU PAPEL:\n"
-        "- Você escuta TODA a conversa entre os especialistas e o usuário.\n"
-        "- Você documenta, pesquisa e formaliza tudo o que foi discutido.\n"
-        "- Você gera QUALQUER tipo de documento empresarial que o usuário precisar.\n"
-        "- Você faz pesquisas adicionais para enriquecer as recomendações.\n"
-        "- Para processos em órgãos públicos, você ORIENTA e EXPLICA — não gera documentos oficiais.\n"
-        "\n\nDOCUMENTOS QUE VOCÊ PODE GERAR:\n"
-        "1. Plano de Execução Estratégico completo (8 seções, KPIs, riscos, cronograma)\n"
-        "2. Análise SWOT (forças, fraquezas, oportunidades, ameaças + cruzamentos estratégicos)\n"
-        "3. Business Model Canvas (9 blocos completos com análise de viabilidade)\n"
-        "4. Pitch Deck (12 slides estruturados para investidores/parceiros)\n"
-        "5. Proposta Comercial (profissional, persuasiva, com SLA e garantias)\n"
-        "6. Modelo de Contrato (prestacâo de servicos, parceria, confidencialidade etc.)\n"
-        "7. Pesquisa de Mercado (TAM/SAM/SOM, PESTEL, competidores, ICP)\n"
-        "8. Guias de Processos Públicos (CNPJ, INPI, LGPD, NFS-e, BNDES, Simples Nacional)\n"
-        "\n\nPROCESSOS EM ÓRGÃOS PÚBLICOS (guias explicativos):\n"
-        "- Abertura de empresa: CNPJ, Junta Comercial, Alvará, MEI/LTDA/SA\n"
-        "- Registro de marca: INPI, classes NCL, prazos, custos\n"
-        "- Enquadramento tributário: Simples Nacional, Lucro Presumido, MEI\n"
-        "- Adequação LGPD: ANPD, encarregado, ROPA, base legal\n"
-        "- Nota Fiscal: NFS-e, NF-e, regras por município\n"
-        "- Crédito público: BNDES, Pronampe, Finep, Inova Simples\n"
-        "\nRESPONSABILIDADE E REALISMO:\n"
-        "- Gere documentos com dados realistas e embasados, nunca com projeções fantasiosas.\n"
-        "- Inclua sempre seções de riscos e contingências com cenários adversos concretos.\n"
-        "- Cronogramas devem ter prazos alcançáveis, não otimistas demais.\n"
-        "- Orçamentos devem incluir margens de segurança e custos frequentemente esquecidos.\n"
-        "- Pesquisas de mercado devem citar fontes e reconhecer limitações dos dados disponíveis.\n"
-        "- Trate cada documento como se fosse apresentado a um conselho de investidores exigente.\n"
-        "\nFale em português do Brasil. Seja profundo, detalhado e realista."
-    ),
-}
-
-# ============================================================
-@dataclass
-class Blackboard:
-    """
-    Repositório central de contexto compartilhado.
-    Todos os agentes têm referência à mesma instância
-    (passada no construtor), sem necessidade de rede.
-    """
-    project_name: str = ""
-    user_name: str = ""
-    user_query: str = ""
-    active_agent: Optional[str] = None
-    transcript: list[dict] = field(default_factory=list)
-    current_objective: str = ""
-    last_user_question: str = ""
-    user_pain_points: list[str] = field(default_factory=list)
-    decisions: list[str] = field(default_factory=list)
-    pending_items: list[str] = field(default_factory=list)
-    is_active: bool = True
-    specialist_sessions: dict[str, AgentSession] = field(default_factory=dict)
-    specialist_rooms: list[rtc.Room] = field(default_factory=list)
-    documentos_disponiveis: list[str] = field(default_factory=list)
-    last_interaction_at: float = 0.0
-    user_currently_speaking: bool = False
-    marco_triggered: bool = False
-    orchestration_metrics: dict[str, float] = field(default_factory=lambda: {
-        "activations_total": 0,
-        "activations_succeeded": 0,
-        "activations_timeout": 0,
-        "activations_cancelled": 0,
-        "activation_ack_latency_ms_total": 0,
-        "activation_done_latency_ms_total": 0,
-    })
-
-    def add_message(self, role: str, content: str) -> None:
-        self.last_interaction_at = monotonic()
-        self.transcript.append({"role": role, "content": content})
-        self._update_memory(role, content)
-        logger.debug(f"[Blackboard] [{role}]: {content[:80]}...")
-
-    def mark_user_activity(self) -> None:
-        self.last_interaction_at = monotonic()
-
-    def set_user_speaking(self, speaking: bool) -> None:
-        self.user_currently_speaking = speaking
-        self.last_interaction_at = monotonic()
-
-    def _append_unique(self, bucket: list[str], value: str, max_size: int = 10) -> None:
-        normalized = value.strip()
-        if not normalized:
-            return
-        lowered = normalized.lower()
-        if any(existing.lower() == lowered for existing in bucket):
-            return
-        bucket.append(normalized)
-        if len(bucket) > max_size:
-            del bucket[:-max_size]
-
-    def _update_memory(self, role: str, content: str) -> None:
-        text = content.strip()
-        if not text:
-            return
-        role_lower = role.lower()
-        if role_lower == "usuário":
-            if not self.user_query:
-                self.user_query = text
-            if "?" in text:
-                self.last_user_question = text
-            lowered = text.lower()
-            if any(k in lowered for k in ("dor", "dificuld", "problema", "trav", "desafio")):
-                self._append_unique(self.user_pain_points, text, max_size=6)
-            if any(k in lowered for k in ("objetivo", "meta", "quero", "preciso", "planejo")):
-                self.current_objective = text
-        elif role in SPECIALIST_NAMES.values() or role == "Nathália":
-            lowered = text.lower()
-            if any(k in lowered for k in ("decisão", "decid", "recomend", "sugiro", "prior")):
-                self._append_unique(self.decisions, text, max_size=8)
-            if any(k in lowered for k in ("próximo passo", "fazer", "ação", "execut", "pendente")):
-                self._append_unique(self.pending_items, text, max_size=8)
-
-    def get_context_summary(self) -> str:
-        """Retorna um resumo do contexto atual para injetar nos prompts."""
-        parts: list[str] = []
-        if self.user_name:
-            parts.append(f"Usuário: {self.user_name}")
-        if self.project_name:
-            parts.append(f"Projeto: {self.project_name}")
-        if self.user_query:
-            parts.append(f"Necessidade do usuário: {self.user_query}")
-        if self.current_objective:
-            parts.append(f"Objetivo atual: {self.current_objective}")
-        if self.last_user_question:
-            parts.append(f"Última pergunta do usuário: {self.last_user_question}")
-        if self.decisions:
-            parts.append("Decisões registradas:")
-            for item in self.decisions[-4:]:
-                parts.append(f"- {item}")
-        if self.pending_items:
-            parts.append("Pendências registradas:")
-            for item in self.pending_items[-4:]:
-                parts.append(f"- {item}")
-        recent = self.transcript[-CONTEXT_RECENT_WINDOW:]
-        if recent:
-            parts.append("--- Conversa Recente ---")
-            for msg in recent:
-                parts.append(f"[{msg['role']}]: {msg['content']}")
-        return "\n".join(parts)
-
-    def get_structured_context(self) -> dict:
-        return {
-            "user_name": self.user_name,
-            "project_name": self.project_name,
-            "user_query": self.user_query,
-            "current_objective": self.current_objective,
-            "last_user_question": self.last_user_question,
-            "pain_points": self.user_pain_points[-6:],
-            "decisions": self.decisions[-8:],
-            "pending_items": self.pending_items[-8:],
-            "active_agent": self.active_agent,
-            "recent_messages": self.transcript[-CONTEXT_RECENT_WINDOW:],
-        }
-
-    def get_full_transcript(self) -> str:
-        return "\n\n".join(f"[{m['role']}]: {m['content']}" for m in self.transcript)
-
-    def get_last_user_message(self) -> str:
-        for message in reversed(self.transcript):
-            if message.get("role") == "Usuário":
-                return (message.get("content") or "").strip()
-        return ""
-
-
-def _normalize_handoff_text(text: str) -> str:
-    normalized = unicodedata.normalize("NFKD", text or "")
-    return "".join(ch for ch in normalized if not unicodedata.combining(ch)).lower().strip()
-
-
-def classify_user_handoff_intent(text: str) -> Optional[str]:
-    """
-    Classifica se a mensagem do usuário indica fim da conversa com o especialista atual.
-    
-    Usa padrões RegEx baseados em expressões regulares para maior cobertura 
-    linguística de intenções e detecção robusta de frases de encerramento.
-    """
-    normalized = _normalize_handoff_text(text)
-    if not normalized:
-        return None
-
-    # 1. Padrões de conclusão explícita (expressões amplas de fim de dúvida e satisfação)
-    done_patterns = [
-        r"n[aã]o\s+tenho\s+(mais\s+)?(d[uú]vida|pergunta|quest)",
-        r"sem\s+(mais\s+)?(d[uú]vida|pergunta)",
-        r"(ficou|est[aá])\s+(bem\s+)?claro",
-        r"tudo\s+(claro|certo|ok|entendido)",
-        r"era\s+(exatamente\s+)?isso",
-        r"respondeu\s+(tudo|minha\s+pergunta)",
-        r"obrigad[oa]\s*,?\s*(era\s+isso|ficou\s+claro|por\s+tudo|t[aá]\s+[oó]timo|t[aá]\s+bom|pode)",
-        r"pode\s+(seguir|passar|prosseguir|continuar)",
-        r"(j[aá]\s+)?entendi\s+tudo",
-        r"entendido\s*,?\s*pode\s+continuar",
-        r"estou\s+satisfeit[oa]",
-        r"satisfez\s+minha\s+d[uú]vida",
-        r"n[aã]o\s+preciso\s+de\s+mais\s+nada",
-        r"por\s+enquanto\s+[ée]\s+s[oó]"
-    ]
-    if any(re.search(p, normalized) for p in done_patterns):
-        return "user_confirmed_done"
-
-    # 2. Padrões de retorno direto para a Nathália
-    host_patterns = [
-        r"pode\s+voltar\s+p(r|ar)a\s+a?\s*nath[aá]lia",
-        r"quero\s+falar\s+com\s+a?\s*nath[aá]lia",
-        r"chama\s+a?\s*nath[aá]lia",
-        r"passa\s+p(r|ar)a\s+a?\s*nath[aá]lia",
-        r"volta\s+p(r|ar)a\s+a?\s*nath[aá]lia",
-        r"quero\s+a?\s*nath[aá]lia",
-        r"fala\s+com\s+a\s+nath[aá]lia"
-    ]
-    if any(re.search(p, normalized) for p in host_patterns):
-        return "user_requested_host"
-
-    # 3. Padrões de mudança radical de assunto
-    topic_patterns = [
-        r"(vamos|quero)\s+mudar\s+de\s+assunto",
-        r"vamos\s+(falar|ir)\s+p(r|ar)a\s+outro\s+(assunto|tema|ponto)",
-        r"(falar|pensar)\s+de\s+outra\s+coisa",
-        r"outro\s+tema\s+agora",
-        r"muda\s+de\s+assunto"
-    ]
-    if any(re.search(p, normalized) for p in topic_patterns):
-        return "topic_change"
-
-    return None
-
-
-def get_specialist_timeout_reason(
-    *,
-    started_at: float,
-    last_interaction_at: float,
-    user_currently_speaking: bool,
-    now: float,
-) -> Optional[str]:
-    if not user_currently_speaking and (now - last_interaction_at) > SPECIALIST_SILENCE_TIMEOUT_SECONDS:
-        return "silence_timeout"
-    if (now - started_at) > SPECIALIST_MAX_TURN_TIMEOUT_SECONDS:
-        return "turn_timeout"
-    return None
 
 async def _safe_publish_data(participant: rtc.LocalParticipant, payload: dict, max_retries: int = 3) -> None:
     """Publica data packets de forma segura com sistema de retries automatizado."""
@@ -993,6 +452,8 @@ class HostAgent(Agent):
         self._specialist_ready_events: dict[str, asyncio.Event] = {
             sid: asyncio.Event() for sid in ["cfo", "legal", "cmo", "cto"]
         }
+        # Marco Strategist: geração de documentos desacoplada via ProcessPool
+        self._marco = MarcoStrategist(blackboard, self._publish_packet)
 
     # ------------------------------------------------------------------
     # Controle de áudio da Nathália — silencia durante turno de especialista
@@ -1135,9 +596,10 @@ class HostAgent(Agent):
             
             logger.info(f"[Host] Acionando especialista: {spec_id} | turno={turn_id} | contexto: {context} | lateral_from={_lateral_from_name or 'Nathália'}")
             
-            # Delay mais longo (4s) para garantir que a Nathália termine de falar
-            # a frase de apresentação antes que o especialista assuma.
-            await asyncio.sleep(4)
+            # Delay para garantir que a Nathália termine de falar a frase de
+            # apresentação do especialista antes que ele assuma o microfone.
+            # 5s dá margem para frases longas sem cortar a Nathália.
+            await asyncio.sleep(5)
 
             # SILENCIA a Nathália ANTES de enviar o packet
             # Impede que o Gemini da Nathália intercepte o áudio do usuário
@@ -1312,34 +774,10 @@ class HostAgent(Agent):
         return await self._activate_specialist("cto", questao)
 
     async def gerar_plano_forcado(self, user_name: str, project_name: str):
+        """Aciona a geração do Plano de Execução pelo Marco (non-blocking via ProcessPool)."""
         self._blackboard.marco_triggered = True
-        logger.info("[Marco] Acionando LLM (Gemini 2.5 Pro + Search) para gerar Plano de Execução...")
-        self._blackboard.add_message("Sistema", f"Marco iniciou a pesquisa e o processamento do Plano para {user_name}...")
-
-        await self._emit_marco_working("Marco iniciou as pesquisas de mercado...", 5)
-        await asyncio.sleep(2.0)
-        markdown_plan = await self._generate_markdown_plan_with_agent(user_name, project_name)
-
-        await self._emit_marco_working("Convertendo Plano de Execução para PDF...", 88)
-        pdf_base64: str | None = None
-        try:
-            from pdf_generator import generate_pdf
-            loop = asyncio.get_running_loop()
-            pdf_bytes = await loop.run_in_executor(None, generate_pdf, markdown_plan, project_name, user_name)
-            pdf_base64 = "data:application/pdf;base64," + base64.b64encode(pdf_bytes).decode("utf-8")
-            logger.info(f"[Marco] PDF gerado com sucesso ({len(pdf_bytes)} bytes).")
-        except Exception as pdf_err:
-            logger.warning(f"[Marco] Falha ao gerar PDF — usando markdown: {pdf_err}")
-
-        try:
-            packet: dict = {"type": "execution_plan", "plan": markdown_plan, "text": markdown_plan}
-            if pdf_base64:
-                packet["pdf_base64"] = pdf_base64
-            await self._publish_packet(packet)
-            await self._emit_marco_working("Plano de Execução pronto! ✅", 100)
-            logger.info("[Marco] Plano de Execução publicado (bastidores).")
-        except Exception as e:
-            logger.warning(f"[Marco] Erro ao publicar plano: {e}")
+        logger.info("[Marco] Delegando geração do Plano ao ProcessPool via MarcoStrategist...")
+        await self._marco.gerar_plano_execucao(user_name, project_name)
 
     @function_tool
     async def gerar_plano_execucao(
@@ -1363,7 +801,7 @@ class HostAgent(Agent):
         )
 
     # ------------------------------------------------------------------
-    # NOVAS FERRAMENTAS DO MARCO — Documentador Completo
+    # FERRAMENTAS DO MARCO → Delegação ao MarcoStrategist (ProcessPool)
     # ------------------------------------------------------------------
 
     @function_tool
@@ -1409,27 +847,13 @@ class HostAgent(Agent):
         }
         doc_title = titulos.get(doc_type, tipo_documento.replace("_", " ").title())
 
-        async def _background_task():
-            logger.info(f"[Marco] Gerando documento '{doc_type}' para {user_name}...")
-            self._blackboard.add_message("Sistema", f"Marco iniciou geração de {doc_title} para {user_name}...")
-
-            markdown_doc = await self._generate_custom_document(
-                doc_type=doc_type,
-                doc_title=doc_title,
-                user_name=user_name,
-                project_name=project_name,
+        async def _bg():
+            await self._marco.gerar_documento_personalizado(
+                doc_type=doc_type, doc_title=doc_title,
+                user_name=user_name, project_name=project_name,
                 extra_context=descricao_contexto,
             )
-
-            await self._publish_document_packet(
-                doc_type=doc_type,
-                doc_title=doc_title,
-                markdown_content=markdown_doc,
-                user_name=user_name,
-                project_name=project_name,
-            )
-
-        asyncio.create_task(_background_task())
+        asyncio.create_task(_bg())
 
         return (
             f"MARCO_ACIONADO: Você acionou o Marco para preparar: {doc_title}. "
@@ -1454,28 +878,14 @@ class HostAgent(Agent):
         user_name = self._blackboard.user_name or "empreendedor"
         project_name = self._blackboard.project_name or "seu projeto"
 
-        async def _background_task():
-            logger.info(f"[Marco] Pesquisando mercado: {setor} | {pergunta_especifica}")
-            self._blackboard.add_message("Sistema", f"Marco iniciou pesquisa de mercado sobre '{setor}'...")
-
+        async def _bg():
             extra_context = f"Setor pesquisado: {setor}\nFoco da pesquisa: {pergunta_especifica}"
-            markdown_doc = await self._generate_custom_document(
-                doc_type="pesquisa_mercado",
-                doc_title="Pesquisa de Mercado",
-                user_name=user_name,
-                project_name=project_name,
+            await self._marco.gerar_documento_personalizado(
+                doc_type="pesquisa_mercado", doc_title="Pesquisa de Mercado",
+                user_name=user_name, project_name=project_name,
                 extra_context=extra_context,
             )
-
-            await self._publish_document_packet(
-                doc_type="pesquisa_mercado",
-                doc_title=f"Pesquisa de Mercado — {setor}",
-                markdown_content=markdown_doc,
-                user_name=user_name,
-                project_name=project_name,
-            )
-
-        asyncio.create_task(_background_task())
+        asyncio.create_task(_bg())
 
         return (
             f"MARCO_ACIONADO: A pesquisa sobre '{setor}' já está rodando em paralelo. "
@@ -1498,27 +908,14 @@ class HostAgent(Agent):
         user_name = self._blackboard.user_name or "empreendedor"
         project_name = self._blackboard.project_name or "seu projeto"
 
-        async def _background_task():
+        async def _bg():
             orgao_processo = f"Abertura de Empresa ({tipo_empresa})"
-            logger.info(f"[Marco] Gerando guia de abertura de empresa: {tipo_empresa}")
-            self._blackboard.add_message("Sistema", f"Marco iniciou guia de abertura de empresa ({tipo_empresa})...")
-
-            markdown_doc = await self._generate_public_agency_guidance(
+            await self._marco.gerar_orientacao_orgao_publico(
                 orgao_processo=orgao_processo,
-                contexto=f"Tipo de empresa: {tipo_empresa}. Contexto do negócio: {self._blackboard.get_context_summary()[:800]}",
-                user_name=user_name,
-                project_name=project_name,
+                contexto=f"Tipo de empresa: {tipo_empresa}. Contexto: {self._blackboard.get_context_summary()[:800]}",
+                user_name=user_name, project_name=project_name,
             )
-
-            await self._publish_document_packet(
-                doc_type="orientacao_orgao",
-                doc_title=f"Guia: Abertura de Empresa — {tipo_empresa}",
-                markdown_content=markdown_doc,
-                user_name=user_name,
-                project_name=project_name,
-            )
-
-        asyncio.create_task(_background_task())
+        asyncio.create_task(_bg())
 
         return (
             f"MARCO_ACIONADO: Você avisou ao Marco para preparar o guia de Abertura ({tipo_empresa}). "
@@ -1551,26 +948,12 @@ class HostAgent(Agent):
         user_name = self._blackboard.user_name or "empreendedor"
         project_name = self._blackboard.project_name or "seu projeto"
 
-        async def _background_task():
-            logger.info(f"[Marco] Gerando orientação sobre: {orgao_processo}")
-            self._blackboard.add_message("Sistema", f"Marco preparando guia sobre '{orgao_processo}'...")
-
-            markdown_doc = await self._generate_public_agency_guidance(
-                orgao_processo=orgao_processo,
-                contexto=contexto_adicional,
-                user_name=user_name,
-                project_name=project_name,
+        async def _bg():
+            await self._marco.gerar_orientacao_orgao_publico(
+                orgao_processo=orgao_processo, contexto=contexto_adicional,
+                user_name=user_name, project_name=project_name,
             )
-
-            await self._publish_document_packet(
-                doc_type="orientacao_orgao",
-                doc_title=f"Guia: {orgao_processo}",
-                markdown_content=markdown_doc,
-                user_name=user_name,
-                project_name=project_name,
-            )
-
-        asyncio.create_task(_background_task())
+        asyncio.create_task(_bg())
 
         return (
             f"MARCO_ACIONADO: Você avisou ao Marco sobre '{orgao_processo}' e ele está extraindo as orientais na rede em background. "
@@ -1599,38 +982,20 @@ class HostAgent(Agent):
         user_name = self._blackboard.user_name or "empreendedor"
         project_name = self._blackboard.project_name or "seu projeto"
 
-        async def _background_task():
-            logger.info(f"[Marco] Gerando modelo de contrato: {tipo_contrato} | partes: {partes_envolvidas}")
-            self._blackboard.add_message("Sistema", f"Marco preparando modelo de contrato de {tipo_contrato}...")
-
+        async def _bg():
             extra_context = (
                 f"Tipo de contrato: {tipo_contrato}\n"
                 f"Partes envolvidas: {partes_envolvidas}\n"
                 f"Contexto do negócio: {self._blackboard.get_context_summary()[:600]}"
             )
-
-            markdown_doc = await self._generate_custom_document(
+            await self._marco.gerar_documento_personalizado(
                 doc_type="modelo_contrato",
                 doc_title=f"Modelo de Contrato — {tipo_contrato.title()}",
-                user_name=user_name,
-                project_name=project_name,
+                user_name=user_name, project_name=project_name,
                 extra_context=extra_context,
-                extra_vars={
-                    "tipo_contrato": tipo_contrato,
-                    "tipo_contrato_upper": tipo_contrato.upper(),
-                    "partes": partes_envolvidas,
-                },
+                extra_vars={"tipo_contrato": tipo_contrato, "tipo_contrato_upper": tipo_contrato.upper(), "partes": partes_envolvidas},
             )
-
-            await self._publish_document_packet(
-                doc_type="modelo_contrato",
-                doc_title=f"Modelo de Contrato — {tipo_contrato.title()}",
-                markdown_content=markdown_doc,
-                user_name=user_name,
-                project_name=project_name,
-            )
-
-        asyncio.create_task(_background_task())
+        asyncio.create_task(_bg())
 
         return (
             f"MARCO_ACIONADO: Você falou com Marco e ele já redigirá o modelo do contrato para os dados deste cenário. "
@@ -1653,602 +1018,19 @@ class HostAgent(Agent):
         user_name = self._blackboard.user_name or "empreendedor"
         project_name = self._blackboard.project_name or "seu projeto"
 
-        async def _background_task():
-            logger.info(f"[Marco] Gerando Pitch Deck para {publico_alvo}...")
-            self._blackboard.add_message("Sistema", f"Marco preparando Pitch Deck para {publico_alvo}...")
-
-            extra_context = f"Público-alvo da apresentação: {publico_alvo}"
-            markdown_doc = await self._generate_custom_document(
-                doc_type="pitch_deck",
-                doc_title="Pitch Deck",
-                user_name=user_name,
-                project_name=project_name,
-                extra_context=extra_context,
+        async def _bg():
+            await self._marco.gerar_documento_personalizado(
+                doc_type="pitch_deck", doc_title="Pitch Deck",
+                user_name=user_name, project_name=project_name,
+                extra_context=f"Público-alvo da apresentação: {publico_alvo}",
                 extra_vars={"publico": publico_alvo},
             )
-
-            await self._publish_document_packet(
-                doc_type="pitch_deck",
-                doc_title=f"Pitch Deck — {project_name}",
-                markdown_content=markdown_doc,
-                user_name=user_name,
-                project_name=project_name,
-            )
-
-        asyncio.create_task(_background_task())
+        asyncio.create_task(_bg())
 
         return (
             f"MARCO_ACIONADO: Marco começou a arquitetar o esquema do Pitch Deck em background. "
             f"Avise que está no processo em andamento e gerando em PDF."
         )
-
-    # ------------------------------------------------------------------
-    # MÉTODOS INTERNOS DO MARCO — Geração de documentos nos bastidores
-    # ------------------------------------------------------------------
-
-    async def _emit_marco_working(self, status: str, progress: int) -> None:
-        """Publica um data packet de progresso para o frontend exibir feedback visual."""
-        try:
-            await self._publish_packet({
-                "type": "marco_working",
-                "status": status,
-                "progress": max(0, min(100, progress)),
-            })
-        except Exception as e:
-            logger.debug(f"[Marco] Erro ao emitir progresso: {e}")
-
-    async def _run_web_search(self, query: str) -> str:
-        """Executa pesquisa no DuckDuckGo e retorna os resultados como texto."""
-        if DDGS is None:
-            return ""
-        try:
-            def _sync_search():
-                return list(DDGS().text(query, max_results=4, region="br-pt"))
-                
-            loop = asyncio.get_running_loop()
-            raw_res = await loop.run_in_executor(None, _sync_search)
-            
-            resultados = []
-            for res in raw_res:
-                resultados.append(f"Título: {res.get('title')}\nTrecho: {res.get('body')}")
-                
-            if resultados:
-                return "\n\n--- DADOS PESQUISADOS NA WEB ---\n" + "\n\n".join(resultados)
-        except Exception as e:
-            logger.warning(f"[Marco] Erro na pesquisa web: {e}")
-        return ""
-
-    async def _generate_custom_document(
-        self,
-        doc_type: str,
-        doc_title: str,
-        user_name: str,
-        project_name: str,
-        extra_context: str = "",
-        extra_vars: Optional[dict] = None,
-    ) -> str:
-        """
-        Gerador polimórfico: recebe o tipo de documento, monta o prompt correto,
-        faz pesquisa web e chama o Gemini para gerar o Markdown.
-        """
-        from google import genai
-        from google.genai import types
-        from pdf_generator import DOCUMENT_PROMPTS
-
-        await self._emit_marco_working(f"Marco está pesquisando sobre {doc_title}...", 10)
-
-        # Pesquisa web contextual
-        full_transcript = self._blackboard.get_full_transcript()
-        search_query_prompt = (
-            f"Projeto '{project_name}', documento '{doc_title}'. "
-            f"Contexto adicional: {extra_context[:300]}. "
-            f"Gere APENAS UMA QUERY curta para busca no Google sobre este mercado/tema. SEM TEXTO ADICIONAL."
-        )
-        web_context = ""
-        try:
-            client = genai.Client(api_key=get_gemini_api_key())
-            loop = asyncio.get_running_loop()
-
-            def _get_query():
-                return client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=search_query_prompt,
-                    config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=60),
-                )
-            q_resp = await loop.run_in_executor(None, _get_query)
-            search_q = q_resp.text.strip().replace('"', "").replace("'", "").strip()[:100]
-            if len(search_q) < 10:
-                search_q = f"{project_name} {doc_title} mercado Brasil"
-                logger.warning(f"[Marco] Query muito curta para {doc_type} — usando fallback: {search_q}")
-            else:
-                logger.info(f"[Marco] Web search query para {doc_type}: {search_q}")
-            web_context = await self._run_web_search(search_q)
-        except Exception as e:
-            logger.warning(f"[Marco] Erro ao gerar query de pesquisa: {e}")
-
-        await self._emit_marco_working(f"Gerando {doc_title}...", 40)
-
-        # Monta o transcript enriquecido
-        transcript_enriched = (
-            f"Usuário: {user_name}\n"
-            f"Projeto: {project_name}\n"
-            f"Informação adicional: {extra_context}\n"
-            f"{web_context}\n\n"
-            f"{full_transcript}"
-        )
-
-        # Recupera o prompt base para este tipo de documento
-        prompt_template, _ = DOCUMENT_PROMPTS.get(doc_type, (None, None))
-        if prompt_template is None:
-            logger.warning(f"[Marco] Tipo de documento desconhecido: {doc_type}. Usando execution_plan.")
-            prompt_template, _ = DOCUMENT_PROMPTS["execution_plan"]
-
-        # Preenche variáveis do template
-        fmt_vars = {
-            "transcript": transcript_enriched,
-            "projeto": project_name,
-            "user_name": user_name,
-            "setor": extra_context[:80] if extra_context else project_name,
-            "publico": extra_vars.get("publico", "investidores") if extra_vars else "investidores",
-            "tipo_contrato": extra_vars.get("tipo_contrato", "prestação de serviços") if extra_vars else "prestação de serviços",
-            "tipo_contrato_upper": extra_vars.get("tipo_contrato_upper", "PRESTAÇÃO DE SERVIÇOS") if extra_vars else "PRESTAÇÃO DE SERVIÇOS",
-            "partes": extra_vars.get("partes", "as partes envolvidas") if extra_vars else "as partes envolvidas",
-            "orgao_processo": extra_context[:120] if extra_context else "processos empresariais",
-        }
-        try:
-            prompt = prompt_template.format(**fmt_vars)
-        except KeyError as ke:
-            logger.warning(f"[Marco] Chave ausente no template {doc_type}: {ke}. Usando formato parcial.")
-            prompt = prompt_template.replace("{transcript}", transcript_enriched)
-
-        await self._emit_marco_working(f"Redigindo {doc_title} com IA...", 65)
-
-        # Geração com Gemini
-        markdown_result = ""
-        try:
-            client_gen = genai.Client(api_key=get_gemini_api_key())
-            loop = asyncio.get_running_loop()
-
-            def _call_llm():
-                return client_gen.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        temperature=0.65,
-                        max_output_tokens=32000,
-                    ),
-                )
-            resp = await loop.run_in_executor(None, _call_llm)
-            markdown_result = resp.text.strip()
-            # Remove wrapper de código se o LLM adicionar
-            for prefix in ("```markdown", "```"):
-                if markdown_result.startswith(prefix):
-                    markdown_result = markdown_result[len(prefix):]
-            if markdown_result.endswith("```"):
-                markdown_result = markdown_result[:-3]
-            markdown_result = markdown_result.strip()
-            logger.info(f"[Marco] {doc_title} gerado: {len(markdown_result)} chars.")
-        except Exception as e:
-            logger.error(f"[Marco] Erro ao gerar {doc_title}: {e}")
-            markdown_result = f"# {doc_title}\n\nErro ao gerar documento. Por favor, tente novamente.\n\nContexto: {project_name} — {user_name}"
-
-        await self._emit_marco_working(f"Convertendo {doc_title} para PDF...", 85)
-        return markdown_result
-
-    async def _generate_public_agency_guidance(
-        self,
-        orgao_processo: str,
-        contexto: str,
-        user_name: str,
-        project_name: str,
-    ) -> str:
-        """
-        Gerador especializado para guias de órgãos públicos.
-        Usa o ORIENTACAO_ORGAO_PROMPT com pesquisa web intensiva.
-        """
-        from google import genai
-        from google.genai import types
-        from pdf_generator import ORIENTACAO_ORGAO_PROMPT
-
-        await self._emit_marco_working(f"Marco pesquisando sobre {orgao_processo}...", 15)
-
-        # Pesquisa web direcionada ao processo público
-        web_context = await self._run_web_search(f"{orgao_processo} Brasil 2024 passo a passo")
-        web_context += await self._run_web_search(f"{orgao_processo} custos taxas portais oficiais")
-
-        await self._emit_marco_working(f"Elaborando guia detalhado: {orgao_processo}...", 50)
-
-        full_transcript = self._blackboard.get_full_transcript()
-        transcript_enriched = (
-            f"Usuário: {user_name}\n"
-            f"Projeto: {project_name}\n"
-            f"Processo solicitado: {orgao_processo}\n"
-            f"Contexto adicional: {contexto}\n"
-            f"{web_context}\n\n"
-            f"{full_transcript[:3000]}"
-        )
-
-        fmt_vars = {
-            "transcript": transcript_enriched,
-            "orgao_processo": orgao_processo,
-            "projeto": project_name,
-            "user_name": user_name,
-        }
-        try:
-            prompt = ORIENTACAO_ORGAO_PROMPT.format(**fmt_vars)
-        except KeyError as ke:
-            logger.warning(f"[Marco] Chave ausente em ORIENTACAO_ORGAO_PROMPT: {ke}")
-            prompt = ORIENTACAO_ORGAO_PROMPT.replace("{transcript}", transcript_enriched)
-
-        markdown_result = ""
-        try:
-            client = genai.Client(api_key=get_gemini_api_key())
-            loop = asyncio.get_running_loop()
-
-            def _call_llm():
-                return client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        temperature=0.5,
-                        max_output_tokens=24000,
-                    ),
-                )
-            resp = await loop.run_in_executor(None, _call_llm)
-            markdown_result = resp.text.strip()
-            for prefix in ("```markdown", "```"):
-                if markdown_result.startswith(prefix):
-                    markdown_result = markdown_result[len(prefix):]
-            if markdown_result.endswith("```"):
-                markdown_result = markdown_result[:-3]
-            markdown_result = markdown_result.strip()
-            logger.info(f"[Marco] Guia '{orgao_processo}' gerado: {len(markdown_result)} chars.")
-        except Exception as e:
-            logger.error(f"[Marco] Erro ao gerar guia '{orgao_processo}': {e}")
-            markdown_result = (
-                f"# Guia: {orgao_processo}\n\n"
-                f"Não foi possível gerar o guia completo neste momento. "
-                f"Por favor, consulte o portal gov.br para informações oficiais sobre {orgao_processo}.\n\n"
-                f"**Link:** https://www.gov.br"
-            )
-
-        await self._emit_marco_working(f"Finalizando guia...", 85)
-        return markdown_result
-
-    async def _publish_document_packet(
-        self,
-        doc_type: str,
-        doc_title: str,
-        markdown_content: str,
-        user_name: str,
-        project_name: str,
-    ) -> None:
-        """
-        Converte o Markdown em PDF e publica o data packet 'document_ready'
-        que o frontend usa para exibir o botão de download.
-        """
-        pdf_base64: Optional[str] = None
-        try:
-            from pdf_generator import generate_pdf
-            loop = asyncio.get_running_loop()
-            pdf_bytes = await loop.run_in_executor(
-                None,
-                lambda: generate_pdf(
-                    markdown_content,
-                    project_name,
-                    user_name,
-                    doc_type=doc_type,
-                    doc_title=doc_title,
-                ),
-            )
-            pdf_base64 = "data:application/pdf;base64," + base64.b64encode(pdf_bytes).decode("utf-8")
-            logger.info(f"[Marco] PDF '{doc_title}' gerado: {len(pdf_bytes)} bytes.")
-        except Exception as e:
-            logger.warning(f"[Marco] Falha ao gerar PDF para '{doc_title}': {e}")
-
-        try:
-            packet: dict = {
-                "type": "document_ready",
-                "doc_type": doc_type,
-                "doc_title": doc_title,
-                "plan": markdown_content,
-                "text": markdown_content,
-            }
-            # Retrocompatibilidade: se for plano de execução, mantém o type antigo também
-            if doc_type == "execution_plan":
-                packet["type"] = "execution_plan"
-
-            if pdf_base64:
-                packet["pdf_base64"] = pdf_base64
-
-            await self._publish_packet(packet)
-            await self._emit_marco_working(f"{doc_title} pronto! ✅", 100)
-            logger.info(f"[Marco] Data packet 'document_ready' publicado para '{doc_title}'.")
-        except Exception as e:
-            logger.warning(f"[Marco] Erro ao publicar document_ready para '{doc_title}': {e}")
-
-    async def _generate_markdown_plan_with_agent(self, user_name: str, project_name: str) -> str:
-        """
-        Fluxo em 2 etapas para gerar o plano de execução com o Marco:
-
-        ETAPA 1 — Draft: Gemini 2.5 Pro + Google Search sintetiza toda a sessão
-                         e gera o Markdown estruturado com as 8 seções obrigatórias.
-
-        ETAPA 2 — Revisão de Completude: Uma segunda chamada ao LLM verifica se
-                  todas as seções críticas (Objetivos SMART, Orçamento concreto,
-                  Cronograma, Responsabilidades, Riscos e Contingências) estão
-                  bem preenchidas. Se não, o LLM detalha o que faltou antes de
-                  retornar a versão final.
-        """
-        from google import genai
-        from google.genai import types
-        from pdf_generator import SUMMARIZATION_PROMPT
-
-        full_transcript = self._blackboard.get_full_transcript()
-
-        # ── PESQUISA DE MERCADO VIA DUCKDUCKGO ───────────────────────────────
-        logger.info("[Marco] Obtendo query de pesquisa de mercado para DDGS...")
-        await self._emit_marco_working("Marco pesquisando dados de mercado na web...", 15)
-        client = genai.Client(api_key=get_gemini_api_key())
-        
-        web_context = ""
-        try:
-            # 1. Obter termo de pesquisa adequado
-            query_prompt = f"Com base no projeto '{project_name}' e nesta transcrição recente:\n{full_transcript[-1500:]}\nGere APENAS UMA QUERY muito curta (ex: 'mercado de tech no brasil tendências') para pesquisarmos no Google. NADA DE TEXTO ADICIONAL."
-            
-            def _call_query():
-                return client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=query_prompt,
-                    config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=60)
-                )
-                
-            loop = asyncio.get_running_loop()
-            query_resp = await loop.run_in_executor(None, _call_query)
-            search_query = query_resp.text.strip().replace("\"", "").replace("'", "").strip()
-            # Fallback se a query gerada for muito curta ou inválida
-            if len(search_query) < 10:
-                search_query = f"{project_name} mercado tendências Brasil 2024"
-                logger.warning(f"[Marco] Query muito curta — usando fallback: {search_query}")
-            else:
-                logger.info(f"[Marco] Query gerada para web search: {search_query}")
-            
-            # 2. Pesquisar na Web com fallback para sincrono em thread
-            logger.info("[Marco] Consultando DuckDuckGo...")
-            resultados_ddgs = []
-            
-            def _do_search():
-                if DDGS is None:
-                    return []
-                return list(DDGS().text(search_query, max_results=3, region="br-pt"))
-
-            raw_results = await loop.run_in_executor(None, _do_search)
-            for res in raw_results:
-                resultados_ddgs.append(f"Título: {res.get('title')}\nTrecho: {res.get('body')}")
-            
-            if resultados_ddgs:
-                web_context = "\n\n--- DADOS PESQUISADOS NA WEB EM TEMPO REAL ---\n" + "\n\n".join(resultados_ddgs)
-                logger.info(f"[Marco] Encontrados {len(resultados_ddgs)} resultados na internet com DDGS.")
-        except Exception as e:
-            logger.warning(f"[Marco] Erro na pesquisa web via DDGS: {e}. Prosseguindo sem dados da internet.")
-            
-        # ── ETAPA 1: Geração do Draft ──────────────────────────────────────────
-        logger.info("[Marco] ETAPA 1 — Gerando Draft com Gemini 3.1 flash-lite-preview + Google Search...")
-        await self._emit_marco_working("Marco redigindo o Plano de Execução com IA...", 40)
-
-        draft_prompt = SUMMARIZATION_PROMPT.format(
-            transcript=(
-                f"Usuário: {user_name}\n"
-                f"Projeto: {project_name}\n"
-                f"{web_context}\n\n"
-                f"{full_transcript}"
-            )
-        )
-
-        draft_text: str = ""
-        try:
-            client = genai.Client(api_key=get_gemini_api_key())
-
-            def _call_draft():
-                return client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=draft_prompt,
-                    config=types.GenerateContentConfig(
-                        temperature=0.65,
-                        max_output_tokens=66000,
-                        # tools=[{"google_search": {}}],  # Removido em favor do DDGS customizado
-                    ),
-                )
-
-            loop = asyncio.get_running_loop()
-            draft_resp = await loop.run_in_executor(None, _call_draft)
-            draft_text = draft_resp.text.strip()
-            # Remove wrapper de código se o LLM adicionar
-            for prefix in ("```markdown", "```"):
-                if draft_text.startswith(prefix):
-                    draft_text = draft_text[len(prefix):]
-            if draft_text.endswith("```"):
-                draft_text = draft_text[:-3]
-            draft_text = draft_text.strip()
-            logger.info(f"[Marco] Draft gerado: {len(draft_text)} chars.")
-        except Exception as e:
-            logger.error(f"[Marco] ETAPA 1 falhou: {e}. Usando fallback estático.")
-            return self._generate_markdown_plan(user_name, project_name)
-
-        # ── ETAPA 2: Revisão de Completude ────────────────────────────────────
-        logger.info("[Marco] ETAPA 2 — Executando revisão de completude e coerência...")
-        await self._emit_marco_working("Marco revisando e enriquecendo o plano...", 68)
-
-        VALIDATION_SECTIONS = [
-            "Objetivos SMART (Específicos, Mensuráveis, Atingíveis, Relevantes, com Prazo)",
-            "Roadmap Financeiro com valores concretos em R$",
-            "Estrutura Jurídica Recomendada",
-            "Estratégia de Marketing e Vendas com canais e métricas",
-            "Arquitetura Técnica com stack e estimativa de tempo",
-            "Cronograma de Execução com divisão de responsabilidades",
-            "KPIs e Métricas de Sucesso com metas numéricas",
-            "Riscos E seus Planos de Contingência (não apenas mitigação)",
-            "Checklist de Ações Imediatas com responsável e prazo por ação",
-        ]
-        sections_list = "\n".join(f"  {idx+1}. {s}" for idx, s in enumerate(VALIDATION_SECTIONS))
-
-        review_prompt = (
-            f"Você é Marco, Estrategista-Chefe do Hive Mind, revisando seu próprio trabalho.\n\n"
-            f"Abaixo está o PLANO que você gerou na etapa anterior.\n\n"
-            f"## CHECKLIST DE COMPLETUDE OBRIGATÓRIO\n"
-            f"Verifique ITEM A ITEM se as seguintes seções estão presentes, detalhadas e com dados concretos:\n"
-            f"{sections_list}\n\n"
-            f"## SUA TAREFA:\n"
-            f"1. Para cada seção faltante ou superficial, DETALHE-A com dados precisos.\n"
-            f"2. Garanta que valores financeiros têm números reais (não 'a definir').\n"
-            f"3. Garanta que o cronograma tem responsáveis nomeados para cada ação.\n"
-            f"4. Garanta que cada risco tem UM plano de mitigação E UM plano de contingência.\n\n"
-            f"## INSTRUÇÃO FINAL:\n"
-            f"Retorne O PLANO COMPLETO E CORRIGIDO em formato MARKDOWN.\n"
-            f"Não adicione introdução, apenas o documento Markdown revisado.\n\n"
-            f"--- PLANO ORIGINAL ---\n"
-            f"{draft_text}\n"
-            f"--- FIM DO PLANO ORIGINAL ---"
-        )
-
-        final_text = draft_text  # fallback: se revisão falhar, usa o draft
-        try:
-            def _call_review():
-                return client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=review_prompt,
-                    config=types.GenerateContentConfig(
-                        temperature=0.5,
-                        max_output_tokens=66000,
-                    ),
-                )
-
-            review_resp = await loop.run_in_executor(None, _call_review)
-            reviewed = review_resp.text.strip()
-            for prefix in ("```markdown", "```"):
-                if reviewed.startswith(prefix):
-                    reviewed = reviewed[len(prefix):]
-            if reviewed.endswith("```"):
-                reviewed = reviewed[:-3]
-            reviewed = reviewed.strip()
-            if len(reviewed) >= len(draft_text) * 0.8:  # revisão deve ser ao menos 80% do draft
-                final_text = reviewed
-                logger.info(f"[Marco] Revisão aprovada: {len(final_text)} chars.")
-            else:
-                logger.warning("[Marco] Revisão muito curta — mantendo draft original.")
-        except Exception as e:
-            logger.warning(f"[Marco] ETAPA 2 (revisão) falhou: {e}. Usando Draft sem revisão.")
-
-        return final_text
-
-    def _generate_markdown_plan(self, user_name: str, project_name: str) -> str:
-        """Gera documento Markdown secundário apenas se o LLM falhar."""
-        from datetime import datetime
-        now = datetime.now().strftime("%d/%m/%Y às %H:%M")
-
-        transcript_lines = self._blackboard.transcript
-        cfo_insights = [m["content"] for m in transcript_lines if "Carlos" in m.get("role", "")]
-        legal_insights = [m["content"] for m in transcript_lines if "Daniel" in m.get("role", "")]
-        cmo_insights = [m["content"] for m in transcript_lines if "Rodrigo" in m.get("role", "")]
-        cto_insights = [m["content"] for m in transcript_lines if "Ana" in m.get("role", "")]
-        user_messages = [m["content"] for m in transcript_lines if m.get("role") == "Usuário"]
-
-        def fmt_insights(items: list) -> str:
-            if not items:
-                return "_Nenhuma análise registrada para esta área._"
-            return "\n".join(f"- {item[:300]}" for item in items[:5])
-
-        user_context = (
-            "\n".join(f"- {u[:200]}" for u in user_messages[:10])
-            if user_messages else "_Sem mensagens registradas._"
-        )
-
-        return f"""# 📋 Plano de Execução — Hive Mind
-
-**Usuário:** {user_name}
-**Sessão:** {project_name}
-**Gerado em:** {now}
-
----
-
-## 1. 🎯 Resumo Executivo
-
-Esta sessão de mentoria reuniu um time completo de especialistas para analisar o projeto de **{user_name}** sob diferentes perspectivas: financeira, jurídica, marketing e tecnologia.
-
-**Principais pontos levantados pelo usuário:**
-{user_context}
-
----
-
-## 2. 📊 Diagnóstico por Área
-
-### 💰 Finanças — Carlos (CFO)
-{fmt_insights(cfo_insights)}
-
-### ⚖️ Jurídico — Daniel (Advogado)
-{fmt_insights(legal_insights)}
-
-### 📣 Marketing & Crescimento — Rodrigo (CMO)
-{fmt_insights(cmo_insights)}
-
-### 💻 Tecnologia & Produto — Ana (CTO)
-{fmt_insights(cto_insights)}
-
----
-
-## 3. 🚨 Prioridades Críticas
-
-> As prioridades abaixo foram definidas com base nos temas discutidos durante a sessão.
-
-1. **Validação do modelo de negócio** — Confirmar demanda real antes de qualquer investimento.
-2. **Estrutura jurídica adequada** — Formalizar a empresa e proteger propriedade intelectual.
-3. **Go-to-market enxuto** — Iniciar com um canal de aquisição principal, medir e escalar.
-4. **MVP tecnológico** — Construir o mínimo viável para testar hipóteses com usuários reais.
-5. **Fluxo de caixa positivo** — Garantir faturamento antes de escalar custos.
-
----
-
-## 4. 📅 Cronograma Sugerido
-
-- **30 dias:** Formalizar empresa, definir ICP e proposta de valor (Jurídico + Estratégia)
-- **60 dias:** Lançar MVP ou versão beta, iniciar primeiras vendas (Produto + Vendas)
-- **90 dias:** Validar unit economics - CAC, LTV - e ajustar pricing (Financeiro + Marketing)
-- **6 meses:** Escalar canal principal de marketing (Growth + Operações)
-- **12 meses:** Expandir produto/equipe, avaliar captação externa (Estratégia + Financeiro)
-
----
-
-## 5. ⚠️ Riscos e Mitigações
-
-- **Falta de tração com clientes:**
-  - *Mitigação:* Validar antes de construir, fazer vendas manuais primeiro.
-- **Burn rate elevado:**
-  - *Mitigação:* Manter operação enxuta, priorizar receita sobre crescimento.
-- **Problemas jurídicos futuros:**
-  - *Mitigação:* Regularizar desde o início com suporte jurídico especializado.
-
----
-
-## 6. ✅ Próximos Passos Imediatos (Esta Semana)
-
-- [ ] Escrever a proposta de valor em 1 frase clara
-- [ ] Identificar os 10 primeiros potenciais clientes para contato direto
-- [ ] Escolher o modelo societário adequado (MEI, LTDA, etc.)
-- [ ] Mapear os custos fixos e variáveis do negócio
-- [ ] Definir o escopo mínimo do MVP e tecnologia necessária
-
----
-
-## 7. 💬 Mensagem Final
-
-*"{user_name}, você já deu o passo mais importante: buscou perspectivas diferentes e fez as perguntas certas. Agora é hora de executar com foco e disciplina. Lembre-se: os melhores negócios não nasceram perfeitos — foram construídos iteração por iteração. O time Hive Mind está aqui quando precisar!"*
-
-— **Marco, Estrategista-Chefe · Hive Mind**
-
----
-
-*Documento gerado automaticamente pela plataforma **Hive Mind** com base na sessão de mentoria realizada em {now}.*
-"""
 
 # =============================================================
 # Helper: inicia uma AvatarSession da Beyond Presence para um agente
