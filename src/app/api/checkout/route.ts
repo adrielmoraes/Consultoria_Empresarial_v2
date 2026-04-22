@@ -1,13 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe, STRIPE_PRICES } from "@/lib/stripe";
+import { auth } from "@/auth";
 
 export async function POST(request: NextRequest) {
   try {
-    const { planId, priceId, userId, userEmail } = await request.json();
+    // SEGURANÇA: userId e email extraídos da sessão autenticada do servidor.
+    // Impede que um hacker pague com seu cartão mas credite outro userId.
+    const session = await auth();
 
-    if (!userId) {
-      return NextResponse.json({ error: "Dados incompletos" }, { status: 400 });
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Não autenticado. Faça login para continuar." },
+        { status: 401 }
+      );
     }
+
+    const userId = session.user.id;
+    const userEmail = session.user.email || undefined;
+
+    const { planId, priceId } = await request.json();
 
     // Mapeamento de planId → price real da Stripe
     // Ambos os planos são assinaturas mensais recorrentes (modelo High Ticket)

@@ -2179,7 +2179,11 @@ async def _run_entrypoint(ctx: JobContext) -> None:
         def _get():
             try:
                 logger.info(f"[Resume] Tentando buscar contexto em: {api_url}")
-                req = urllib.request.Request(api_url, headers={"User-Agent": "MentoriaAI-Worker/1.0"})
+                internal_secret = os.getenv("INTERNAL_API_SECRET", "")
+                req = urllib.request.Request(api_url, headers={
+                    "User-Agent": "MentoriaAI-Worker/1.0",
+                    "X-Internal-Secret": internal_secret,
+                })
                 with urllib.request.urlopen(req) as resp:
                     return json.loads(resp.read().decode())
             except Exception as e:
@@ -2753,10 +2757,14 @@ async def _run_entrypoint(ctx: JobContext) -> None:
 
             def _post():
                 try:
+                    internal_secret = os.getenv("INTERNAL_API_SECRET", "")
                     req = urllib.request.Request(
                         api_url,
                         data=payload,
-                        headers={"Content-Type": "application/json"},
+                        headers={
+                            "Content-Type": "application/json",
+                            "X-Internal-Secret": internal_secret,
+                        },
                         method="POST",
                     )
                     with urllib.request.urlopen(req, timeout=5.0):

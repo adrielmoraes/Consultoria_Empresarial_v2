@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { and, asc, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { mentoringSessions, projects, users, executionPlans } from "@/lib/db/schema";
+import { auth } from "@/auth";
+
+// Secret compartilhado entre o worker Python e o Next.js para chamadas server-to-server.
+// Definido em .env como INTERNAL_API_SECRET. Se não definido, chamadas internas serão bloqueadas.
+const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET || "";
 
 export async function GET(
   _request: NextRequest,
@@ -10,12 +15,24 @@ export async function GET(
   const { id } = await params;
 
   try {
+    // SEGURANÇA: Validação híbrida (browser autenticado OU worker interno).
+    const session = await auth();
+    const internalSecret = _request.headers.get("x-internal-secret");
+
+    if (!session?.user?.id && internalSecret !== INTERNAL_API_SECRET) {
+      return NextResponse.json(
+        { error: "Não autenticado." },
+        { status: 401 }
+      );
+    }
+
     const [project] = await db
       .select({
         projectId: projects.id,
         projectTitle: projects.title,
         projectDescription: projects.description,
         userName: users.name,
+        userId: projects.userId,
       })
       .from(projects)
       .innerJoin(users, eq(projects.userId, users.id))
@@ -24,6 +41,11 @@ export async function GET(
 
     if (!project) {
       return NextResponse.json({ error: "Projeto não encontrado" }, { status: 404 });
+    }
+
+    // SEGURANÇA: Se é um browser autenticado, verificar que o projeto pertence ao usuário.
+    if (session?.user?.id && project.userId !== session.user.id) {
+      return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
     }
 
     // Busca TODAS as sessões com transcript (ordenadas da mais antiga → mais recente)
@@ -95,6 +117,29 @@ export async function POST(
   const { id } = await params;
 
   try {
+    // SEGURANÇA: Validação híbrida (browser autenticado OU worker interno).
+    const session = await auth();
+    const internalSecret = request.headers.get("x-internal-secret");
+
+    if (!session?.user?.id && internalSecret !== INTERNAL_API_SECRET) {
+      return NextResponse.json(
+        { error: "Não autenticado." },
+        { status: 401 }
+      );
+    }
+
+    // SEGURANÇA: Se é browser autenticado, verificar ownership do projeto.
+    if (session?.user?.id) {
+      const [proj] = await db
+        .select({ userId: projects.userId })
+        .from(projects)
+        .where(eq(projects.id, id))
+        .limit(1);
+      if (!proj || proj.userId !== session.user.id) {
+        return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
+      }
+    }
+
     const { transcript } = await request.json();
 
     if (typeof transcript !== "string" || !transcript.trim()) {

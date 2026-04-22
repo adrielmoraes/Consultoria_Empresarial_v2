@@ -3,9 +3,20 @@ import { generateLiveKitToken } from "@/lib/livekit";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { auth } from "@/auth";
 
 export async function POST(request: NextRequest) {
   try {
+    // SEGURANÇA: Validar sessão autenticada antes de gerar token.
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Não autenticado. Faça login para continuar." },
+        { status: 401 }
+      );
+    }
+
     const { roomName, participantName, participantIdentity } = await request.json();
 
     if (!roomName || !participantName || !participantIdentity) {
@@ -15,11 +26,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // --- GUARDA DE SALDO: Verificar créditos (minutos) do usuário ---
-    // Extrai o userId bruto do participantIdentity (formato: user-{userId}-{timestamp})
-    // ou usa diretamente caso o frontend tenha enviado apenas o userId.
+    // SEGURANÇA: Garantir que o participantIdentity contém o ID do usuário autenticado.
+    // Impede que alguém forje uma identity com o userId de outro para roubar créditos.
     const userIdMatch = participantIdentity.match(/^user-(.+)-\d+$/);
     const rawUserId = userIdMatch ? userIdMatch[1] : participantIdentity;
+
+    if (rawUserId !== session.user.id) {
+      console.warn(`[Token API] IDOR bloqueado: sessão=${session.user.id}, identity=${rawUserId}`);
+      return NextResponse.json(
+        { error: "Identidade do participante não corresponde ao usuário autenticado." },
+        { status: 403 }
+      );
+    }
+
+    // --- GUARDA DE SALDO: Verificar créditos (minutos) do usuário ---
+    // rawUserId já extraído e validado contra a sessão acima.
 
     const [user] = await db
       .select({ credits: users.credits })

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { projectDocuments } from "@/lib/db/schema";
+import { projectDocuments, projects } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { auth } from "@/auth";
 
 // Como não há pdf-parse ativo ainda garantidamente, extrairemos usando a API basica de buffer ou Gemini nativamente
 export async function POST(
@@ -11,6 +12,25 @@ export async function POST(
   const { id } = await params;
 
   try {
+    // SEGURANÇA: Exigir sessão autenticada e ownership do projeto.
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Não autenticado. Faça login para continuar." },
+        { status: 401 }
+      );
+    }
+
+    const [proj] = await db
+      .select({ userId: projects.userId })
+      .from(projects)
+      .where(eq(projects.id, id))
+      .limit(1);
+
+    if (!proj || proj.userId !== session.user.id) {
+      return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
+    }
     const formData = await request.formData();
     const file = formData.get("file") as File;
 
@@ -61,6 +81,26 @@ export async function GET(
   const { id } = await params;
 
   try {
+    // SEGURANÇA: Exigir sessão autenticada e ownership do projeto.
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Não autenticado. Faça login para continuar." },
+        { status: 401 }
+      );
+    }
+
+    const [proj] = await db
+      .select({ userId: projects.userId })
+      .from(projects)
+      .where(eq(projects.id, id))
+      .limit(1);
+
+    if (!proj || proj.userId !== session.user.id) {
+      return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
+    }
+
     const docs = await db.query.projectDocuments.findMany({
       where: eq(projectDocuments.projectId, id),
       orderBy: (docs, { desc }) => [desc(docs.createdAt)],

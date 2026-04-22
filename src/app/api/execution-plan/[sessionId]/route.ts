@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { executionPlans, mentoringSessions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { auth } from "@/auth";
 
 export async function GET(
   request: NextRequest,
@@ -13,6 +14,16 @@ export async function GET(
 
     if (!sessionId) {
       return NextResponse.json({ error: "sessionId é obrigatório" }, { status: 400 });
+    }
+
+    // SEGURANÇA: Exigir sessão autenticada.
+    const authSession = await auth();
+
+    if (!authSession?.user?.id) {
+      return NextResponse.json(
+        { error: "Não autenticado. Faça login para continuar." },
+        { status: 401 }
+      );
     }
 
     const session = await db.query.mentoringSessions.findFirst({
@@ -28,6 +39,11 @@ export async function GET(
 
     if (!session) {
       return NextResponse.json({ error: "Sessão não encontrada" }, { status: 404 });
+    }
+
+    // SEGURANÇA: Verificar que o projeto da sessão pertence ao usuário autenticado.
+    if (session.project.userId !== authSession.user.id) {
+      return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
     }
 
     const plan = await db.query.executionPlans.findFirst({

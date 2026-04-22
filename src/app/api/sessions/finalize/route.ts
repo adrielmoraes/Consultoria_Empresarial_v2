@@ -2,9 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { mentoringSessions, executionPlans, projects, users } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
+import { auth } from "@/auth";
+
+// Secret compartilhado entre o worker Python e o Next.js para chamadas server-to-server.
+const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET || "";
 
 export async function POST(request: NextRequest) {
   try {
+    // SEGURANÇA: Validação híbrida (browser autenticado OU worker interno).
+    const session = await auth();
+    const internalSecret = request.headers.get("x-internal-secret");
+
+    if (!session?.user?.id && internalSecret !== INTERNAL_API_SECRET) {
+      return NextResponse.json(
+        { error: "Não autenticado." },
+        { status: 401 }
+      );
+    }
+
     const payload = await request.json();
     const { sessionId, transcript } = payload;
 

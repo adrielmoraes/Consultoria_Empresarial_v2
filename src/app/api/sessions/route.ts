@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { mentoringSessions, projects, users } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { AgentDispatchClient, RoomServiceClient } from "livekit-server-sdk";
+import { auth } from "@/auth";
 
 const DISPATCH_DEDUP_WINDOW_MS = 30_000; // 30 segundos
 
@@ -37,11 +38,23 @@ async function getNonAgentParticipantCount(roomName: string): Promise<number | n
 
 export async function POST(request: NextRequest) {
   try {
-    const { projectId, userId } = await request.json();
+    // SEGURANÇA: userId extraído da sessão autenticada do servidor.
+    // Impede que um hacker envie o userId de outra pessoa para gastar seus créditos.
+    const session = await auth();
 
-    if (!projectId || !userId) {
+    if (!session?.user?.id) {
       return NextResponse.json(
-        { error: "projectId e userId são obrigatórios" },
+        { error: "Não autenticado. Faça login para continuar." },
+        { status: 401 }
+      );
+    }
+
+    const userId = session.user.id;
+    const { projectId } = await request.json();
+
+    if (!projectId) {
+      return NextResponse.json(
+        { error: "projectId é obrigatório" },
         { status: 400 }
       );
     }

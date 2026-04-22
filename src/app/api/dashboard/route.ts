@@ -2,14 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { users, projects, mentoringSessions, executionPlans } from "@/lib/db/schema";
 import { eq, inArray, desc } from "drizzle-orm";
+import { auth } from "@/auth";
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.nextUrl.searchParams.get("userId");
+    // SEGURANÇA: userId extraído da sessão autenticada do servidor.
+    // Nunca confiar no userId enviado pelo cliente (previne IDOR).
+    const session = await auth();
 
-    if (!userId) {
-      return NextResponse.json({ error: "userId é obrigatório" }, { status: 400 });
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Não autenticado. Faça login para continuar." },
+        { status: 401 }
+      );
     }
+
+    const userId = session.user.id;
 
     // Query 1: usuário
     const [rawUser] = await db
