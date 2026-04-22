@@ -501,8 +501,8 @@ class SpecialistAgent(Agent):
 
         return (
             f"MARCO_ACIONADO: Você avisou ao Marco nos bastidores. ELE JÁ ESTA TRABALHANDO no Plano de Execução para {user_name}. "
-            f"Gere UMA NOVA FALA AVISANDO O USUÁRIO: diga exatamente que o Marco começou a redigir o plano nos bastidores, "
-            f"fazendo pesquisas e em instantes chegará pronto na tela dele. Seja natural."
+            f"IMPORTANTE: Você DEVE continuar conversando com o usuário. NÃO devolva a palavra agora. "
+            f"Fale para o usuário que o Marco começou a redigir o plano nos bastidores, e pergunte se o usuário tem mais alguma dúvida para você. Seja natural."
         )
 
     @function_tool
@@ -558,7 +558,8 @@ class SpecialistAgent(Agent):
 
         return (
             f"MARCO_ACIONADO: Você acionou o Marco para preparar: {doc_title}. "
-            f"Diga que ele já esta pesquisando e gerando o PDF nos bastidores e em instantes chegará para {user_name}."
+            f"IMPORTANTE: Você DEVE continuar conversando com o usuário. NÃO devolva a palavra agora. "
+            f"Diga que o Marco já está pesquisando e gerando o PDF nos bastidores, e pergunte se o usuário tem mais alguma dúvida para você."
         )
 
     @function_tool
@@ -590,7 +591,8 @@ class SpecialistAgent(Agent):
 
         return (
             f"MARCO_ACIONADO: A pesquisa sobre '{setor}' já está rodando em paralelo. "
-            f"Avise ao {user_name} que o Marco vai coletar os dados na Web e o relatório aparecerá na tela dele."
+            f"IMPORTANTE: Você DEVE continuar conversando com o usuário. NÃO devolva a palavra agora. "
+            f"Avise ao {user_name} que o Marco vai coletar os dados na Web e pergunte se há mais alguma dúvida para você."
         )
 
     @function_tool
@@ -620,7 +622,8 @@ class SpecialistAgent(Agent):
 
         return (
             f"MARCO_ACIONADO: Você avisou ao Marco para preparar o guia de Abertura ({tipo_empresa}). "
-            f"Diga que ele compilara com links, prazos e custos na web, gerando e enviando em background para a tela."
+            f"IMPORTANTE: Você DEVE continuar conversando com o usuário. NÃO devolva a palavra agora. "
+            f"Diga que o Marco já está compilando os dados na web, e pergunte se o usuário tem mais alguma dúvida para você."
         )
 
     @function_tool
@@ -658,7 +661,8 @@ class SpecialistAgent(Agent):
 
         return (
             f"MARCO_ACIONADO: Você avisou ao Marco sobre '{orgao_processo}' e ele está extraindo as orientais na rede em background. "
-            f"Diga que é bom o {user_name} aguardar pois o documento chegará pronto."
+            f"IMPORTANTE: Você DEVE continuar conversando com o usuário. NÃO devolva a palavra agora. "
+            f"Diga que o Marco já está trabalhando nisso, e pergunte se o {user_name} tem mais alguma dúvida para você."
         )
 
     @function_tool
@@ -700,7 +704,8 @@ class SpecialistAgent(Agent):
 
         return (
             f"MARCO_ACIONADO: Você falou com Marco e ele já redigirá o modelo do contrato para os dados deste cenário. "
-            f"Fale que ele está no backstage adaptando e em instantes chegará para {user_name} revisar com advogados reais."
+            f"IMPORTANTE: Você DEVE continuar conversando com o usuário. NÃO devolva a palavra agora. "
+            f"Fale que o Marco está no backstage adaptando o modelo e pergunte se o {user_name} tem mais alguma dúvida para você."
         )
 
     @function_tool
@@ -730,8 +735,49 @@ class SpecialistAgent(Agent):
 
         return (
             f"MARCO_ACIONADO: Marco começou a arquitetar o esquema do Pitch Deck em background. "
-            f"Avise que está no processo em andamento e gerando em PDF."
+            f"IMPORTANTE: Você DEVE continuar conversando com o usuário. NÃO devolva a palavra agora. "
+            f"Avise que o Marco já está gerando o PDF, e pergunte se o usuário tem mais alguma dúvida para você."
         )
+
+    @function_tool
+    async def pesquisar_na_web(
+        self,
+        context: RunContext,
+        query: str,
+    ) -> str:
+        """
+        Realiza uma pesquisa rápida na internet usando o DuckDuckGo em tempo real.
+        Use quando o usuário fizer perguntas sobre dados atualizados, cotações, notícias recentes
+        ou qualquer informação que não esteja no seu contexto pré-treinado.
+        
+        Parâmetros:
+        - query: A frase ou palavra-chave exata para buscar na internet.
+        """
+        try:
+            try:
+                from ddgs import DDGS
+            except ImportError:
+                from duckduckgo_search import DDGS  # type: ignore
+            
+            # Executa a busca em uma thread para não bloquear o event loop
+            import asyncio
+            loop = asyncio.get_running_loop()
+            
+            def _do_search():
+                results = list(DDGS().text(query, max_results=3, region="br-pt"))
+                if results:
+                    parts = [f"Título: {r.get('title')}\nTrecho: {r.get('body')}" for r in results]
+                    return "\n\n--- RESULTADOS DA WEB ---\n" + "\n\n".join(parts)
+                return "A pesquisa não encontrou resultados relevantes."
+                
+            resultados = await loop.run_in_executor(None, _do_search)
+            return (
+                f"RESULTADOS DA WEB OBTIDOS COM SUCESSO.\n"
+                f"{resultados}\n"
+                f"Sintetize a resposta para o usuário de forma natural e pergunte se há mais alguma dúvida."
+            )
+        except Exception as e:
+            return f"Falha ao pesquisar na web: {e}. Diga ao usuário que você está com instabilidade na conexão."
 
 class HostAgent(Agent):
     """
@@ -854,6 +900,46 @@ class HostAgent(Agent):
         """
         logger.info(f"[Host] Consultando documentos: {pergunta}")
         return await _query_documents_with_llm(pergunta, self._blackboard.documentos_disponiveis)
+
+    @function_tool
+    async def pesquisar_na_web(
+        self,
+        context: RunContext,
+        query: str,
+    ) -> str:
+        """
+        Realiza uma pesquisa rápida na internet usando o DuckDuckGo em tempo real.
+        Use quando o usuário fizer perguntas sobre dados atualizados, cotações, notícias recentes
+        ou qualquer informação que não esteja no seu contexto pré-treinado.
+        
+        Parâmetros:
+        - query: A frase ou palavra-chave exata para buscar na internet.
+        """
+        try:
+            try:
+                from ddgs import DDGS
+            except ImportError:
+                from duckduckgo_search import DDGS  # type: ignore
+            
+            # Executa a busca em uma thread para não bloquear o event loop
+            import asyncio
+            loop = asyncio.get_running_loop()
+            
+            def _do_search():
+                results = list(DDGS().text(query, max_results=3, region="br-pt"))
+                if results:
+                    parts = [f"Título: {r.get('title')}\nTrecho: {r.get('body')}" for r in results]
+                    return "\n\n--- RESULTADOS DA WEB ---\n" + "\n\n".join(parts)
+                return "A pesquisa não encontrou resultados relevantes."
+                
+            resultados = await loop.run_in_executor(None, _do_search)
+            return (
+                f"RESULTADOS DA WEB OBTIDOS COM SUCESSO.\n"
+                f"{resultados}\n"
+                f"Sintetize a resposta para o usuário de forma natural e pergunte se há mais alguma dúvida."
+            )
+        except Exception as e:
+            return f"Falha ao pesquisar na web: {e}. Diga ao usuário que você está com instabilidade na conexão."
 
     @function_tool
     async def consultar_historico_mentoria(
@@ -1150,8 +1236,8 @@ class HostAgent(Agent):
 
         return (
             f"MARCO_ACIONADO: Você avisou ao Marco nos bastidores. ELE JÁ ESTA TRABALHANDO no Plano de Execução para {user_name}. "
-            f"Gere UMA NOVA FALA AVISANDO O USUÁRIO: diga exatamente que o Marco começou a redigir o plano nos bastidores, "
-            f"fazendo pesquisas e em instantes chegará pronto na tela dele. Seja natural."
+            f"IMPORTANTE: Você DEVE continuar conversando com o usuário. NÃO devolva a palavra agora. "
+            f"Fale para o usuário que o Marco começou a redigir o plano nos bastidores, e pergunte se o usuário tem mais alguma dúvida para você. Seja natural."
         )
 
     # ------------------------------------------------------------------
@@ -1211,7 +1297,8 @@ class HostAgent(Agent):
 
         return (
             f"MARCO_ACIONADO: Você acionou o Marco para preparar: {doc_title}. "
-            f"Diga que ele já esta pesquisando e gerando o PDF nos bastidores e em instantes chegará para {user_name}."
+            f"IMPORTANTE: Você DEVE continuar conversando com o usuário. NÃO devolva a palavra agora. "
+            f"Diga que o Marco já está pesquisando e gerando o PDF nos bastidores, e pergunte se o usuário tem mais alguma dúvida para você."
         )
 
     @function_tool
@@ -1243,7 +1330,8 @@ class HostAgent(Agent):
 
         return (
             f"MARCO_ACIONADO: A pesquisa sobre '{setor}' já está rodando em paralelo. "
-            f"Avise ao {user_name} que o Marco vai coletar os dados na Web e o relatório aparecerá na tela dele."
+            f"IMPORTANTE: Você DEVE continuar conversando com o usuário. NÃO devolva a palavra agora. "
+            f"Avise ao {user_name} que o Marco vai coletar os dados na Web e pergunte se há mais alguma dúvida para você."
         )
 
     @function_tool
@@ -1273,7 +1361,8 @@ class HostAgent(Agent):
 
         return (
             f"MARCO_ACIONADO: Você avisou ao Marco para preparar o guia de Abertura ({tipo_empresa}). "
-            f"Diga que ele compilara com links, prazos e custos na web, gerando e enviando em background para a tela."
+            f"IMPORTANTE: Você DEVE continuar conversando com o usuário. NÃO devolva a palavra agora. "
+            f"Diga que o Marco já está compilando os dados na web, e pergunte se o usuário tem mais alguma dúvida para você."
         )
 
     @function_tool
@@ -1311,7 +1400,8 @@ class HostAgent(Agent):
 
         return (
             f"MARCO_ACIONADO: Você avisou ao Marco sobre '{orgao_processo}' e ele está extraindo as orientais na rede em background. "
-            f"Diga que é bom o {user_name} aguardar pois o documento chegará pronto."
+            f"IMPORTANTE: Você DEVE continuar conversando com o usuário. NÃO devolva a palavra agora. "
+            f"Diga que o Marco já está trabalhando nisso, e pergunte se o {user_name} tem mais alguma dúvida para você."
         )
 
     @function_tool
@@ -1353,7 +1443,8 @@ class HostAgent(Agent):
 
         return (
             f"MARCO_ACIONADO: Você falou com Marco e ele já redigirá o modelo do contrato para os dados deste cenário. "
-            f"Fale que ele está no backstage adaptando e em instantes chegará para {user_name} revisar com advogados reais."
+            f"IMPORTANTE: Você DEVE continuar conversando com o usuário. NÃO devolva a palavra agora. "
+            f"Fale que o Marco está no backstage adaptando o modelo e pergunte se o {user_name} tem mais alguma dúvida para você."
         )
 
     @function_tool
@@ -1383,7 +1474,8 @@ class HostAgent(Agent):
 
         return (
             f"MARCO_ACIONADO: Marco começou a arquitetar o esquema do Pitch Deck em background. "
-            f"Avise que está no processo em andamento e gerando em PDF."
+            f"IMPORTANTE: Você DEVE continuar conversando com o usuário. NÃO devolva a palavra agora. "
+            f"Avise que o Marco já está gerando o PDF, e pergunte se o usuário tem mais alguma dúvida para você."
         )
 
 # =============================================================
