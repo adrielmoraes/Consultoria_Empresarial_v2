@@ -10,10 +10,10 @@ const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET || "";
 export async function POST(request: NextRequest) {
   try {
     // SEGURANÇA: Validação híbrida (browser autenticado OU worker interno).
-    const session = await auth();
+    const authSession = await auth();
     const internalSecret = request.headers.get("x-internal-secret");
 
-    if (!session?.user?.id && internalSecret !== INTERNAL_API_SECRET) {
+    if (!authSession?.user?.id && internalSecret !== INTERNAL_API_SECRET) {
       return NextResponse.json(
         { error: "Não autenticado." },
         { status: 401 }

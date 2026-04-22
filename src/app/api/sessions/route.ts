@@ -40,16 +40,16 @@ export async function POST(request: NextRequest) {
   try {
     // SEGURANÇA: userId extraído da sessão autenticada do servidor.
     // Impede que um hacker envie o userId de outra pessoa para gastar seus créditos.
-    const session = await auth();
+    const authSession = await auth();
 
-    if (!session?.user?.id) {
+    if (!authSession?.user?.id) {
       return NextResponse.json(
         { error: "Não autenticado. Faça login para continuar." },
         { status: 401 }
       );
     }
 
-    const userId = session.user.id;
+    const userId = authSession.user.id;
     const { projectId } = await request.json();
 
     if (!projectId) {

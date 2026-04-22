@@ -6,17 +6,17 @@ export async function POST(request: NextRequest) {
   try {
     // SEGURANÇA: userId e email extraídos da sessão autenticada do servidor.
     // Impede que um hacker pague com seu cartão mas credite outro userId.
-    const session = await auth();
+    const authSession = await auth();
 
-    if (!session?.user?.id) {
+    if (!authSession?.user?.id) {
       return NextResponse.json(
         { error: "Não autenticado. Faça login para continuar." },
         { status: 401 }
       );
     }
 
-    const userId = session.user.id;
-    const userEmail = session.user.email || undefined;
+    const userId = authSession.user.id;
+    const userEmail = authSession.user.email || undefined;
 
     const { planId, priceId } = await request.json();
 
