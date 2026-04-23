@@ -373,23 +373,15 @@ class SpecialistAgent(Agent):
         Parâmetros:
         - resumo_interacao: Breve resumo (1-2 frases) do que foi resolvido ou combinado, para contextualizar a Nathália.
         """
-        logger.info(
-            f"[{self._name}] ✅ Handoff aprovado → Nathália. "
+        logger.info(f"[{self._name}] ✅ Handoff aprovado → Nathália.")
+        self._blackboard.add_message(
+            self._name,
+            f"Pronto, Nathália! Pode continuar. Resumo do meu atendimento: {resumo_interacao}"
         )
-        self._blackboard.add_message(self._name, f"Pronto, Nathália! Pode continuar. Resumo do meu atendimento: {resumo_interacao}")
         self._handover_result = {
             "type": "nathalia",
             "reason": "specialist_decision",
-            "last_user_message": "Usuário ou especialista encerrou o assunto",
-            "summary": resumo_interacao,
-        }
-        self._handover_event.set()
-        return "Palavra devolvida à Nathália com sucesso. Aguarde em silêncio absoluto."
-        self._blackboard.add_message(self._name, f"Pronto, Nathália! Pode continuar. Resumo do meu atendimento: {resumo_interacao}")
-        self._handover_result = {
-            "type": "nathalia",
-            "reason": handoff_reason,
-            "last_user_message": last_user_message,
+            "last_user_message": self._blackboard.get_last_user_message(),
             "summary": resumo_interacao,
         }
         self._handover_event.set()
@@ -1613,15 +1605,24 @@ async def _start_specialist_in_room(
                 return
             _audio_subscribed = True
 
-            # Delay sincroniza com RealtimeModel pronto para ouvir interrupções
+            # Delay + retry: sincroniza com RealtimeModel e garante que encontramos
+            # as tracks mesmo que o usuário as publique depois da conexão do especialista.
             async def _do_subscribe():
                 await asyncio.sleep(0.15)  # 150ms para RealtimeModel inicializar
-                for p in room.remote_participants.values():
-                    if p.identity.startswith("user-") or p.identity.startswith("guest-"):
-                        for pub in p.track_publications.values():
-                            if pub.kind == rtc.TrackKind.KIND_AUDIO:
-                                pub.set_subscribed(True)
-                logger.info(f"[{name}] Áudio do usuário SUBSCRITO com sucesso (interrupções ATIVAS).")
+                # Retry por até 3s caso o usuário ainda não tenha publicado a track neste room
+                for _sub_attempt in range(6):  # 6 × 0.5s = 3s
+                    subscribed_any = False
+                    for p in room.remote_participants.values():
+                        if p.identity.startswith("user-") or p.identity.startswith("guest-"):
+                            for pub in p.track_publications.values():
+                                if pub.kind == rtc.TrackKind.KIND_AUDIO:
+                                    pub.set_subscribed(True)
+                                    subscribed_any = True
+                    if subscribed_any:
+                        logger.info(f"[{name}] Áudio do usuário SUBSCRITO com sucesso (interrupções ATIVAS).")
+                        return
+                    await asyncio.sleep(0.5)
+                logger.warning(f"[{name}] Nenhuma track de áudio do usuário encontrada após 3s. Especialista pode estar surdo.")
 
             asyncio.create_task(_do_subscribe())
 
@@ -1638,16 +1639,21 @@ async def _start_specialist_in_room(
                             pub.set_subscribed(False)
             logger.info(f"[{name}] Áudio do usuário DESSUBSCRITO (silenciado).")
 
-        # Quando o usuário publicar áudio depois, subscreve SOMENTE se ativado
+        # Quando o usuário publicar áudio depois, subscreve se ativado OU durante boot
         def _on_track_published(publication, participant):
-            if (
-                _audio_subscribed
-                and (participant.identity.startswith("user-") or participant.identity.startswith("guest-"))
-                and publication.kind == rtc.TrackKind.KIND_AUDIO
-            ):
-                publication.set_subscribed(True)
+            is_user = (
+                participant.identity.startswith("user-")
+                or participant.identity.startswith("guest-")
+            )
+            if is_user and publication.kind == rtc.TrackKind.KIND_AUDIO:
+                if _audio_subscribed or _boot_subscribed_flag[0]:
+                    publication.set_subscribed(True)
+
+        # Flag mutável para o handler de track_published detectar boot ativo
+        _boot_subscribed_flag = [False]  # usa lista para ser mutável por closure
 
         room.on("track_published", _on_track_published)
+
 
         connected = False
         for attempt in range(1, MAX_RETRIES + 1):
@@ -1691,12 +1697,26 @@ async def _start_specialist_in_room(
         # O Gemini Realtime precisa "ver" tracks de áudio durante session.start()
         # para acoplar corretamente os pinos VAD internos. Sem isso, o especialista
         # fica "surdo" quando ativado posteriormente via _subscribe_user_audio().
-        logger.info(f"[{name}] Micro-subscrição: ativando áudio temporário para boot do pipeline...")
-        for p in room.remote_participants.values():
-            if p.identity.startswith("user-") or p.identity.startswith("guest-"):
-                for pub in p.track_publications.values():
-                    if pub.kind == rtc.TrackKind.KIND_AUDIO:
-                        pub.set_subscribed(True)
+        # CORREÇÃO: aguarda até 4s pelas tracks caso o usuário ainda não as tenha
+        # publicado neste room (frequente em Rodrigo/Ana que conectam mais tarde).
+        logger.info(f"[{name}] Micro-subscrição: aguardando tracks do usuário (até 4s)...")
+        _boot_subscribed = False
+        _boot_subscribed_flag[0] = True  # habilita handler track_published durante boot
+        for _wait_attempt in range(8):  # 8 × 0.5s = 4s máximo
+            for p in room.remote_participants.values():
+                if p.identity.startswith("user-") or p.identity.startswith("guest-"):
+                    for pub in p.track_publications.values():
+                        if pub.kind == rtc.TrackKind.KIND_AUDIO:
+                            pub.set_subscribed(True)
+                            _boot_subscribed = True
+            if _boot_subscribed:
+                break
+            await asyncio.sleep(0.5)
+        _boot_subscribed_flag[0] = False  # boot concluído, handler volta ao modo normal
+        if _boot_subscribed:
+            logger.info(f"[{name}] Micro-subscrição: tracks encontradas. Pipeline de áudio aquecendo.")
+        else:
+            logger.warning(f"[{name}] Micro-subscrição: nenhuma track do usuário encontrada após 4s. VAD pode não inicializar.")
 
         async def _publish_packet(payload: dict) -> None:
             base_payload = {
@@ -1995,6 +2015,7 @@ async def _start_specialist_in_room(
                         f"1. NUNCA acione ferramentas de handoff na sua PRIMEIRA fala. Responda e faça uma pergunta.\n"
                         f"2. Mantenha a conversa: ouça o usuário, aprofunde, pergunte.\n"
                         f"3. Use `devolver_para_nathalia` ou `transferir_para_especialista` assim que a sua parte estiver concluída e o usuário desejar seguir em frente.\n"
+                        f"4. Se o usuário perguntar sobre sessões ou reuniões ANTERIORES, use `consultar_historico_mentoria`. Se mencionar documentos ou arquivos, use `consultar_documento_empresa`.\n"
                     )
                 else:
                     # Ativação normal pela Nathália
@@ -2007,6 +2028,8 @@ async def _start_specialist_in_room(
                         f"1. NUNCA acione ferramentas de handoff na sua PRIMEIRA fala. Responda e faça uma pergunta.\n"
                         f"2. Mantenha a conversa por múltiplos turnos: escute o usuário, aprofunde, pergunte.\n"
                         f"3. Use `devolver_para_nathalia` assim que a sua parte estiver concluída e o usuário concordar em seguir em frente.\n"
+                        f"4. Se o usuário perguntar sobre algo discutido em SESSÕES ANTERIORES (ex: 'na semana passada', 'da última vez'), use IMEDIATAMENTE a ferramenta `consultar_historico_mentoria` passando o tema como pergunta. Não tente adivinhar — consulte o histórico.\n"
+                        f"5. Se o usuário mencionar documentos, anexos ou arquivos da empresa, use `consultar_documento_empresa`.\n"
                     )
 
                 # Gera resposta inicial
@@ -2461,9 +2484,11 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                     except Exception as e:
                         logger.warning(f"[Apresentação] Erro ao conectar {SPECIALIST_NAMES.get(sid, sid)}: {e}")
                         results.append(e)
-                    # Delay escalonado (1.5s) para dar respiro ao Gemini API entre conexões
+                    # Delay de 3s entre conexões: respeita rate limits do Gemini e
+                    # garante que o room do especialista anterior já está estável
+                    # antes do próximo conectar (crítico para Rodrigo e Ana).
                     if i < len(SPECIALIST_ORDER) - 1:
-                        await asyncio.sleep(1.5)
+                        await asyncio.sleep(3.0)
                 return results
 
             logger.info("[Apresentação] Conectando especialistas em cascata (1-2s entre cada)...")
