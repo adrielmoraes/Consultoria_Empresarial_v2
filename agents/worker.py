@@ -373,50 +373,18 @@ class SpecialistAgent(Agent):
         Parâmetros:
         - resumo_interacao: Breve resumo (1-2 frases) do que foi resolvido ou combinado, para contextualizar a Nathália.
         """
-        # ── GUARDA 1: O usuário precisa ter enviado ao menos 1 mensagem após ativação ─
-        # Isso impede que o especialista retorne antes de ouvir o usuário mesmo uma vez.
-        if self._user_messages_since_activation < 1:
-            logger.info(
-                f"[{self._name}] Devolução BLOQUEADA — usuário ainda não enviou nenhuma "
-                f"mensagem desde a ativação. Continuando a conversa."
-            )
-            return (
-                "CONTINUE_COM_USUARIO: o usuário ainda não respondeu nada para você. "
-                "Aguarde a fala do usuário. Termine sua resposta com uma pergunta direta "
-                "para engajá-lo na conversa."
-            )
-
-        # ── GUARDA 2: Só verifica mensagens APÓS a ativação deste especialista ────────
-        # CRÍTICO: ignorar o histórico anterior evita o bug onde "entendi" dito à Nathália
-        # antes da ativação libera o handoff prematuramente.
-        messages_since_activation = self._blackboard.transcript[self._activation_transcript_len:]
-        user_messages_since = [
-            m for m in messages_since_activation if m.get("role") == "Usuário"
-        ]
-
-        last_user_message = (
-            user_messages_since[-1].get("content", "").strip()
-            if user_messages_since else ""
-        )
-        handoff_reason = classify_user_handoff_intent(last_user_message)
-
-        if not handoff_reason:
-            logger.info(
-                f"[{self._name}] Devolução BLOQUEADA — última mensagem do usuário desde ativação "
-                f"não indica encerramento: '{last_user_message[:80] or '<vazia>'}'. "
-                f"Mensagens do usuário desde ativação: {len(user_messages_since)}."
-            )
-            return (
-                "CONTINUE_COM_USUARIO: o usuário ainda não confirmou explicitamente "
-                "que não tem mais dúvidas com você. Continue ajudando na sua área, "
-                "aprofunde a resposta e termine com uma pergunta objetiva de acompanhamento. "
-                "Somente devolva quando o usuário disser claramente que terminou."
-            )
-
         logger.info(
             f"[{self._name}] ✅ Handoff aprovado → Nathália. "
-            f"Motivo: {handoff_reason} | Última fala: '{last_user_message[:60]}'"
         )
+        self._blackboard.add_message(self._name, f"Pronto, Nathália! Pode continuar. Resumo do meu atendimento: {resumo_interacao}")
+        self._handover_result = {
+            "type": "nathalia",
+            "reason": "specialist_decision",
+            "last_user_message": "Usuário ou especialista encerrou o assunto",
+            "summary": resumo_interacao,
+        }
+        self._handover_event.set()
+        return "Palavra devolvida à Nathália com sucesso. Aguarde em silêncio absoluto."
         self._blackboard.add_message(self._name, f"Pronto, Nathália! Pode continuar. Resumo do meu atendimento: {resumo_interacao}")
         self._handover_result = {
             "type": "nathalia",
@@ -448,17 +416,6 @@ class SpecialistAgent(Agent):
         if not target_spec_id:
             return f"ID de colega inválido: {colega_id}. Use carlos_cfo, daniel_advogado, rodrigo_cmo ou ana_cto."
 
-        # Guarda: ao menos 1 mensagem do usuário deve ter sido recebida após ativação
-        if self._user_messages_since_activation < 1:
-            logger.info(
-                f"[{self._name}] Transferência BLOQUEADA para {colega_id} — "
-                f"usuário ainda não respondeu nada desde a ativação."
-            )
-            return (
-                f"CONTINUE_COM_USUARIO: você ainda não ouviu o usuário responder nada. "
-                f"Aguarde a resposta do usuário antes de transferir para {SPECIALIST_NAMES.get(target_spec_id, colega_id)}."
-            )
-
         target_name = SPECIALIST_NAMES.get(target_spec_id, colega_id)
         logger.info(
             f"[{self._name}] ✅ Transferência lateral para {target_name}. "
@@ -482,7 +439,10 @@ class SpecialistAgent(Agent):
         """Aciona a geração do Plano de Execução pelo Marco (non-blocking via ProcessPool)."""
         self._blackboard.marco_triggered = True
         logger.info("[Marco] Delegando geração do Plano ao ProcessPool via MarcoStrategist...")
-        if self._marco: await self._marco.gerar_plano_execucao(user_name, project_name)
+        try:
+            if self._marco: await self._marco.gerar_plano_execucao(user_name, project_name)
+        except Exception as e:
+            logger.error(f"[Marco/Worker] Erro crítico ao gerar plano forçado: {e}")
 
     @function_tool
     async def gerar_plano_execucao(
@@ -1217,7 +1177,10 @@ class HostAgent(Agent):
         """Aciona a geração do Plano de Execução pelo Marco (non-blocking via ProcessPool)."""
         self._blackboard.marco_triggered = True
         logger.info("[Marco] Delegando geração do Plano ao ProcessPool via MarcoStrategist...")
-        await self._marco.gerar_plano_execucao(user_name, project_name)
+        try:
+            await self._marco.gerar_plano_execucao(user_name, project_name)
+        except Exception as e:
+            logger.error(f"[Marco/Worker] Erro crítico ao gerar plano forçado na Host: {e}")
 
     @function_tool
     async def gerar_plano_execucao(
@@ -1288,11 +1251,14 @@ class HostAgent(Agent):
         doc_title = titulos.get(doc_type, tipo_documento.replace("_", " ").title())
 
         async def _bg():
-            await self._marco.gerar_documento_personalizado(
-                doc_type=doc_type, doc_title=doc_title,
-                user_name=user_name, project_name=project_name,
-                extra_context=descricao_contexto,
-            )
+            try:
+                await self._marco.gerar_documento_personalizado(
+                    doc_type=doc_type, doc_title=doc_title,
+                    user_name=user_name, project_name=project_name,
+                    extra_context=descricao_contexto,
+                )
+            except Exception as e:
+                logger.error(f"[Marco/Worker] Erro crítico ao gerar doc {doc_type}: {e}")
         asyncio.create_task(_bg())
 
         return (
@@ -1774,14 +1740,13 @@ async def _start_specialist_in_room(
             except Exception:
                 pass
             try:
-                await host_room.local_participant.publish_data(
-                    json.dumps({
-                        "version": DATA_PACKET_SCHEMA_VERSION,
+                await _safe_publish_data(
+                    host_room.local_participant,
+                    {
                         "type": "agent_error",
                         "agent_id": spec_id,
                         "name": name,
-                    }).encode(),
-                    reliable=True,
+                    }
                 )
             except Exception:
                 pass
@@ -1813,14 +1778,13 @@ async def _start_specialist_in_room(
 
         # C3: Publica health-check data packet para o frontend
         try:
-            await host_room.local_participant.publish_data(
-                json.dumps({
-                    "version": DATA_PACKET_SCHEMA_VERSION,
+            await _safe_publish_data(
+                host_room.local_participant,
+                {
                     "type": "agent_ready",
                     "agent_id": spec_id,
                     "name": name,
-                }).encode(),
-                reliable=True,
+                }
             )
             logger.info(f"[{name}] Health-check agent_ready publicado.")
         except Exception as e:
@@ -1884,14 +1848,13 @@ async def _start_specialist_in_room(
             if role == "assistant":
                 blackboard.add_message(name, text)
                 asyncio.create_task(
-                    host_room.local_participant.publish_data(
-                        json.dumps({
-                            "version": DATA_PACKET_SCHEMA_VERSION,
+                    _safe_publish_data(
+                        host_room.local_participant,
+                        {
                             "type": "transcript",
                             "speaker": name,
                             "text": text,
-                        }).encode(),
-                        reliable=True,
+                        }
                     )
                 )
             elif role == "user":
@@ -1907,14 +1870,13 @@ async def _start_specialist_in_room(
                     blackboard.user_query = text
                 
                 asyncio.create_task(
-                    host_room.local_participant.publish_data(
-                        json.dumps({
-                            "version": DATA_PACKET_SCHEMA_VERSION,
+                    _safe_publish_data(
+                        host_room.local_participant,
+                        {
                             "type": "transcript",
                             "speaker": "Você",
                             "text": text,
-                        }).encode(),
-                        reliable=True,
+                        }
                     )
                 )
                 agent._user_messages_since_activation += 1
@@ -1943,14 +1905,13 @@ async def _start_specialist_in_room(
                 blackboard.user_query = text
             # Publica transcrição no host_room para o frontend receber
             asyncio.create_task(
-                host_room.local_participant.publish_data(
-                    json.dumps({
-                        "version": DATA_PACKET_SCHEMA_VERSION,
+                _safe_publish_data(
+                    host_room.local_participant,
+                    {
                         "type": "transcript",
                         "speaker": "Você",
                         "text": text,
-                    }).encode(),
-                    reliable=True,
+                    }
                 )
             )
             # Incrementa o contador de mensagens do usuário desde a ativação deste especialista.
@@ -2028,28 +1989,24 @@ async def _start_specialist_in_room(
                         f"{from_agent} acabou de transferir a palavra para você. "
                         f"O contexto da pergunta do usuário é: {context_text}. "
                         f"O Resumo da conversa até agora é: {ctx_summary}. "
+                        f"Dados do projeto e documentos: {context_state_str}. "
                         f"Inicie sua fala reconhecendo o colega e respondendo diretamente à pergunta do usuário.\n"
-                        f"REGRAS ABSOLUTAS (violá-las vai causar erro):\n"
+                        f"REGRAS ABSOLUTAS:\n"
                         f"1. NUNCA acione ferramentas de handoff na sua PRIMEIRA fala. Responda e faça uma pergunta.\n"
                         f"2. Mantenha a conversa: ouça o usuário, aprofunde, pergunte.\n"
-                        f"3. Somente use `devolver_para_nathalia` ou `transferir_para_especialista` DEPOIS que o usuário "
-                        f"disser EXPLICITAMENTE que não tem mais perguntas para você (ex: 'entendi tudo', 'não tenho mais dúvidas', "
-                        f"'pode voltar para a Nathália'). Se tentar antes, a ferramenta bloqueará automaticamente.\n"
-                        f"4. Enquanto o usuário estiver interagindo (fazendo perguntas, comentando), CONTINUE a conversa."
+                        f"3. Use `devolver_para_nathalia` ou `transferir_para_especialista` assim que a sua parte estiver concluída e o usuário desejar seguir em frente.\n"
                     )
                 else:
                     # Ativação normal pela Nathália
                     prompt = (
                         f"Nathália acabou de te acionar. O contexto da pergunta do usuário é: {context_text}. "
                         f"O Resumo da conversa até agora é: {ctx_summary}. "
+                        f"Dados do projeto e documentos: {context_state_str}. "
                         f"Responda a questão do usuário detalhando sua visão e experiência na sua área.\n"
-                        f"REGRAS ABSOLUTAS (violá-las vai causar erro):\n"
+                        f"REGRAS ABSOLUTAS:\n"
                         f"1. NUNCA acione ferramentas de handoff na sua PRIMEIRA fala. Responda e faça uma pergunta.\n"
                         f"2. Mantenha a conversa por múltiplos turnos: escute o usuário, aprofunde, pergunte.\n"
-                        f"3. Somente use `devolver_para_nathalia` DEPOIS que o usuário disser EXPLICITAMENTE que não tem "
-                        f"mais perguntas para você (ex: 'entendi tudo', 'não tenho mais dúvidas', 'ficou tudo claro', "
-                        f"'pode continuar'). A ferramenta bloqueará automaticamente se tentar muito cedo.\n"
-                        f"4. Enquanto o usuário estiver interagindo, CONTINUE. Não encerre antes de ele autorizar."
+                        f"3. Use `devolver_para_nathalia` assim que a sua parte estiver concluída e o usuário concordar em seguir em frente.\n"
                     )
 
                 # Gera resposta inicial
