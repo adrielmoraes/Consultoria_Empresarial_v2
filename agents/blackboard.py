@@ -52,6 +52,7 @@ class Blackboard:
     documentos_disponiveis: list[str] = field(default_factory=list)
     last_interaction_at: float = 0.0
     user_currently_speaking: bool = False
+    session_id: str = ""  # ID da sessão de mentoria ativa (usado para salvar documentos)
     marco_triggered: bool = False
     orchestration_metrics: dict[str, float] = field(default_factory=lambda: {
         "activations_total": 0,

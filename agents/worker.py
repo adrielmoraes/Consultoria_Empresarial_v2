@@ -1609,8 +1609,9 @@ async def _start_specialist_in_room(
             # as tracks mesmo que o usuário as publique depois da conexão do especialista.
             async def _do_subscribe():
                 await asyncio.sleep(0.15)  # 150ms para RealtimeModel inicializar
-                # Retry por até 3s caso o usuário ainda não tenha publicado a track neste room
-                for _sub_attempt in range(6):  # 6 × 0.5s = 3s
+                # Retry por até 8s caso o usuário ainda não tenha publicado a track neste room
+                # CORREÇÃO: Rodrigo/Ana conectam ~6-9s após o início e precisam de mais tempo
+                for _sub_attempt in range(16):  # 16 × 0.5s = 8s
                     subscribed_any = False
                     for p in room.remote_participants.values():
                         if p.identity.startswith("user-") or p.identity.startswith("guest-"):
@@ -1622,7 +1623,7 @@ async def _start_specialist_in_room(
                         logger.info(f"[{name}] Áudio do usuário SUBSCRITO com sucesso (interrupções ATIVAS).")
                         return
                     await asyncio.sleep(0.5)
-                logger.warning(f"[{name}] Nenhuma track de áudio do usuário encontrada após 3s. Especialista pode estar surdo.")
+                logger.warning(f"[{name}] Nenhuma track de áudio do usuário encontrada após 8s. Especialista pode estar surdo.")
 
             asyncio.create_task(_do_subscribe())
 
@@ -1697,12 +1698,14 @@ async def _start_specialist_in_room(
         # O Gemini Realtime precisa "ver" tracks de áudio durante session.start()
         # para acoplar corretamente os pinos VAD internos. Sem isso, o especialista
         # fica "surdo" quando ativado posteriormente via _subscribe_user_audio().
-        # CORREÇÃO: aguarda até 4s pelas tracks caso o usuário ainda não as tenha
+        # CORREÇÃO: aguarda até 10s pelas tracks caso o usuário ainda não as tenha
         # publicado neste room (frequente em Rodrigo/Ana que conectam mais tarde).
-        logger.info(f"[{name}] Micro-subscrição: aguardando tracks do usuário (até 4s)...")
+        # CRÍTICO: O Gemini Realtime precisa "ver" tracks de áudio durante session.start()
+        # para acoplar os pinos VAD internos. Sem isso, o especialista fica "surdo".
+        logger.info(f"[{name}] Micro-subscrição: aguardando tracks do usuário (até 10s)...")
         _boot_subscribed = False
         _boot_subscribed_flag[0] = True  # habilita handler track_published durante boot
-        for _wait_attempt in range(8):  # 8 × 0.5s = 4s máximo
+        for _wait_attempt in range(20):  # 20 × 0.5s = 10s máximo
             for p in room.remote_participants.values():
                 if p.identity.startswith("user-") or p.identity.startswith("guest-"):
                     for pub in p.track_publications.values():
@@ -1716,7 +1719,7 @@ async def _start_specialist_in_room(
         if _boot_subscribed:
             logger.info(f"[{name}] Micro-subscrição: tracks encontradas. Pipeline de áudio aquecendo.")
         else:
-            logger.warning(f"[{name}] Micro-subscrição: nenhuma track do usuário encontrada após 4s. VAD pode não inicializar.")
+            logger.warning(f"[{name}] Micro-subscrição: nenhuma track do usuário encontrada após 10s. VAD pode não inicializar.")
 
         async def _publish_packet(payload: dict) -> None:
             base_payload = {
@@ -2304,7 +2307,11 @@ async def _run_entrypoint(ctx: JobContext) -> None:
         def _get():
             try:
                 logger.info(f"[Docs] Tentando buscar documentos em: {api_url}")
-                req = urllib.request.Request(api_url, headers={"User-Agent": "MentoriaAI-Worker/1.0"})
+                internal_secret = os.getenv("INTERNAL_API_SECRET", "")
+                req = urllib.request.Request(api_url, headers={
+                    "User-Agent": "MentoriaAI-Worker/1.0",
+                    "X-Internal-Secret": internal_secret,
+                })
                 with urllib.request.urlopen(req) as resp:
                     data = json.loads(resp.read().decode())
                     return [d.get("content", "") for d in data if d.get("content")]
@@ -2380,14 +2387,27 @@ async def _run_entrypoint(ctx: JobContext) -> None:
             # ── MODO RETOMADA ──────────────────────────────────────────
             user_name_part = f", {blackboard.user_name}" if blackboard.user_name else ""
             resumption_context = blackboard.get_context_summary()
+            
+            # Listar documentos e decisões anteriores para dar contexto rico
+            docs_summary = ""
+            if blackboard.documentos_disponiveis:
+                doc_titles = [d.split("\n")[0].replace("DOCUMENTO ANTERIOR GERADO: ", "") for d in blackboard.documentos_disponiveis if d.startswith("DOCUMENTO ANTERIOR GERADO:")]
+                if doc_titles:
+                    docs_summary = f" Na(s) sessão(ões) anterior(es) já geramos os documentos: {', '.join(doc_titles)}."
+            
+            decisions_summary = ""
+            if blackboard.decisions:
+                decisions_summary = f" Algumas decisões já registradas: {'; '.join(blackboard.decisions[-3:])}."
+            
             logger.info("[Host] Nathália retomando sessão existente...")
             resumption_msg = (
                 f"Estou retomando nossa sessão! "
                 f"Olá{user_name_part}, que bom ter você de volta. "
-                f"Nossa conversa foi interrompida, mas tenho todo o contexto do que discutimos. "
-                f"Podemos continuar exatamente de onde paramos. "
-                f"Estávamos falando sobre: {blackboard.user_query or 'seu projeto'}. "
-                f"Como você gostaria de continuar?"
+                f"Esta é uma continuação da nossa mentoria anterior. "
+                f"Tenho todo o contexto do que discutimos e dos documentos que geramos. "
+                f"Estávamos falando sobre: {blackboard.user_query or 'seu projeto'}."
+                f"{docs_summary}{decisions_summary} "
+                f"Podemos continuar de onde paramos. O que você gostaria de abordar agora?"
             )
 
             # ── RECONEXÃO EM PARALELO COM O GREETING ──────────────────
@@ -2775,6 +2795,10 @@ async def _run_entrypoint(ctx: JobContext) -> None:
             elif msg_type == "set_user_name":
                 blackboard.user_name = msg.get("name", "")
                 logger.info(f"[Room] Nome do usuário definido: {blackboard.user_name}")
+
+            elif msg_type == "set_session_id":
+                blackboard.session_id = msg.get("sessionId", "")
+                logger.info(f"[Room] Session ID definido: {blackboard.session_id}")
 
             elif msg_type == "pause_ai":
                 logger.info("[Room] IA pausada pelo anfitrião — modo debate humano.")

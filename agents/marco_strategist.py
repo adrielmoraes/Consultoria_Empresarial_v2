@@ -185,10 +185,20 @@ def _worker_full_document_pipeline(
 
         result["markdown"] = final_text
 
-        # 5. O PDF agora será gerado no Backend ou via Frontend renderizando markdown,
-        # portanto removemos a carga massiva de Base64 daqui para não violar o 
-        # MTU limit do LiveKit DataChannel (1008 policy violation).
-        result["pdf_base64"] = None
+        # 5. O PDF agora volta a ser gerado pelo ReportLab nativo, mas será 
+        # trafegado via API e NÃO pelo websocket para não quebrar a política de MTU.
+        pdf_bytes = _worker_generate_pdf(
+            final_text,
+            project_name,
+            user_name,
+            doc_type=doc_type,
+            doc_title=doc_title,
+        )
+        if pdf_bytes:
+            b64_str = base64.b64encode(pdf_bytes).decode("utf-8")
+            result["pdf_base64"] = f"data:application/pdf;base64,{b64_str}"
+        else:
+            result["pdf_base64"] = None
 
     except Exception as e:
         result["error"] = str(e)
@@ -236,6 +246,58 @@ class MarcoStrategist:
             })
         except Exception as e:
             logger.debug(f"[Marco] Erro ao emitir progresso: {e}")
+
+    async def _persist_document(
+        self,
+        doc_type: str,
+        doc_title: str,
+        markdown_content: str,
+        pdf_base64: Optional[str] = None,
+    ) -> None:
+        """
+        Salva o documento gerado no banco de dados via POST /api/execution-plan/save.
+        Usa o session_id do Blackboard para associar ao sessionId correto.
+        Falha silenciosamente se o endpoint estiver indisponível.
+        """
+        session_id = self._blackboard.session_id
+        if not session_id:
+            logger.warning("[Marco] session_id não disponível no Blackboard. Documento não será persistido via API.")
+            return
+
+        api_base = os.getenv("NEXT_API_URL", "http://localhost:5000").rstrip("/")
+        save_url = f"{api_base}/api/execution-plan/save"
+        internal_secret = os.getenv("INTERNAL_API_SECRET", "")
+
+        import urllib.request
+
+        payload = json.dumps({
+            "sessionId": session_id,
+            "docType": doc_type,
+            "title": doc_title,
+            "markdownContent": markdown_content,
+            "pdfBase64": pdf_base64,
+        }).encode("utf-8")
+
+        def _post():
+            try:
+                req = urllib.request.Request(
+                    save_url,
+                    data=payload,
+                    headers={
+                        "Content-Type": "application/json",
+                        "User-Agent": "MentoriaAI-Marco/1.0",
+                        "X-Internal-Secret": internal_secret,
+                    },
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    result = json.loads(resp.read().decode())
+                    logger.info(f"[Marco] Documento '{doc_title}' persistido com sucesso: {result}")
+            except Exception as e:
+                logger.warning(f"[Marco] Falha ao persistir '{doc_title}' via API: {e}")
+
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, _post)
 
     async def _run_in_pool(self, fn, *args):
         """Executa uma função no ProcessPoolExecutor sem bloquear o event loop."""
@@ -352,15 +414,19 @@ class MarcoStrategist:
 
         # Publica resultado apenas em MARKDOWN leve (DataChannel seguro)
         markdown_plan = result.get("markdown", "")
+        doc_title = "Plano de Execução"
         try:
             packet: dict = {
                 "type": "execution_plan",
+                "doc_title": doc_title,
                 "plan": markdown_plan,
                 "text": markdown_plan,
             }
             await self._publish_packet(packet)
             await self._emit_progress("Plano de Execução pronto! ✅", 100)
             logger.info("[Marco] Plano de Execução publicado (Marketing only).")
+            # Persistir no banco de dados (enviando PDF Base64)
+            await self._persist_document("execution_plan", doc_title, markdown_plan, result.get("pdf_base64"))
         except Exception as e:
             logger.warning(f"[Marco] Erro ao publicar plano: {e}")
 
@@ -475,6 +541,8 @@ class MarcoStrategist:
             await self._publish_packet(packet)
             await self._emit_progress(f"{doc_title} pronto! ✅", 100)
             logger.info(f"[Marco] {doc_title} publicado (Marketing only).")
+            # Persistir no banco de dados
+            await self._persist_document(doc_type, doc_title, result.get("markdown", ""), result.get("pdf_base64"))
         except Exception as e:
             logger.warning(f"[Marco] Erro ao publicar {doc_title}: {e}")
 
@@ -566,6 +634,8 @@ class MarcoStrategist:
             await self._publish_packet(packet)
             await self._emit_progress(f"Guia pronto! ✅", 100)
             logger.info(f"[Marco] Guia '{orgao_processo}' publicado.")
+            # Persistir no banco de dados
+            await self._persist_document("orientacao_orgao", f"Guia: {orgao_processo}", result.get("markdown", ""), result.get("pdf_base64"))
         except Exception as e:
             logger.warning(f"[Marco] Erro ao publicar guia '{orgao_processo}': {e}")
 

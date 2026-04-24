@@ -715,6 +715,17 @@ export default function MentorshipRoomPage() {
             console.warn("[Room] Não foi possível sincronizar nome do usuário com o worker:", error);
           }
 
+          // Envia o sessionId para o Worker Python persistir documentos do Marco
+          try {
+            const sessionPayload = new TextEncoder().encode(
+              JSON.stringify({ type: "set_session_id", sessionId: sid }),
+            );
+            await room!.localParticipant.publishData(sessionPayload, { reliable: true });
+            console.log("[Room] sessionId enviado ao Worker:", sid);
+          } catch (error) {
+            console.warn("[Room] Não foi possível enviar sessionId ao worker:", error);
+          }
+
           for (const [, p] of room!.remoteParticipants) {
             const pid = p.identity;
             if (pid.startsWith("agent-")) {
@@ -908,6 +919,7 @@ export default function MentorshipRoomPage() {
               if (data.type === "transcript") {
                 addTranscriptMessage(data.speaker, data.text);
               } else if (data.type === "execution_plan") {
+                const epTitle = (data.doc_title as string) || "Plano de Execução";
                 setExecutionPlan(data.plan ?? data.text ?? "");
                 // Captura o PDF Base64 enviado pelo Marco via LiveKit packet
                 if (data.pdf_base64 && typeof data.pdf_base64 === "string") {
@@ -915,7 +927,7 @@ export default function MentorshipRoomPage() {
                 }
                 setSessionDocuments(prev => [...prev, {
                   docType: "plano_execucao",
-                  title: "Plano de Execução",
+                  title: epTitle,
                   content: data.plan ?? data.text ?? "",
                   pdfUrl: data.pdf_base64 || null
                 }]);
@@ -923,8 +935,8 @@ export default function MentorshipRoomPage() {
                 addTranscriptMessage(
                   "Marco",
                   data.pdf_base64
-                    ? "Plano de Execução gerado! PDF disponível para download."
-                    : "Plano de Execução gerado!"
+                    ? `${epTitle} gerado! PDF disponível para download.`
+                    : `${epTitle} gerado!`
                 );
               } else if (data.type === "document_ready") {
                 // Novos documentos do Marco (SWOT, Canvas, Pitch, Contrato, etc.)
