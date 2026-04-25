@@ -10,7 +10,7 @@ Extraído de worker.py para manter o monólito enxuto.
 import os
 
 # ── Modelo Gemini Realtime ─────────────────────────────────────────────────────
-GEMINI_REALTIME_MODEL = "gemini-3.1-flash-live-preview"
+GEMINI_REALTIME_MODEL = "gemini-2.5-flash-native-audio-preview-12-2025"
 
 # Configurações avançadas do Gemini Realtime
 GEMINI_REALTIME_CONFIG = {

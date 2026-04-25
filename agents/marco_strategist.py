@@ -292,9 +292,14 @@ class MarcoStrategist:
                 )
                 with urllib.request.urlopen(req, timeout=10) as resp:
                     result = json.loads(resp.read().decode())
-                    logger.info(f"[Marco] Documento '{doc_title}' persistido com sucesso: {result}")
+                    logger.info(f"[Marco] Documento '{doc_title}' persistido com sucesso na sessao {session_id}: {result}")
             except Exception as e:
-                logger.warning(f"[Marco] Falha ao persistir '{doc_title}' via API: {e}")
+                if "401" in str(e):
+                    logger.error(f"[Marco] ERRO 401 ao persistir '{doc_title}': Falha de autenticacao (X-Internal-Secret incorreto).")
+                elif "404" in str(e):
+                    logger.warning(f"[Marco] ERRO 404 ao persistir '{doc_title}': Sessao {session_id} nao encontrada na API.")
+                else:
+                    logger.warning(f"[Marco] Falha ao persistir '{doc_title}' (Sessao: {session_id}) via API: {e}")
 
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, _post)

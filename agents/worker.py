@@ -2249,12 +2249,34 @@ async def _run_entrypoint(ctx: JobContext) -> None:
         import urllib.request
         import json
 
-        api_url = os.getenv("NEXT_API_URL", "http://localhost:5000").rstrip("/") + f"/api/projects/{project_id}/resume-context"
+        api_base = os.getenv("NEXT_API_URL", "http://localhost:5000").rstrip("/")
+        internal_secret = os.getenv("INTERNAL_API_SECRET", "")
+        loop = asyncio.get_running_loop()
+
+        # 1. Tentar descobrir o sessionId da sessão ativa para esta sala
+        try:
+            session_url = f"{api_base}/api/sessions?roomName={ctx.room.name}"
+            req_session = urllib.request.Request(session_url, headers={
+                "User-Agent": "MentoriaAI-Worker/1.0",
+                "X-Internal-Secret": internal_secret,
+            })
+            def _get_sid():
+                with urllib.request.urlopen(req_session) as resp:
+                    return json.loads(resp.read().decode())
+            
+            session_data = await loop.run_in_executor(None, _get_sid)
+            if session_data and session_data.get("sessionId"):
+                blackboard.session_id = session_data["sessionId"]
+                logger.info(f"[Worker] Session ID vinculado com sucesso: {blackboard.session_id}")
+        except Exception as e:
+            logger.warning(f"[Worker] Falha ao recuperar sessionId via API (sala: {ctx.room.name}): {e}")
+
+        # 2. Buscar contexto de retomada (mensagens anteriores, documentos, etc.)
+        api_url = f"{api_base}/api/projects/{project_id}/resume-context"
 
         def _get():
             try:
                 logger.info(f"[Resume] Tentando buscar contexto em: {api_url}")
-                internal_secret = os.getenv("INTERNAL_API_SECRET", "")
                 req = urllib.request.Request(api_url, headers={
                     "User-Agent": "MentoriaAI-Worker/1.0",
                     "X-Internal-Secret": internal_secret,
@@ -2262,6 +2284,9 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                 with urllib.request.urlopen(req) as resp:
                     return json.loads(resp.read().decode())
             except Exception as e:
+                # Tratar erro 401 especificamente para log mais claro
+                if "401" in str(e):
+                    logger.error(f"[Resume] ERRO 401: Falha de autenticacao com a API. Verifique a INTERNAL_API_SECRET no Railway e na API.")
                 logger.warning(f"Erro ao buscar contexto de retomada na URL {api_url}: {e}")
                 return None
 

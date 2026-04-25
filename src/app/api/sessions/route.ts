@@ -36,6 +36,38 @@ async function getNonAgentParticipantCount(roomName: string): Promise<number | n
   }
 }
 
+export async function GET(request: NextRequest) {
+  try {
+    const internalSecret = request.headers.get("x-internal-secret");
+    const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET || "";
+
+    if (internalSecret !== INTERNAL_API_SECRET || !INTERNAL_API_SECRET) {
+      console.warn("[Sessions API] Falha na autenticação interna via GET");
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
+
+    const roomName = request.nextUrl.searchParams.get("roomName");
+    if (!roomName) {
+      return NextResponse.json({ error: "roomName é obrigatório" }, { status: 400 });
+    }
+
+    const [session] = await db
+      .select({ id: mentoringSessions.id })
+      .from(mentoringSessions)
+      .where(eq(mentoringSessions.livekitRoomId, roomName))
+      .limit(1);
+
+    if (!session) {
+      return NextResponse.json({ error: "Sessão não encontrada" }, { status: 404 });
+    }
+
+    return NextResponse.json({ sessionId: session.id });
+  } catch (error) {
+    console.error("[Sessions API] Erro ao buscar sessão por roomName:", error);
+    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     // SEGURANÇA: userId extraído da sessão autenticada do servidor.
