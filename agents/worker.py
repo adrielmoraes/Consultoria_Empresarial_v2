@@ -1731,73 +1731,183 @@ async def _start_specialist_in_room(
             
         marco = MarcoStrategist(blackboard, _publish_packet)
 
-        # C2: Instancia agent + sessão com retry no start()
-        agent = SpecialistAgent(spec_id, blackboard, marco)
-        session = AgentSession()
+        # Helper para vincular eventos a uma nova sessão
+        def _bind_session_events(agent_instance: SpecialistAgent, session_instance: AgentSession):
+            @session_instance.on("conversation_item_added")
+            def _on_agent_speech(event) -> None:
+                if not blackboard.is_active:
+                    return
 
-        session_started = False
-        for attempt in range(1, MAX_RETRIES + 1):
-            try:
-                await asyncio.wait_for(
-                    session.start(agent, room=room),
-                    timeout=15.0,
-                )
-                session_started = True
-                break
-            except (asyncio.TimeoutError, Exception) as start_err:
-                retry_delay = RETRY_BASE_DELAY * (2 ** (attempt - 1))
-                logger.warning(
-                    f"[{name}] AgentSession.start() tentativa {attempt}/{MAX_RETRIES} "
-                    f"falhou: {start_err}. Retentando em {retry_delay}s..."
-                )
-                if attempt < MAX_RETRIES:
-                    await asyncio.sleep(retry_delay)
-                    # Recria agent e session para nova tentativa
-                    agent = SpecialistAgent(spec_id, blackboard, marco)
-                    session = AgentSession()
+                item = getattr(event, "item", None)
+                if item is None:
+                    return
+                
+                role = getattr(item, "role", None)
+                if role not in ("assistant", "user"):
+                    return  # Ignora outras mensagens
 
-        if not session_started:
-            logger.error(f"[{name}] AgentSession falhou após {MAX_RETRIES} tentativas.")
+                text = ""
+                if hasattr(event, "item") and hasattr(event.item, "content"):
+                    content = event.item.content
+                    if isinstance(content, list):
+                        text = " ".join(
+                            getattr(part, "text", str(part))
+                            for part in content
+                            if part
+                        )
+                    elif isinstance(content, str):
+                        text = content
+                    else:
+                        text = str(content) if content else ""
+                elif hasattr(event, "item") and hasattr(event.item, "text_content"):
+                    text = event.item.text_content or ""
+                elif hasattr(event, "text"):
+                    text = event.text or ""
+
+                text = text.strip()
+                if not text:
+                    return
+
+                if role == "assistant":
+                    blackboard.add_message(name, text)
+                    asyncio.create_task(
+                        _safe_publish_data(
+                            host_room.local_participant,
+                            {
+                                "type": "transcript",
+                                "speaker": name,
+                                "text": text,
+                            }
+                        )
+                    )
+                elif role == "user":
+                    if not _audio_subscribed:
+                        return
+                    blackboard.mark_user_activity()
+                    if _should_ignore_user_transcript(text):
+                        return
+
+                    logger.info(f"[{name}] Usuário fala (Gemini STT): {text}")
+                    blackboard.add_message("Usuário", text)
+                    if not blackboard.user_query:
+                        blackboard.user_query = text
+                    
+                    asyncio.create_task(
+                        _safe_publish_data(
+                            host_room.local_participant,
+                            {
+                                "type": "transcript",
+                                "speaker": "Você",
+                                "text": text,
+                            }
+                        )
+                    )
+                    agent_instance._user_messages_since_activation += 1
+                    logger.debug(
+                        f"[{name}] Msg do usuário #{agent_instance._user_messages_since_activation} "
+                        f"desde ativação: '{text[:60]}'"
+                    )
+
+            @session_instance.on("user_input_transcribed")
+            def _on_specialist_user_speech(event) -> None:
+                if not blackboard.is_active or not _audio_subscribed:
+                    return
+                blackboard.mark_user_activity()
+                if not getattr(event, "is_final", True):
+                    return
+
+                text = _extract_transcribed_text(event)
+                text = text.strip()
+                if not text or _should_ignore_user_transcript(text):
+                    return
+
+                logger.info(f"[{name}] Usuário fala: {text}")
+                blackboard.add_message("Usuário", text)
+                if not blackboard.user_query:
+                    blackboard.user_query = text
+                asyncio.create_task(
+                    _safe_publish_data(
+                        host_room.local_participant,
+                        {
+                            "type": "transcript",
+                            "speaker": "Você",
+                            "text": text,
+                        }
+                    )
+                )
+                agent_instance._user_messages_since_activation += 1
+                logger.debug(
+                    f"[{name}] Msg do usuário #{agent_instance._user_messages_since_activation} "
+                    f"desde ativação: '{text[:60]}'"
+                )
+
+            @session_instance.on("input_speech_started")
+            def _on_specialist_input_speech_started(_event) -> None:
+                if not blackboard.is_active or not _audio_subscribed:
+                    return
+                blackboard.set_user_speaking(True)
+
+            @session_instance.on("input_speech_stopped")
+            def _on_specialist_input_speech_stopped(_event) -> None:
+                if not blackboard.is_active or not _audio_subscribed:
+                    return
+                blackboard.set_user_speaking(False)
+
+        async def _create_and_start_session() -> tuple[SpecialistAgent, AgentSession]:
+            """Cria e inicia uma nova AgentSession limpa para evitar o erro 1008 e problemas de VAD."""
+            new_agent = SpecialistAgent(spec_id, blackboard, marco)
+            new_session = AgentSession()
+            
+            session_started = False
+            for attempt in range(1, MAX_RETRIES + 1):
+                try:
+                    await asyncio.wait_for(
+                        new_session.start(new_agent, room=room),
+                        timeout=15.0,
+                    )
+                    session_started = True
+                    break
+                except (asyncio.TimeoutError, Exception) as start_err:
+                    retry_delay = RETRY_BASE_DELAY * (2 ** (attempt - 1))
+                    logger.warning(
+                        f"[{name}] AgentSession.start() tentativa {attempt}/{MAX_RETRIES} "
+                        f"falhou: {start_err}. Retentando em {retry_delay}s..."
+                    )
+                    if attempt < MAX_RETRIES:
+                        await asyncio.sleep(retry_delay)
+                        new_agent = SpecialistAgent(spec_id, blackboard, marco)
+                        new_session = AgentSession()
+
+            if not session_started:
+                raise Exception(f"Falha ao iniciar AgentSession para {name} após {MAX_RETRIES} tentativas")
+                
+            _bind_session_events(new_agent, new_session)
+            blackboard.specialist_sessions[spec_id] = new_session
+            return new_agent, new_session
+
+        # C2: Instancia agent + sessão inicial (para a apresentação)
+        try:
+            agent, session = await _create_and_start_session()
+            logger.info(f"[{name}] AgentSession inicial iniciada com RealtimeModel nativo.")
+        except Exception as e:
+            logger.error(f"[{name}] Erro crítico: {e}")
             try:
                 await room.disconnect()
             except Exception:
                 pass
-            try:
-                await _safe_publish_data(
-                    host_room.local_participant,
-                    {
-                        "type": "agent_error",
-                        "agent_id": spec_id,
-                        "name": name,
-                    }
-                )
-            except Exception:
-                pass
             return None
-
-        logger.info(f"[{name}] AgentSession iniciada com RealtimeModel nativo.")
 
         # Aguarda o RealtimeModel inicializar
         await asyncio.sleep(2.0)
         logger.info(f"[{name}] RealtimeModel inicializado.")
 
         # ── DESATIVA MICRO-SUBSCRIÇÃO (Retorno ao modo dormente) ──────────────
-        # Pipeline inicializado com sucesso. Desliga o áudio para o especialista
-        # ficar em silêncio até ser explicitamente ativado pela Nathália.
         for p in room.remote_participants.values():
             if p.identity.startswith("user-") or p.identity.startswith("guest-"):
                 for pub in p.track_publications.values():
                     if pub.kind == rtc.TrackKind.KIND_AUDIO:
                         pub.set_subscribed(False)
         logger.info(f"[{name}] Micro-subscrição ENCERRADA. Especialista dormente até ativação.")
-
-        # ATUALIZAÇÃO: Para evitar crash e estouro do limite grátis da Beyond Presence,
-        # Nós DESATIVAMOS os avatares 3D dos especialistas (Eles viram Voice/Podcast).
-        # Apenas a Nathália receberá o vídeo 3D.
-        # asyncio.create_task(_start_avatar_session(spec_id, session, room))
-
-        # Registra a sessão no Blackboard
-        blackboard.specialist_sessions[spec_id] = session
 
         # C3: Publica health-check data packet para o frontend
         try:
@@ -1832,139 +1942,11 @@ async def _start_specialist_in_room(
             except Exception as e:
                 logger.warning(f"[{name}] Erro na auto-apresentação: {type(e).__name__}: {e}", exc_info=True)
 
-        # Captura transcrição do especialista via evento
-        @session.on("conversation_item_added")
-        def _on_agent_speech(event) -> None:
-            if not blackboard.is_active:
-                return
+        # Eventos extraídos para _bind_session_events
 
-            item = getattr(event, "item", None)
-            if item is None:
-                return
-            
-            role = getattr(item, "role", None)
-            if role not in ("assistant", "user"):
-                return  # Ignora outras mensagens
-
-            text = ""
-            if hasattr(event, "item") and hasattr(event.item, "content"):
-                content = event.item.content
-                if isinstance(content, list):
-                    text = " ".join(
-                        getattr(part, "text", str(part))
-                        for part in content
-                        if part
-                    )
-                elif isinstance(content, str):
-                    text = content
-                else:
-                    text = str(content) if content else ""
-            elif hasattr(event, "item") and hasattr(event.item, "text_content"):
-                text = event.item.text_content or ""
-            elif hasattr(event, "text"):
-                text = event.text or ""
-
-            text = text.strip()
-            if not text:
-                return
-
-            if role == "assistant":
-                blackboard.add_message(name, text)
-                asyncio.create_task(
-                    _safe_publish_data(
-                        host_room.local_participant,
-                        {
-                            "type": "transcript",
-                            "speaker": name,
-                            "text": text,
-                        }
-                    )
-                )
-            elif role == "user":
-                if not _audio_subscribed:
-                    return
-                blackboard.mark_user_activity()
-                if _should_ignore_user_transcript(text):
-                    return
-
-                logger.info(f"[{name}] Usuário fala (Gemini STT): {text}")
-                blackboard.add_message("Usuário", text)
-                if not blackboard.user_query:
-                    blackboard.user_query = text
-                
-                asyncio.create_task(
-                    _safe_publish_data(
-                        host_room.local_participant,
-                        {
-                            "type": "transcript",
-                            "speaker": "Você",
-                            "text": text,
-                        }
-                    )
-                )
-                agent._user_messages_since_activation += 1
-                logger.debug(
-                    f"[{name}] Msg do usuário #{agent._user_messages_since_activation} "
-                    f"desde ativação: '{text[:60]}'"
-                )
-
-        @session.on("user_input_transcribed")
-        def _on_specialist_user_speech(event) -> None:
-            if not blackboard.is_active or not _audio_subscribed:
-                return
-            blackboard.mark_user_activity()
-            if not getattr(event, "is_final", True):
-                return
-
-            text = _extract_transcribed_text(event)
-            text = text.strip()
-            if not text or _should_ignore_user_transcript(text):
-                return
-
-            # Registra no blackboard compartilhado (o host_room publica o transcript)
-            logger.info(f"[{name}] Usuário fala: {text}")
-            blackboard.add_message("Usuário", text)
-            if not blackboard.user_query:
-                blackboard.user_query = text
-            # Publica transcrição no host_room para o frontend receber
-            asyncio.create_task(
-                _safe_publish_data(
-                    host_room.local_participant,
-                    {
-                        "type": "transcript",
-                        "speaker": "Você",
-                        "text": text,
-                    }
-                )
-            )
-            # Incrementa o contador de mensagens do usuário desde a ativação deste especialista.
-            # Este contador é usado como guarda mínima em devolver_para_nathalia e
-            # transferir_para_especialista para evitar handoff imediato após a primeira fala.
-            agent._user_messages_since_activation += 1
-            logger.debug(
-                f"[{name}] Msg do usuário #{agent._user_messages_since_activation} "
-                f"desde ativação: '{text[:60]}'"
-            )
-
-        @session.on("input_speech_started")
-        def _on_specialist_input_speech_started(_event) -> None:
-            if not blackboard.is_active or not _audio_subscribed:
-                return
-            blackboard.set_user_speaking(True)
-
-        @session.on("input_speech_stopped")
-        def _on_specialist_input_speech_stopped(_event) -> None:
-            if not blackboard.is_active or not _audio_subscribed:
-                return
-            blackboard.set_user_speaking(False)
-
-        # C5: Handler assíncrono para ativação de especialista.
-        # REFATORADO PARA HANDOVER PEER-TO-PEER:
-        # O especialista gera a resposta inicial e mantém o áudio aberto,
-        # conversando livremente com o usuário. O turno só encerra quando
-        # a IA aciona devolver_para_nathalia ou transferir_para_especialista.
         async def _handle_activation(msg: dict) -> None:
             """Processa ativação deste especialista de forma assíncrona (Peer-to-Peer)."""
+            nonlocal agent, session
             turn_id = msg.get("turn_id")
             started_at = monotonic()
 
@@ -1980,6 +1962,21 @@ async def _start_specialist_in_room(
                     payload.update(extra)
                 await _safe_publish_data(room.local_participant, payload)
             
+            # RECRIAR SESSÃO FRESCA AQUI:
+            # Isso limpa qualquer conexão morta do Gemini e reconecta os nós de áudio do Zero, resolvendo a surdez.
+            logger.info(f"[{name}] Recriando AgentSession fresca para o turno...")
+            try:
+                # Opcionalmente, pode tentar fechar a antiga se a API expuser isso futuramente
+                # Por ora, sobrescrever a variável e iniciar a nova resolve o problema de pipeline
+                agent, session = await _create_and_start_session()
+                # O audio_subscribed deve começar false para _subscribe_user_audio assinar
+                nonlocal _audio_subscribed
+                _audio_subscribed = False 
+            except Exception as e:
+                logger.error(f"[{name}] Falha ao recriar a sessão: {e}")
+                await _emit("agent_error", {"error": str(e)})
+                return
+
             try:
                 ctx_summary = msg.get("transcript_summary", "")
                 context_text = msg.get("context", "")
