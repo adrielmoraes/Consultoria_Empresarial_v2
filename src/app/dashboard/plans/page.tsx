@@ -23,6 +23,8 @@ import { useState, useEffect } from "react";
 type Plan = {
   id: string;
   projectTitle: string;
+  docTitle: string;
+  docType: string;
   projectId: string;
   sessionId: string;
   pdfUrl: string | null;
@@ -203,8 +205,11 @@ export default function PlansPage() {
                     <FileText className="w-5 h-5 text-emerald-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm truncate">{plan.projectTitle}</h3>
+                    <h3 className="font-semibold text-sm truncate">{plan.docTitle}</h3>
                     <div className="flex items-center gap-3 mt-1">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        {plan.projectTitle}
+                      </span>
                       <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
                         {plan.generatedAt}
@@ -213,7 +218,7 @@ export default function PlansPage() {
                   </div>
                   {(plan.pdfUrl || plan.hasMarkdown) ? (
                     <Link
-                      href={`/dashboard/plans/${plan.sessionId}`}
+                      href={`/dashboard/plans/${plan.sessionId}?planId=${plan.id}`}
                       className="text-xs px-3 py-1.5 rounded-full bg-[#d4af37]/10 text-[#d4af37] border border-[#d4af37]/20 flex-shrink-0 hover:bg-[#d4af37]/20 transition-colors"
                     >
                       Abrir Plano

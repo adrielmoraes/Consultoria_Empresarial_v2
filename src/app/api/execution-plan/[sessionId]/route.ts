@@ -46,14 +46,30 @@ export async function GET(
       return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
     }
 
-    const plan = await db.query.executionPlans.findFirst({
-      where: eq(executionPlans.sessionId, sessionId),
-      orderBy: (plans, { desc }) => [desc(plans.generatedAt)],
-    });
+    // Busca o plano mais recente da sessão. Se houver um planId específico, usa ele.
+    const planId = request.nextUrl.searchParams.get("planId");
+    
+    const plan = planId
+      ? await db.query.executionPlans.findFirst({
+          where: eq(executionPlans.id, planId),
+        })
+      : await db.query.executionPlans.findFirst({
+          where: eq(executionPlans.sessionId, sessionId),
+          orderBy: (plans, { desc }) => [desc(plans.generatedAt)],
+        });
 
     if (!plan) {
       return NextResponse.json({ error: "Plano não encontrado" }, { status: 404 });
     }
+
+    // Gera um nome de arquivo seguro baseado no título do documento
+    const docTitle = plan.title || "Plano de Execução";
+    const safeFileName = docTitle
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove acentos
+      .replace(/[^a-zA-Z0-9\s-]/g, "")                  // Remove caracteres especiais
+      .replace(/\s+/g, "_")                              // Substitui espaços por underscore
+      .substring(0, 80)                                   // Limita comprimento
+      || "documento";
 
     if (format !== "json") {
       if (plan.pdfUrl) {
@@ -63,7 +79,7 @@ export async function GET(
           // Decodifica Base64 → Buffer → responde como download de PDF
           const b64 = plan.pdfUrl.slice(BASE64_PREFIX.length);
           const pdfBuffer = Buffer.from(b64, "base64");
-          const fileName = `plano-${sessionId}.pdf`;
+          const fileName = `${safeFileName}.pdf`;
           return new NextResponse(pdfBuffer, {
             status: 200,
             headers: {
@@ -83,7 +99,7 @@ export async function GET(
         return new NextResponse(plan.markdownContent, {
           headers: {
             "Content-Type": "text/markdown; charset=utf-8",
-            "Content-Disposition": `inline; filename="plano-${sessionId}.md"`,
+            "Content-Disposition": `inline; filename="${safeFileName}.md"`,
           },
         });
       }
@@ -92,6 +108,8 @@ export async function GET(
     return NextResponse.json({
       plan: {
         id: plan.id,
+        docTitle: plan.title || "Plano de Execução",
+        docType: plan.docType || "plano_execucao",
         pdfUrl: plan.pdfUrl,
         markdownContent: plan.markdownContent,
         generatedAt: plan.generatedAt,

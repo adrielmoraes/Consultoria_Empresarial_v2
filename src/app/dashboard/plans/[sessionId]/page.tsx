@@ -23,6 +23,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 type PlanData = {
   plan: {
     id: string;
+    docTitle: string;
+    docType: string;
     pdfUrl: string | null;
     markdownContent: string | null;
     generatedAt: string;
@@ -98,6 +100,7 @@ export default function PlanViewerPage() {
   
   const [data, setData] = useState<PlanData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -116,7 +119,13 @@ export default function PlanViewerPage() {
   const fetchPlan = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/execution-plan/${params.sessionId}?format=json`);
+      // Lê planId da query string para buscar o documento específico
+      const searchParams = new URLSearchParams(window.location.search);
+      const planId = searchParams.get("planId");
+      const queryStr = planId 
+        ? `format=json&planId=${planId}` 
+        : "format=json";
+      const res = await fetch(`/api/execution-plan/${params.sessionId}?${queryStr}`);
       if (res.ok) {
         const jsonText = await res.json();
         setData(jsonText);
@@ -149,8 +158,40 @@ export default function PlanViewerPage() {
 
   if (status === "unauthenticated") return null;
 
-  const handlePrint = () => {
-    window.print();
+  const handleDownloadPdf = async () => {
+    if (!data) return;
+    setDownloading(true);
+    try {
+      // Faz o download do PDF via API (sem sair da aba)
+      const res = await fetch(`/api/execution-plan/${data.session.id}?planId=${data.plan.id}`);
+      if (!res.ok) throw new Error("Erro ao baixar PDF");
+      
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      
+      // Nome do arquivo baseado no título do documento
+      const docTitle = data.plan.docTitle || "Plano de Execução";
+      const safeFileName = docTitle
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9\s-]/g, "")
+        .replace(/\s+/g, "_")
+        .substring(0, 80)
+        || "documento";
+      a.download = `${safeFileName}.pdf`;
+      
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Erro ao baixar PDF:", err);
+      // Fallback: usa window.print()
+      window.print();
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const userName = sessionData?.user?.name || "Usuário";
@@ -240,8 +281,11 @@ export default function PlanViewerPage() {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 print:hidden">
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {data.project.title}
+                      {data.plan.docTitle}
                     </h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      {data.project.title}
+                    </p>
                     <div className="flex items-center gap-2 mt-2 text-sm text-gray-500 dark:text-gray-400">
                       <Calendar className="w-4 h-4" />
                       <span>Gerado em {new Date(data.plan.generatedAt).toLocaleDateString('pt-BR', { 
@@ -251,26 +295,28 @@ export default function PlanViewerPage() {
                   </div>
                   
                   <div className="flex items-center gap-3">
-                    {/* Botão para Gerar/Salvar Salvar como PDF via Navegador */}
-                    <button 
-                      onClick={handlePrint}
-                      className="px-4 py-2 flex items-center gap-2 rounded-lg bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors text-sm font-medium"
-                    >
-                      <Printer className="w-4 h-4" />
-                      Imprimir / Salvar PDF
-                    </button>
-
-                    {/* Botão direto do Arquivo Base64 (se o modelo gerou um payload bruto de PDF) */}
-                    {data.plan.pdfUrl && (
-                      <a 
-                        href={`/api/execution-plan/${data.session.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn-primary px-4 py-2 flex items-center gap-2 text-sm"
+                    {/* Botão para baixar PDF diretamente (sem sair da aba) */}
+                    {data.plan.pdfUrl ? (
+                      <button 
+                        onClick={handleDownloadPdf}
+                        disabled={downloading}
+                        className="btn-primary px-4 py-2 flex items-center gap-2 text-sm disabled:opacity-50"
                       >
-                        <Download className="w-4 h-4" />
-                        Baixar Arquivo PDF
-                      </a>
+                        {downloading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Download className="w-4 h-4" />
+                        )}
+                        {downloading ? "Baixando..." : "Baixar PDF"}
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => window.print()}
+                        className="px-4 py-2 flex items-center gap-2 rounded-lg bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors text-sm font-medium"
+                      >
+                        <Printer className="w-4 h-4" />
+                        Imprimir
+                      </button>
                     )}
                   </div>
                 </div>
@@ -278,7 +324,8 @@ export default function PlanViewerPage() {
                 {/* Conteúdo Renderizado do Plano */}
                 <div className="bg-white dark:bg-[#0a0a0f] rounded-2xl p-6 md:p-10 border border-gray-100 dark:border-white/5 print:border-none print:p-0">
                   <div className="print:block hidden mb-8 text-center pb-8 border-b border-gray-200">
-                    <h1 className="text-3xl font-bold text-black mb-2">Plano de Execução: {data.project.title}</h1>
+                    <h1 className="text-3xl font-bold text-black mb-2">{data.plan.docTitle}</h1>
+                    <p className="text-gray-500 text-sm mb-1">{data.project.title}</p>
                     <p className="text-gray-600">Gerado por Hive Mind - Mentoria Estratégica</p>
                   </div>
                   

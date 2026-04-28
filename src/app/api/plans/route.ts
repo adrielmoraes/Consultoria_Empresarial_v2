@@ -7,6 +7,8 @@ import { auth } from "@/auth";
 type PlanListItem = {
   id: string;
   projectTitle: string;
+  docTitle: string;
+  docType: string;
   projectId: string;
   sessionId: string;
   pdfUrl: string | null;
@@ -57,6 +59,8 @@ export async function GET(request: NextRequest) {
           allPlans.push({
             id: plan.id,
             projectTitle: project.title,
+            docTitle: plan.title || "Plano de Execução",
+            docType: plan.docType || "plano_execucao",
             projectId: project.id,
             sessionId: session.id,
             pdfUrl: plan.pdfUrl,
