@@ -294,8 +294,8 @@ class SpecialistAgent(Agent):
                 realtime_input_config=genai_types.RealtimeInputConfig(
                     automatic_activity_detection=genai_types.AutomaticActivityDetection(
                         disabled=False,
-                        prefix_padding_ms=300,
-                        silence_duration_ms=550,
+                        prefix_padding_ms=200,
+                        silence_duration_ms=400,
                     ),
                 ),
                 context_window_compression=genai_types.ContextWindowCompressionConfig(
@@ -754,8 +754,8 @@ class HostAgent(Agent):
             realtime_input_config=genai_types.RealtimeInputConfig(
                 automatic_activity_detection=genai_types.AutomaticActivityDetection(
                     disabled=False,
-                    prefix_padding_ms=300,
-                    silence_duration_ms=550,
+                    prefix_padding_ms=200,
+                    silence_duration_ms=400,
                 ),
             ),
             context_window_compression=genai_types.ContextWindowCompressionConfig(
@@ -1599,34 +1599,40 @@ async def _start_specialist_in_room(
         # C5: Controle de subscrição de áudio — ativado/desativado por data packet
         _audio_subscribed = False
 
-        def _subscribe_user_audio():
-            """Subscreve ao áudio do usuário com delay para sincronização com RealtimeModel."""
+        async def _subscribe_user_audio_blocking() -> bool:
+            """Subscreve ao áudio do usuário de forma BLOQUEANTE e confirmada.
+            
+            CORREÇÃO CRÍTICA: A versão anterior era fire-and-forget (asyncio.create_task).
+            A ativação esperava apenas 1s antes de criar a AgentSession.
+            Para Carlos (1º a conectar), tracks já estavam disponíveis → funcionava.
+            Para Ana/Rodrigo (últimos a conectar), tracks levavam >1s para propagar
+            ao room separado → sessão criada SEM áudio → surda!
+            
+            Agora aguardamos CONFIRMAÇÃO da subscrição antes de prosseguir.
+            """
             nonlocal _audio_subscribed
-            if _audio_subscribed:
-                return
             _audio_subscribed = True
 
-            # Delay + retry: sincroniza com RealtimeModel e garante que encontramos
-            # as tracks mesmo que o usuário as publique depois da conexão do especialista.
-            async def _do_subscribe():
-                await asyncio.sleep(0.15)  # 150ms para RealtimeModel inicializar
-                # Retry por até 8s caso o usuário ainda não tenha publicado a track neste room
-                # CORREÇÃO: Rodrigo/Ana conectam ~6-9s após o início e precisam de mais tempo
-                for _sub_attempt in range(16):  # 16 × 0.5s = 8s
-                    subscribed_any = False
-                    for p in room.remote_participants.values():
-                        if p.identity.startswith("user-") or p.identity.startswith("guest-"):
-                            for pub in p.track_publications.values():
-                                if pub.kind == rtc.TrackKind.KIND_AUDIO:
-                                    pub.set_subscribed(True)
-                                    subscribed_any = True
-                    if subscribed_any:
-                        logger.info(f"[{name}] Áudio do usuário SUBSCRITO com sucesso (interrupções ATIVAS).")
-                        return
+            await asyncio.sleep(0.1)  # 100ms para RealtimeModel inicializar
+            
+            # Retry por até 10s para dar tempo suficiente para TODOS os especialistas
+            for attempt in range(20):  # 20 × 0.5s = 10s
+                subscribed_any = False
+                for p in room.remote_participants.values():
+                    if p.identity.startswith("user-") or p.identity.startswith("guest-"):
+                        for pub in p.track_publications.values():
+                            if pub.kind == rtc.TrackKind.KIND_AUDIO:
+                                pub.set_subscribed(True)
+                                subscribed_any = True
+                if subscribed_any:
+                    logger.info(f"[{name}] ✅ Áudio do usuário SUBSCRITO com sucesso (tentativa {attempt+1}).")
+                    return True
+                if attempt < 19:
                     await asyncio.sleep(0.5)
-                logger.warning(f"[{name}] Nenhuma track de áudio do usuário encontrada após 8s. Especialista pode estar surdo.")
-
-            asyncio.create_task(_do_subscribe())
+            
+            logger.error(f"[{name}] ❌ FALHA: Nenhuma track de áudio do usuário encontrada após 10s!")
+            _audio_subscribed = False
+            return False
 
         def _unsubscribe_user_audio():
             """Dessubscreve do áudio do usuário (chamado quando outro especialista é ativado)."""
@@ -1941,16 +1947,16 @@ async def _start_specialist_in_room(
 
                 await _emit("agent_activated", {"activated_in_ms": int((monotonic() - started_at) * 1000)})
                 
-                # ── PASSO 1: Inscreve o áudio PRIMEIRO ──
-                # O VAD do modelo Realtime do Gemini exige que o fluxo de RTP (áudio)
-                # esteja ativo DURANTE a criação/início da sessão. 
+                # ── PASSO 1: Inscreve o áudio PRIMEIRO (BLOQUEANTE) ──
+                # CORREÇÃO: A subscrição agora é AWAIT e confirmada.
+                # Antes era fire-and-forget + sleep(1s) que não era suficiente
+                # para Rodrigo/Ana cujos rooms demoravam >1s para receber tracks.
                 nonlocal _audio_subscribed
-                _audio_subscribed = False # Garante que o toggle funcione
-                _subscribe_user_audio()
-                
-                # Aguarda tempo suficiente para os pacotes WebRTC começarem a fluir
-                logger.info(f"[{name}] Aguardando ativação das faixas de áudio...")
-                await asyncio.sleep(1.0)
+                _audio_subscribed = False  # Reset para garantir que o toggle funcione
+                logger.info(f"[{name}] Aguardando subscrição de áudio do usuário (bloqueante)...")
+                audio_ok = await _subscribe_user_audio_blocking()
+                if not audio_ok:
+                    logger.error(f"[{name}] Áudio não disponível — especialista pode estar surdo!")
                 
                 # ── PASSO 2: Cria AgentSession Fresca (ou recria se já existir) ──
                 # Passa a sessão antiga (se houver) para que seja fechada antes,
