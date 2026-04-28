@@ -1151,16 +1151,17 @@ export default function MentorshipRoomPage() {
           reliable: true,
         });
 
-        // Backend was instructed to kill the session. Let's wait up to 35 seconds
-        // for it to generate the PDF via Marco and send the "session_end" packet,
-        // which will trigger handleSessionCompleted natively.
-        await new Promise((resolve) => setTimeout(resolve, 35000));
+        // O backend agora envia session_end IMEDIATAMENTE (sem esperar o Marco).
+        // O Marco trabalha em segundo plano e o documento aparece no Dashboard
+        // quando pronto. Esperamos apenas 3s como safety net caso o backend
+        // não consiga enviar o session_end.
+        await new Promise((resolve) => setTimeout(resolve, 3000));
       } catch {
         console.warn("[Sessão] Erro ao enviar end_session para backend. Forçando finalização.");
       }
     }
 
-    // Fallback: Se passaram 35 segs e o backend não nos enviou 'session_end' pra fechar limpo, forçamos:
+    // Fallback: se após 3s o backend não nos enviou 'session_end', força redirect
     await handleSessionCompletedRef.current?.();
   };
 
@@ -1669,8 +1670,9 @@ export default function MentorshipRoomPage() {
                 Encerrar Mentoria?
               </h2>
               <p className="text-sm text-gray-400 mb-6">
-                Ao encerrar, o Plano de Execução completo será gerado pelo Marco
-                e salvo no seu Dashboard.
+                A sessão será encerrada e você será redirecionado ao Dashboard.
+                Os documentos do Marco serão gerados automaticamente em segundo plano
+                e estarão disponíveis em "Plano de Execução".
               </p>
               <div className="flex gap-3">
                 <button
@@ -1688,7 +1690,7 @@ export default function MentorshipRoomPage() {
                   {ending ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Mapeando Dossiê do Marco...
+                      Encerrando...
                     </>
                   ) : (
                     "Encerrar"

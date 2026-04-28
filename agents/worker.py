@@ -2757,27 +2757,40 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                 logger.info("[Room] Pedido de encerramento recebido do frontend.")
 
                 async def _end_session_flow():
+                    # ── PASSO 1: Envia session_end IMEDIATAMENTE ──
+                    # O frontend redireciona o usuário pro Dashboard instantaneamente.
+                    # Não há mais espera de 35s para o Marco gerar o plano.
+                    try:
+                        await ctx.room.local_participant.publish_data(
+                            json.dumps({
+                                "version": DATA_PACKET_SCHEMA_VERSION,
+                                "type": "session_end",
+                                "full_transcript": blackboard.get_full_transcript(),
+                                "context_summary": blackboard.get_context_summary(),
+                                "context_state": blackboard.get_structured_context(),
+                            }).encode(),
+                            reliable=True,
+                        )
+                        logger.info("[Room] session_end enviado ao frontend. Usuário será redirecionado.")
+                    except Exception as e:
+                        logger.warning(f"[Room] Falha ao enviar session_end: {e}")
+
+                    # ── PASSO 2: Marco trabalha em SEGUNDO PLANO ──
+                    # O worker fica vivo enquanto o Marco gera o plano e persiste no DB.
+                    # O documento aparece pronto na aba "Plano de Execução" do Dashboard.
                     if not blackboard.marco_triggered:
-                        logger.info("[Room] Marco não foi acionado. Acionando geração automática forçada do plano.")
+                        logger.info("[Room] Marco não foi acionado. Gerando plano em segundo plano...")
                         u_name = blackboard.user_name or "empreendedor"
                         p_name = blackboard.project_name or "seu projeto"
-                        # Bloqueia a finalização da sessão até a emissão do PDF pelo Marco
                         try:
                             await host_agent.gerar_plano_forcado(u_name, p_name)
+                            logger.info("[Room] Marco finalizou a geração do plano em segundo plano.")
                         except Exception as e:
-                            logger.error(f"[Room] Erro na geração automática forçada do Marco: {e}")
+                            logger.error(f"[Room] Erro na geração em segundo plano do Marco: {e}")
+                    else:
+                        logger.info("[Room] Marco já foi acionado anteriormente. Nenhuma geração adicional necessária.")
 
-                    # Após Marco terminar a geração, publica o encerramento que fará o redirect final no Frontend
-                    await ctx.room.local_participant.publish_data(
-                        json.dumps({
-                            "version": DATA_PACKET_SCHEMA_VERSION,
-                            "type": "session_end",
-                            "full_transcript": blackboard.get_full_transcript(),
-                            "context_summary": blackboard.get_context_summary(),
-                            "context_state": blackboard.get_structured_context(),
-                        }).encode(),
-                        reliable=True,
-                    )
+                    # ── PASSO 3: Agora sim, encerra o worker ──
                     shutdown_event.set()
 
                 asyncio.create_task(_end_session_flow())
