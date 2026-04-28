@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { mentoringSessions, projects, users } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { AgentDispatchClient, RoomServiceClient } from "livekit-server-sdk";
 import { auth } from "@/auth";
 
@@ -36,6 +36,8 @@ async function getNonAgentParticipantCount(roomName: string): Promise<number | n
   }
 }
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   try {
     const internalSecret = request.headers.get("x-internal-secret");
@@ -51,11 +53,35 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "roomName é obrigatório" }, { status: 400 });
     }
 
-    const [session] = await db
+    let [session] = await db
       .select({ id: mentoringSessions.id })
       .from(mentoringSessions)
       .where(eq(mentoringSessions.livekitRoomId, roomName))
       .limit(1);
+
+    // Fallback: se não encontrou pela string exata do livekitRoomId,
+    // tenta encontrar a sessão ativa mais recente para este projeto
+    if (!session) {
+      const projectMatch = roomName.match(/mentoria-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
+      const projectId = projectMatch ? projectMatch[1] : null;
+      
+      if (projectId) {
+        const fallbackSessions = await db
+          .select({ id: mentoringSessions.id })
+          .from(mentoringSessions)
+          .where(and(
+            eq(mentoringSessions.projectId, projectId),
+            eq(mentoringSessions.status, "active")
+          ))
+          .orderBy(desc(mentoringSessions.startedAt)) // mais recente primeiro
+          .limit(1);
+          
+        if (fallbackSessions.length > 0) {
+          session = fallbackSessions[0];
+          console.log(`[Sessions API] Fallback: Sessão encontrada pelo projectId ${projectId}`);
+        }
+      }
+    }
 
     if (!session) {
       return NextResponse.json({ error: "Sessão não encontrada" }, { status: 404 });

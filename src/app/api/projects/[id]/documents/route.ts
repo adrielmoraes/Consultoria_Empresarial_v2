@@ -81,24 +81,28 @@ export async function GET(
   const { id } = await params;
 
   try {
-    // SEGURANÇA: Exigir sessão autenticada e ownership do projeto.
+    // SEGURANÇA: Validação híbrida (browser autenticado OU worker interno).
     const session = await auth();
+    const internalSecret = request.headers.get("x-internal-secret");
+    const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET || "";
 
-    if (!session?.user?.id) {
+    if (!session?.user?.id && internalSecret !== INTERNAL_API_SECRET) {
       return NextResponse.json(
-        { error: "Não autenticado. Faça login para continuar." },
+        { error: "Não autenticado." },
         { status: 401 }
       );
     }
 
-    const [proj] = await db
-      .select({ userId: projects.userId })
-      .from(projects)
-      .where(eq(projects.id, id))
-      .limit(1);
+    if (session?.user?.id) {
+      const [proj] = await db
+        .select({ userId: projects.userId })
+        .from(projects)
+        .where(eq(projects.id, id))
+        .limit(1);
 
-    if (!proj || proj.userId !== session.user.id) {
-      return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
+      if (!proj || proj.userId !== session.user.id) {
+        return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
+      }
     }
 
     const docs = await db.query.projectDocuments.findMany({
