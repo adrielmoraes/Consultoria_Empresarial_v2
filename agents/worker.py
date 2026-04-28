@@ -1068,6 +1068,7 @@ class HostAgent(Agent):
                 "user_confirmed_done",
                 "user_requested_host",
                 "topic_change",
+                "silence_timeout",
             }:
                 spec_name = SPECIALIST_NAMES[spec_id]
                 user_name = self._blackboard.user_name or "você"
@@ -1640,18 +1641,17 @@ async def _start_specialist_in_room(
                             pub.set_subscribed(False)
             logger.info(f"[{name}] Áudio do usuário DESSUBSCRITO (silenciado).")
 
-        # Quando o usuário publicar áudio depois, subscreve se ativado OU durante boot
+        # Quando o usuário publicar áudio depois da conexão, subscreve automaticamente
+        # se o especialista estiver ativo (_audio_subscribed=True).
         def _on_track_published(publication, participant):
             is_user = (
                 participant.identity.startswith("user-")
                 or participant.identity.startswith("guest-")
             )
             if is_user and publication.kind == rtc.TrackKind.KIND_AUDIO:
-                if _audio_subscribed or _boot_subscribed_flag[0]:
+                if _audio_subscribed:
                     publication.set_subscribed(True)
-
-        # Flag mutável para o handler de track_published detectar boot ativo
-        _boot_subscribed_flag = [False]  # usa lista para ser mutável por closure
+                    logger.info(f"[{name}] Track de áudio do usuário detectada e subscrita automaticamente.")
 
         room.on("track_published", _on_track_published)
 
@@ -1694,32 +1694,14 @@ async def _start_specialist_in_room(
         logger.info(f"[{name}] Room conectado.")
         blackboard.specialist_rooms.append(room)
 
-        # ── MICRO-SUBSCRIÇÃO TEMPORÁRIA (Pré-aquecimento do Pipeline de Áudio) ──
-        # O Gemini Realtime precisa "ver" tracks de áudio durante session.start()
-        # para acoplar corretamente os pinos VAD internos. Sem isso, o especialista
-        # fica "surdo" quando ativado posteriormente via _subscribe_user_audio().
-        # CORREÇÃO: aguarda até 10s pelas tracks caso o usuário ainda não as tenha
-        # publicado neste room (frequente em Rodrigo/Ana que conectam mais tarde).
-        # CRÍTICO: O Gemini Realtime precisa "ver" tracks de áudio durante session.start()
-        # para acoplar os pinos VAD internos. Sem isso, o especialista fica "surdo".
-        logger.info(f"[{name}] Micro-subscrição: aguardando tracks do usuário (até 10s)...")
-        _boot_subscribed = False
-        _boot_subscribed_flag[0] = True  # habilita handler track_published durante boot
-        for _wait_attempt in range(20):  # 20 × 0.5s = 10s máximo
-            for p in room.remote_participants.values():
-                if p.identity.startswith("user-") or p.identity.startswith("guest-"):
-                    for pub in p.track_publications.values():
-                        if pub.kind == rtc.TrackKind.KIND_AUDIO:
-                            pub.set_subscribed(True)
-                            _boot_subscribed = True
-            if _boot_subscribed:
-                break
-            await asyncio.sleep(0.5)
-        _boot_subscribed_flag[0] = False  # boot concluído, handler volta ao modo normal
-        if _boot_subscribed:
-            logger.info(f"[{name}] Micro-subscrição: tracks encontradas. Pipeline de áudio aquecendo.")
-        else:
-            logger.warning(f"[{name}] Micro-subscrição: nenhuma track do usuário encontrada após 10s. VAD pode não inicializar.")
+        # ── BOOT SEM MICRO-SUBSCRIÇÃO ─────────────────────────────────────────
+        # A micro-subscrição de boot foi REMOVIDA. Ela causava uma race condition:
+        # o loop de 10s do boot rodava CONCORRENTEMENTE com _handle_activation,
+        # e quando o boot terminava, seu cleanup DESSUBSCREVIA o áudio que a
+        # ativação já havia subscrito — deixando o especialista surdo.
+        # Como a AgentSession agora é criada sob demanda (sem sessão no boot),
+        # não há necessidade de aquecer o pipeline de áudio aqui.
+        logger.info(f"[{name}] Boot sem micro-subscrição (sessão sob demanda).")
 
         async def _publish_packet(payload: dict) -> None:
             base_payload = {
@@ -1901,23 +1883,12 @@ async def _start_specialist_in_room(
             blackboard.specialist_sessions[spec_id] = new_session
             return new_agent, new_session
 
-        # ── C2: NÃO cria AgentSession na inicialização ──────────────────────
-        # CORREÇÃO DEFINITIVA: A sessão Gemini só é criada no momento EXATO
-        # da ativação (_handle_activation). Criar uma sessão aqui registrava
-        # handlers de room (pre-connect-audio-buffer, lk.chat) que depois
-        # impediam a nova sessão de registrar os seus — causando "surdez".
-        # O especialista fica genuinamente dormente: room conectado, sem sessão Gemini.
+        # ── C2: Especialista genuinamente dormente ───────────────────────
+        # Sem sessão Gemini, sem subscrição de áudio.
+        # Tudo será criado/subscrito no momento EXATO da ativação.
         agent: Optional[SpecialistAgent] = None
         session: Optional[AgentSession] = None
-        logger.info(f"[{name}] Room conectado. Sessão Gemini será criada sob demanda na ativação.")
-
-        # ── DESATIVA MICRO-SUBSCRIÇÃO (garantia de modo dormente) ─────────────
-        for p in room.remote_participants.values():
-            if p.identity.startswith("user-") or p.identity.startswith("guest-"):
-                for pub in p.track_publications.values():
-                    if pub.kind == rtc.TrackKind.KIND_AUDIO:
-                        pub.set_subscribed(False)
-        logger.info(f"[{name}] Micro-subscrição ENCERRADA. Especialista dormente até ativação.")
+        logger.info(f"[{name}] Especialista dormente. Sessão e áudio serão criados na ativação.")
 
         # C3: Publica health-check data packet para o frontend
         try:
