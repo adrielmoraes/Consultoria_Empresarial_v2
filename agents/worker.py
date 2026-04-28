@@ -1853,8 +1853,24 @@ async def _start_specialist_in_room(
                     return
                 blackboard.set_user_speaking(False)
 
-        async def _create_and_start_session() -> tuple[SpecialistAgent, AgentSession]:
-            """Cria e inicia uma nova AgentSession limpa para evitar o erro 1008 e problemas de VAD."""
+        async def _create_and_start_session(old_session: Optional[AgentSession] = None) -> tuple[SpecialistAgent, AgentSession]:
+            """Cria e inicia uma nova AgentSession limpa para evitar o erro 1008 e problemas de VAD.
+            
+            IMPORTANTE: Se old_session for fornecida, ela é fechada ANTES de criar a nova,
+            para liberar os handlers de room (pre-connect-audio-buffer, lk.chat) que
+            impediriam a nova sessão de registrar os seus — causando 'surdez'.
+            """
+            # ── Fecha sessão anterior para liberar handlers do room ──
+            if old_session is not None:
+                logger.info(f"[{name}] Fechando sessão anterior para liberar handlers do room...")
+                try:
+                    await asyncio.wait_for(old_session.aclose(), timeout=5.0)
+                    logger.info(f"[{name}] Sessão anterior fechada com sucesso.")
+                except Exception as close_err:
+                    logger.warning(f"[{name}] Erro ao fechar sessão anterior (prosseguindo): {close_err}")
+                # Pequena espera para garantir que os handlers foram desregistrados
+                await asyncio.sleep(0.3)
+
             new_agent = SpecialistAgent(spec_id, blackboard, marco)
             new_session = AgentSession()
             
@@ -1885,23 +1901,17 @@ async def _start_specialist_in_room(
             blackboard.specialist_sessions[spec_id] = new_session
             return new_agent, new_session
 
-        # C2: Instancia agent + sessão inicial (para a apresentação)
-        try:
-            agent, session = await _create_and_start_session()
-            logger.info(f"[{name}] AgentSession inicial iniciada com RealtimeModel nativo.")
-        except Exception as e:
-            logger.error(f"[{name}] Erro crítico: {e}")
-            try:
-                await room.disconnect()
-            except Exception:
-                pass
-            return None
+        # ── C2: NÃO cria AgentSession na inicialização ──────────────────────
+        # CORREÇÃO DEFINITIVA: A sessão Gemini só é criada no momento EXATO
+        # da ativação (_handle_activation). Criar uma sessão aqui registrava
+        # handlers de room (pre-connect-audio-buffer, lk.chat) que depois
+        # impediam a nova sessão de registrar os seus — causando "surdez".
+        # O especialista fica genuinamente dormente: room conectado, sem sessão Gemini.
+        agent: Optional[SpecialistAgent] = None
+        session: Optional[AgentSession] = None
+        logger.info(f"[{name}] Room conectado. Sessão Gemini será criada sob demanda na ativação.")
 
-        # Aguarda o RealtimeModel inicializar
-        await asyncio.sleep(2.0)
-        logger.info(f"[{name}] RealtimeModel inicializado.")
-
-        # ── DESATIVA MICRO-SUBSCRIÇÃO (Retorno ao modo dormente) ──────────────
+        # ── DESATIVA MICRO-SUBSCRIÇÃO (garantia de modo dormente) ─────────────
         for p in room.remote_participants.values():
             if p.identity.startswith("user-") or p.identity.startswith("guest-"):
                 for pub in p.track_publications.values():
@@ -1923,24 +1933,11 @@ async def _start_specialist_in_room(
         except Exception as e:
             logger.warning(f"[{name}] Erro ao publicar agent_ready: {e}")
 
-        # Auto-apresentação: instrui o agente a dizer o texto de apresentação
+        # Auto-apresentação: DESATIVADA no modo sob demanda.
+        # A sessão não existe durante a inicialização, então a auto-apresentação
+        # será feita no primeiro generate_reply da ativação.
         if auto_introduce:
-            intro_text = SPECIALIST_INTRODUCTIONS[spec_id]
-            logger.info(f"[{name}] Iniciando auto-apresentação...")
-            try:
-                await asyncio.wait_for(
-                    session.generate_reply(
-                        instructions=(
-                            f"Por favor, apresente-se dizendo: {intro_text}"
-                        ),
-                    ),
-                    timeout=15.0,
-                )
-                logger.info(f"[{name}] Auto-apresentação concluída.")
-            except asyncio.TimeoutError:
-                logger.warning(f"[{name}] Timeout na auto-apresentação (30s).")
-            except Exception as e:
-                logger.warning(f"[{name}] Erro na auto-apresentação: {type(e).__name__}: {e}", exc_info=True)
+            logger.info(f"[{name}] Auto-apresentação será feita na ativação (sessão sob demanda).")
 
         # Eventos extraídos para _bind_session_events
 
@@ -1984,13 +1981,14 @@ async def _start_specialist_in_room(
                 logger.info(f"[{name}] Aguardando ativação das faixas de áudio...")
                 await asyncio.sleep(1.0)
                 
-                # ── PASSO 2: Recria AgentSession Limpa ──
-                # Isso limpa qualquer conexão morta do Gemini que ficou dormente
-                logger.info(f"[{name}] Recriando AgentSession fresca para o turno...")
+                # ── PASSO 2: Cria AgentSession Fresca (ou recria se já existir) ──
+                # Passa a sessão antiga (se houver) para que seja fechada antes,
+                # liberando os handlers do room para a nova sessão.
+                logger.info(f"[{name}] Criando AgentSession fresca para o turno...")
                 try:
-                    agent, session = await _create_and_start_session()
+                    agent, session = await _create_and_start_session(old_session=session)
                 except Exception as e:
-                    logger.error(f"[{name}] Falha ao recriar a sessão: {e}")
+                    logger.error(f"[{name}] Falha ao criar a sessão: {e}")
                     await _emit("agent_error", {"error": str(e)})
                     return
 
