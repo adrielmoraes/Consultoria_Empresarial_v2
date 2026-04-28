@@ -1961,21 +1961,6 @@ async def _start_specialist_in_room(
                 if extra:
                     payload.update(extra)
                 await _safe_publish_data(room.local_participant, payload)
-            
-            # RECRIAR SESSÃO FRESCA AQUI:
-            # Isso limpa qualquer conexão morta do Gemini e reconecta os nós de áudio do Zero, resolvendo a surdez.
-            logger.info(f"[{name}] Recriando AgentSession fresca para o turno...")
-            try:
-                # Opcionalmente, pode tentar fechar a antiga se a API expuser isso futuramente
-                # Por ora, sobrescrever a variável e iniciar a nova resolve o problema de pipeline
-                agent, session = await _create_and_start_session()
-                # O audio_subscribed deve começar false para _subscribe_user_audio assinar
-                nonlocal _audio_subscribed
-                _audio_subscribed = False 
-            except Exception as e:
-                logger.error(f"[{name}] Falha ao recriar a sessão: {e}")
-                await _emit("agent_error", {"error": str(e)})
-                return
 
             try:
                 ctx_summary = msg.get("transcript_summary", "")
@@ -1984,16 +1969,32 @@ async def _start_specialist_in_room(
                 context_state_str = json.dumps(context_state, ensure_ascii=False)
 
                 if ctx_summary or context_state:
-                    # REMOVIDO: agent.update_instructions() causava fechamento do WebSocket (Erro 1007 WebRTC Gemini Native)
-                    # devido à injeção abrupta de tokens gigantes na camada sistêmica de áudio.
-                    # As instruções agora seguem via PROMPT simples do turno (generate_reply).
                     pass
 
                 await _emit("agent_activated", {"activated_in_ms": int((monotonic() - started_at) * 1000)})
+                
+                # ── PASSO 1: Inscreve o áudio PRIMEIRO ──
+                # O VAD do modelo Realtime do Gemini exige que o fluxo de RTP (áudio)
+                # esteja ativo DURANTE a criação/início da sessão. 
+                nonlocal _audio_subscribed
+                _audio_subscribed = False # Garante que o toggle funcione
                 _subscribe_user_audio()
+                
+                # Aguarda tempo suficiente para os pacotes WebRTC começarem a fluir
+                logger.info(f"[{name}] Aguardando ativação das faixas de áudio...")
+                await asyncio.sleep(1.0)
+                
+                # ── PASSO 2: Recria AgentSession Limpa ──
+                # Isso limpa qualquer conexão morta do Gemini que ficou dormente
+                logger.info(f"[{name}] Recriando AgentSession fresca para o turno...")
+                try:
+                    agent, session = await _create_and_start_session()
+                except Exception as e:
+                    logger.error(f"[{name}] Falha ao recriar a sessão: {e}")
+                    await _emit("agent_error", {"error": str(e)})
+                    return
 
                 # ── CRÍTICO: registra o comprimento do transcript no momento da ativação ──
-                # Toda verificação de handoff usará APENAS mensagens após este ponto.
                 agent._activation_transcript_len = len(blackboard.transcript)
                 agent._user_messages_since_activation = 0
                 logger.info(
@@ -2004,7 +2005,6 @@ async def _start_specialist_in_room(
                 # Determina o prompt baseado no tipo de ativação injetando todo o contexto sem quebrar a VAD API
                 from_agent = msg.get("from_name")
                 if from_agent:
-                    # Transferência lateral: outro especialista repassou
                     prompt = (
                         f"{from_agent} acabou de transferir a palavra para você. "
                         f"O contexto da pergunta do usuário é: {context_text}. "
@@ -2018,7 +2018,6 @@ async def _start_specialist_in_room(
                         f"4. Se o usuário perguntar sobre sessões ou reuniões ANTERIORES, use `consultar_historico_mentoria`. Se mencionar documentos ou arquivos, use `consultar_documento_empresa`.\n"
                     )
                 else:
-                    # Ativação normal pela Nathália
                     prompt = (
                         f"Nathália acabou de te acionar. O contexto da pergunta do usuário é: {context_text}. "
                         f"O Resumo da conversa até agora é: {ctx_summary}. "
@@ -2039,14 +2038,10 @@ async def _start_specialist_in_room(
                 )
                 logger.info(f"[{name}] Resposta inicial gerada. Entrando em modo conversa livre (Peer-to-Peer).")
 
-                # HANDOVER PEER-TO-PEER: Aguarda o agente decidir encerrar via ferramenta
-                # O agente continua escutando o áudio do usuário e respondendo livremente
-                # até acionar devolver_para_nathalia ou transferir_para_especialista.
-                # Reset do evento de handover para este turno
+                # HANDOVER PEER-TO-PEER
                 agent._handover_event.clear()
                 agent._handover_result = None
 
-                # Inicia tracking de inatividade (reseta agora para o tempo de fala não explodir)
                 agent._blackboard.set_user_speaking(False)
                 try:
                     while not agent._handover_event.is_set():
@@ -2626,6 +2621,8 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                     "Antes de tudo, adoraria saber o seu nome — e depois me conte: "
                     "qual é o seu projeto ou negócio e o que você quer resolver hoje?"
                 )
+
+
 
             logger.info("[Host] Nathália fazendo pergunta inicial (pós-apresentações)...")
             try:
