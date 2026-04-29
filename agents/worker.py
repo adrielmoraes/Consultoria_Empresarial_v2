@@ -1590,79 +1590,25 @@ async def _start_specialist_in_room(
             .to_jwt()
         )
 
-        # C5: Conecta ao room SEM subscrever ao áudio do usuário.
-        # Especialistas só ouvem o usuário quando são explicitamente ativados.
-        # Isso evita que todos respondam simultaneamente ao usuário.
-        room_options = rtc.RoomOptions(auto_subscribe=False)
+        # Especialistas só processam áudio quando são ativados (pois a AgentSession é criada sob demanda).
+        room_options = rtc.RoomOptions(auto_subscribe=True)
         room = rtc.Room()
 
-        # C5: Controle de subscrição de áudio — ativado/desativado por data packet
+        # O controle de áudio agora é gerenciado pelo ciclo de vida da AgentSession.
+        # Quando a sessão não existe (dormente), o áudio é ignorado no cliente.
         _audio_subscribed = False
 
-        async def _subscribe_user_audio_blocking() -> bool:
-            """Subscreve ao áudio do usuário de forma BLOQUEANTE e confirmada.
-            
-            CORREÇÃO CRÍTICA: A versão anterior era fire-and-forget (asyncio.create_task).
-            A ativação esperava apenas 1s antes de criar a AgentSession.
-            Para Carlos (1º a conectar), tracks já estavam disponíveis → funcionava.
-            Para Ana/Rodrigo (últimos a conectar), tracks levavam >1s para propagar
-            ao room separado → sessão criada SEM áudio → surda!
-            
-            Agora aguardamos CONFIRMAÇÃO da subscrição antes de prosseguir.
-            """
-            nonlocal _audio_subscribed
-            _audio_subscribed = True
-
-            await asyncio.sleep(0.1)  # 100ms para RealtimeModel inicializar
-            
-            # Retry por até 10s para dar tempo suficiente para TODOS os especialistas
-            for attempt in range(20):  # 20 × 0.5s = 10s
-                subscribed_any = False
-                for p in room.remote_participants.values():
-                    if p.identity.startswith("user-") or p.identity.startswith("guest-"):
-                        for pub in p.track_publications.values():
-                            if pub.kind == rtc.TrackKind.KIND_AUDIO:
-                                pub.set_subscribed(True)
-                                subscribed_any = True
-                if subscribed_any:
-                    logger.info(f"[{name}] ✅ Áudio do usuário SUBSCRITO com sucesso (tentativa {attempt+1}).")
-                    return True
-                if attempt < 19:
-                    await asyncio.sleep(0.5)
-            
-            logger.error(f"[{name}] ❌ FALHA: Nenhuma track de áudio do usuário encontrada após 10s!")
+        async def _close_session():
+            """Fecha a AgentSession atual para liberar o microfone e evitar interferências/surdez."""
+            nonlocal session, _audio_subscribed
             _audio_subscribed = False
-            return False
-
-        def _unsubscribe_user_audio():
-            """Dessubscreve do áudio do usuário (chamado quando outro especialista é ativado)."""
-            nonlocal _audio_subscribed
-            if not _audio_subscribed:
-                return
-            _audio_subscribed = False
-            for p in room.remote_participants.values():
-                if p.identity.startswith("user-") or p.identity.startswith("guest-"):
-                    for pub in p.track_publications.values():
-                        if pub.kind == rtc.TrackKind.KIND_AUDIO:
-                            pub.set_subscribed(False)
-            logger.info(f"[{name}] Áudio do usuário DESSUBSCRITO (silenciado).")
-
-        # Quando o usuário publicar áudio depois da conexão, subscreve automaticamente
-        # se o especialista estiver ativo (_audio_subscribed=True).
-        def _on_track_published(publication, participant):
-            is_user = (
-                participant.identity.startswith("user-")
-                or participant.identity.startswith("guest-")
-            )
-            if is_user and publication.kind == rtc.TrackKind.KIND_AUDIO:
-                if _audio_subscribed:
-                    publication.set_subscribed(True)
-                    logger.info(f"[{name}] Track de áudio do usuário detectada e subscrita automaticamente.")
-
-        room.on("track_published", _on_track_published)
-
-
-        connected = False
+            if session is not None:
+                logger.info(f"[{name}] Fechando AgentSession (liberando room handlers e VAD)...")
+                try:
+                    await asyncio.wait_for(session.aclose(), timeout=5.0)
+                except Exception as close_err:
+                    logger.warning(f"[{name}] Erro ao fechar AgentSession: {close_err}")
+                session = None
         for attempt in range(1, MAX_RETRIES + 1):
             try:
                 await asyncio.wait_for(
@@ -1844,20 +1790,9 @@ async def _start_specialist_in_room(
         async def _create_and_start_session(old_session: Optional[AgentSession] = None) -> tuple[SpecialistAgent, AgentSession]:
             """Cria e inicia uma nova AgentSession limpa para evitar o erro 1008 e problemas de VAD.
             
-            IMPORTANTE: Se old_session for fornecida, ela é fechada ANTES de criar a nova,
-            para liberar os handlers de room (pre-connect-audio-buffer, lk.chat) que
-            impediriam a nova sessão de registrar os seus — causando 'surdez'.
+            O fechamento de sessões antigas agora ocorre *eagerly* ao final de cada turno,
+            então não precisamos nos preocupar com concorrência aqui.
             """
-            # ── Fecha sessão anterior para liberar handlers do room ──
-            if old_session is not None:
-                logger.info(f"[{name}] Fechando sessão anterior para liberar handlers do room...")
-                try:
-                    await asyncio.wait_for(old_session.aclose(), timeout=5.0)
-                    logger.info(f"[{name}] Sessão anterior fechada com sucesso.")
-                except Exception as close_err:
-                    logger.warning(f"[{name}] Erro ao fechar sessão anterior (prosseguindo): {close_err}")
-                # Pequena espera para garantir que os handlers foram desregistrados
-                await asyncio.sleep(0.3)
 
             new_agent = SpecialistAgent(spec_id, blackboard, marco)
             new_session = AgentSession()
@@ -1963,17 +1898,12 @@ async def _start_specialist_in_room(
                     await _emit("agent_error", {"error": str(e)})
                     return
 
-                # ── PASSO 2: Subscreve áudio DEPOIS (RealtimeModel pronto) ──
-                # Agora o pipeline de áudio do Gemini já está inicializado.
-                # A subscrição entrega áudio a um pipeline que EXISTE e ESTÁ ESCUTANDO.
+                # ── PASSO 2: Áudio já está subscrito pelo auto_subscribe do Room ──
+                # A AgentSession recém criada automaticamente pega a track já existente.
                 nonlocal _audio_subscribed
-                _audio_subscribed = False  # Reset para garantir toggle limpo
+                _audio_subscribed = True
                 # Pequena espera para o RealtimeModel registrar seus handlers de áudio
                 await asyncio.sleep(0.5)
-                logger.info(f"[{name}] Aguardando subscrição de áudio do usuário (bloqueante)...")
-                audio_ok = await _subscribe_user_audio_blocking()
-                if not audio_ok:
-                    logger.error(f"[{name}] Áudio não disponível — especialista pode estar surdo!")
 
                 # ── CRÍTICO: registra o comprimento do transcript no momento da ativação ──
                 agent._activation_transcript_len = len(blackboard.transcript)
@@ -2105,7 +2035,7 @@ async def _start_specialist_in_room(
                 await _emit("agent_error", {"error": str(e)[:240]})
                 logger.warning(f"[{name}] Erro na ativação assíncrona: {e}")
             finally:
-                _unsubscribe_user_audio()
+                await _close_session()
 
         _generation_task: Optional[asyncio.Task] = None
         _last_activation_at: float = 0.0
@@ -2146,7 +2076,7 @@ async def _start_specialist_in_room(
                             _generation_task.cancel()
                             logger.info(f"[{name}] Geração CANCELADA (turno de {msg.get('agent_id')}).")
                         _generation_task = None
-                        _unsubscribe_user_audio()
+                        asyncio.create_task(_close_session())
                         logger.debug(f"[{name}] DESATIVADO (ativo agora: {msg.get('agent_id')}).")
             except Exception as e:
                 logger.warning(f"[{name}] Erro ao processar data packet: {e}")
