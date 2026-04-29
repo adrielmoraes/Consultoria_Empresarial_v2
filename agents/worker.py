@@ -1947,20 +1947,14 @@ async def _start_specialist_in_room(
 
                 await _emit("agent_activated", {"activated_in_ms": int((monotonic() - started_at) * 1000)})
                 
-                # ── PASSO 1: Inscreve o áudio PRIMEIRO (BLOQUEANTE) ──
-                # CORREÇÃO: A subscrição agora é AWAIT e confirmada.
-                # Antes era fire-and-forget + sleep(1s) que não era suficiente
-                # para Rodrigo/Ana cujos rooms demoravam >1s para receber tracks.
-                nonlocal _audio_subscribed
-                _audio_subscribed = False  # Reset para garantir que o toggle funcione
-                logger.info(f"[{name}] Aguardando subscrição de áudio do usuário (bloqueante)...")
-                audio_ok = await _subscribe_user_audio_blocking()
-                if not audio_ok:
-                    logger.error(f"[{name}] Áudio não disponível — especialista pode estar surdo!")
-                
-                # ── PASSO 2: Cria AgentSession Fresca (ou recria se já existir) ──
-                # Passa a sessão antiga (se houver) para que seja fechada antes,
-                # liberando os handlers do room para a nova sessão.
+                # ── PASSO 1: Cria AgentSession PRIMEIRO (pipeline limpo) ──
+                # CORREÇÃO v6: A ordem anterior (subscrever áudio → criar sessão) causava
+                # surdez nos especialistas Ana/Daniel/Rodrigo porque:
+                #   a) old_session.aclose() RESETAVA as subscrições de áudio recém-feitas
+                #   b) session.start() recriava o pipeline sem detectar tracks já subscritas
+                # Carlos funcionava porque era o 1º a conectar (tracks mais estáveis).
+                # SOLUÇÃO: Criar a sessão ANTES para que o RealtimeModel do Gemini
+                # esteja pronto para receber áudio quando a subscrição ocorrer.
                 logger.info(f"[{name}] Criando AgentSession fresca para o turno...")
                 try:
                     agent, session = await _create_and_start_session(old_session=session)
@@ -1968,6 +1962,18 @@ async def _start_specialist_in_room(
                     logger.error(f"[{name}] Falha ao criar a sessão: {e}")
                     await _emit("agent_error", {"error": str(e)})
                     return
+
+                # ── PASSO 2: Subscreve áudio DEPOIS (RealtimeModel pronto) ──
+                # Agora o pipeline de áudio do Gemini já está inicializado.
+                # A subscrição entrega áudio a um pipeline que EXISTE e ESTÁ ESCUTANDO.
+                nonlocal _audio_subscribed
+                _audio_subscribed = False  # Reset para garantir toggle limpo
+                # Pequena espera para o RealtimeModel registrar seus handlers de áudio
+                await asyncio.sleep(0.5)
+                logger.info(f"[{name}] Aguardando subscrição de áudio do usuário (bloqueante)...")
+                audio_ok = await _subscribe_user_audio_blocking()
+                if not audio_ok:
+                    logger.error(f"[{name}] Áudio não disponível — especialista pode estar surdo!")
 
                 # ── CRÍTICO: registra o comprimento do transcript no momento da ativação ──
                 agent._activation_transcript_len = len(blackboard.transcript)
@@ -2012,6 +2018,14 @@ async def _start_specialist_in_room(
                     timeout=SPECIALIST_GENERATION_TIMEOUT_SECONDS,
                 )
                 logger.info(f"[{name}] Resposta inicial gerada. Entrando em modo conversa livre (Peer-to-Peer).")
+
+                # ── CORREÇÃO v6: Reseta timer de silêncio APÓS resposta inicial ──
+                # Sem isso, o silence_timeout de 60s começava a contar desde a
+                # ativação (~8.5s ACK + ~30s generate_reply = ~38s), sobrando
+                # apenas ~22s para o usuário responder antes do timeout.
+                # Agora os 60s contam a partir do FIM da fala inicial do agente.
+                blackboard.last_interaction_at = monotonic()
+                logger.debug(f"[{name}] Timer de silêncio resetado após resposta inicial.")
 
                 # HANDOVER PEER-TO-PEER
                 agent._handover_event.clear()
