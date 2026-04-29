@@ -294,8 +294,8 @@ class SpecialistAgent(Agent):
                 realtime_input_config=genai_types.RealtimeInputConfig(
                     automatic_activity_detection=genai_types.AutomaticActivityDetection(
                         disabled=False,
-                        prefix_padding_ms=200,
-                        silence_duration_ms=400,
+                        prefix_padding_ms=100,
+                        silence_duration_ms=250,
                     ),
                 ),
                 context_window_compression=genai_types.ContextWindowCompressionConfig(
@@ -754,8 +754,8 @@ class HostAgent(Agent):
             realtime_input_config=genai_types.RealtimeInputConfig(
                 automatic_activity_detection=genai_types.AutomaticActivityDetection(
                     disabled=False,
-                    prefix_padding_ms=200,
-                    silence_duration_ms=400,
+                    prefix_padding_ms=100,
+                    silence_duration_ms=250,
                 ),
             ),
             context_window_compression=genai_types.ContextWindowCompressionConfig(
@@ -1557,10 +1557,10 @@ async def _start_specialist_in_room(
     room_name: str,
     host_room: rtc.Room,
     auto_introduce: bool = False,
-) -> Optional[AgentSession]:
+) -> Optional[Any]:
     """
     Conecta um SpecialistAgent ao room como participante separado.
-    Retorna a AgentSession criada.
+    Retorna um SpecialistHandle com método present().
 
     C1/C2/C3: Inicialização sequencial com retry no AgentSession.start()
     e publicação de health-check data packet (agent_ready) ao conectar.
@@ -2137,7 +2137,20 @@ async def _start_specialist_in_room(
             except Exception as e:
                 logger.warning(f"[{name}] Erro ao processar data packet: {e}")
 
-        return session
+        class SpecialistHandle:
+            async def present(self, instructions: str):
+                logger.info(f"[{name}] Criando sessão temporária para apresentação...")
+                temp_agent, temp_session = await _create_and_start_session()
+                try:
+                    await asyncio.wait_for(
+                        temp_session.generate_reply(instructions=instructions),
+                        timeout=SPECIALIST_GENERATION_TIMEOUT_SECONDS
+                    )
+                finally:
+                    logger.info(f"[{name}] Fechando sessão temporária de apresentação...")
+                    await temp_session.aclose()
+
+        return SpecialistHandle()
 
     except Exception as e:
         logger.error(f"[{name}] Erro ao iniciar: {e}", exc_info=True)
@@ -2542,15 +2555,15 @@ async def _run_entrypoint(ctx: JobContext) -> None:
             logger.info("[Apresentação] Todos conectados. Iniciando apresentações imediatamente...")
 
             # Executa as apresentações sequencialmente — um por vez
-            for sid, spec_session in zip(SPECIALIST_ORDER, sessions):
+            for sid, spec_handle in zip(SPECIALIST_ORDER, sessions):
                 if not blackboard.is_active:
                     logger.info("[Apresentação] Job encerrando, abortando sequência.")
                     return
 
                 spec_name = SPECIALIST_NAMES[sid]
 
-                if isinstance(spec_session, Exception) or not spec_session:
-                    logger.warning(f"[Apresentação] {spec_name} falhou ao conectar. Pulando. (Err: {spec_session})")
+                if isinstance(spec_handle, Exception) or not spec_handle:
+                    logger.warning(f"[Apresentação] {spec_name} falhou ao conectar. Pulando. (Err: {spec_handle})")
                     continue
 
                 intro_text = SPECIALIST_INTRODUCTIONS[sid]
@@ -2558,15 +2571,12 @@ async def _run_entrypoint(ctx: JobContext) -> None:
 
                 for attempt in range(2):
                     try:
-                        await asyncio.wait_for(
-                            spec_session.generate_reply(
-                                instructions=(
-                                    f"Apresente-se de forma calorosa e natural dizendo: {intro_text} "
-                                    f"Máximo 3 frases. Não faça perguntas ao usuário de forma alguma. "
-                                    f"Apenas e unicamente se apresente e conclua a fala."
-                                ),
-                            ),
-                            timeout=HOST_GENERATE_REPLY_TIMEOUT_SECONDS,
+                        await spec_handle.present(
+                            instructions=(
+                                f"Apresente-se de forma calorosa e natural dizendo: {intro_text} "
+                                f"Máximo 3 frases. Não faça perguntas ao usuário de forma alguma. "
+                                f"Apenas e unicamente se apresente e conclua a fala."
+                            )
                         )
                         logger.info(f"[Apresentação] {spec_name} concluiu.")
                         await asyncio.sleep(POST_INTRO_WAIT)
