@@ -2148,8 +2148,7 @@ async def _start_specialist_in_room(
         _last_activation_at: float = 0.0
         _last_turn_id: int = -1
 
-        @room.on("data_received")
-        async def _on_data(dp: rtc.DataPacket) -> None:
+        async def _async_on_data(dp: rtc.DataPacket) -> None:
             nonlocal _generation_task, _last_activation_at, _last_turn_id
             try:
                 msg = json.loads(dp.data.decode())
@@ -2177,7 +2176,7 @@ async def _start_specialist_in_room(
                             _last_turn_id = turn_id
                         if _generation_task and not _generation_task.done():
                             _generation_task.cancel()
-                        # P7: Cede o loop para garantir que qualquer cleanup de _close_session 
+                        # P7: Cede o loop para garantir que qualquer cleanup de _close_session
                         # ou cancelamento prévio seja processado antes da nova ativação.
                         await asyncio.sleep(0)
                         _generation_task = asyncio.create_task(_handle_activation(msg))
@@ -2188,10 +2187,15 @@ async def _start_specialist_in_room(
                         _generation_task = None
                         if session is not None:
                             asyncio.create_task(_close_session())
-                            await asyncio.sleep(0)  # P7: Cede o loop para _close_session iniciar cleanup antes do próximo handle
+                            # P7: Cede o loop para _close_session iniciar cleanup antes do próximo handle
+                            await asyncio.sleep(0)
                         logger.debug(f"[{name}] DESATIVADO (ativo agora: {msg.get('agent_id')}).")
             except Exception as e:
                 logger.warning(f"[{name}] Erro ao processar data packet: {e}")
+
+        @room.on("data_received")
+        def _on_data(dp: rtc.DataPacket) -> None:
+            asyncio.create_task(_async_on_data(dp))
 
         class SpecialistHandle:
             async def present(self, instructions: str):
