@@ -39,6 +39,7 @@ import base64
 import json
 import logging
 import os
+import random
 import re
 import tempfile
 import unicodedata
@@ -103,6 +104,10 @@ from models import (
     SPECIALIST_READY_WAIT_SECONDS, AGENT_VOICES, SPECIALIST_NAMES,
     SPECIALIST_IDENTITIES, AVATAR_IDS, SPECIALIST_ORDER, POST_INTRO_WAIT,
     LATERAL_TRANSFER_MAP,
+    SPECIALIST_CONNECT_JITTER_MIN, SPECIALIST_CONNECT_JITTER_MAX,
+    SPECIALIST_RECONNECT_JITTER_MIN, SPECIALIST_RECONNECT_JITTER_MAX,
+    SPECIALIST_RETRY_JITTER_MAX,
+    CIRCUIT_BREAKER_FAILURE_THRESHOLD, CIRCUIT_BREAKER_RESET_SECONDS,
 )
 from prompts import (
     LANGUAGE_ENFORCEMENT, HOST_PROMPT, SPECIALIST_SYSTEM_PROMPTS,
@@ -145,6 +150,66 @@ class _IgnoringStreamFilter(logging.Filter):
 for _handler in logging.root.handlers:
     _handler.addFilter(_IgnoringStreamFilter())
 logging.getLogger("root").addFilter(_IgnoringStreamFilter())
+# ──────────────────────────────────────────────────────────────────────────────
+
+# ── Circuit Breaker global (anti-cascata de 429 do Gemini API) ────────────────
+class _CircuitBreaker:
+    """
+    Proteção contra avalanche de erros 429 (Too Many Requests) do Gemini API.
+
+    Quando CIRCUIT_BREAKER_FAILURE_THRESHOLD falhas de AgentSession.start()
+    ocorrem em sequência, o circuito "abre" e bloqueia novas tentativas por
+    CIRCUIT_BREAKER_RESET_SECONDS. Após esse período, fecha automaticamente
+    e permite uma nova tentativa de conexão.
+
+    Thread/coroutine-safe: usa apenas primitivas built-in (monotonic, int).
+    """
+    def __init__(
+        self,
+        threshold: int = CIRCUIT_BREAKER_FAILURE_THRESHOLD,
+        reset_seconds: float = CIRCUIT_BREAKER_RESET_SECONDS,
+    ) -> None:
+        self._failures: int = 0
+        self._threshold: int = threshold
+        self._reset_seconds: float = reset_seconds
+        self._opened_at: float = 0.0
+
+    @property
+    def is_open(self) -> bool:
+        """True quando o circuito está aberto (novas conexões bloqueadas)."""
+        if self._failures < self._threshold:
+            return False
+        if monotonic() - self._opened_at >= self._reset_seconds:
+            # Reset automático após o período de espera
+            self._failures = 0
+            self._opened_at = 0.0
+            return False
+        return True
+
+    def record_failure(self, agent_name: str = "") -> None:
+        """Registra uma falha de conexão. Abre o circuito se atingir o threshold."""
+        self._failures += 1
+        if self._failures >= self._threshold and self._opened_at == 0.0:
+            self._opened_at = monotonic()
+            logger.warning(
+                f"[CircuitBreaker] ABERTO após {self._failures} falhas consecutivas "
+                f"(agente: {agent_name or 'desconhecido'}). "
+                f"Bloqueando novas conexões por {self._reset_seconds:.0f}s."
+            )
+
+    def record_success(self, agent_name: str = "") -> None:
+        """Registra uma conexão bem-sucedida. Fecha o circuito."""
+        if self._failures > 0:
+            logger.info(
+                f"[CircuitBreaker] Fechado após sucesso "
+                f"(agente: {agent_name or 'desconhecido'}). Contador resetado."
+            )
+        self._failures = 0
+        self._opened_at = 0.0
+
+
+# Instância global compartilhada por todos os especialistas.
+_gemini_circuit_breaker = _CircuitBreaker()
 # ──────────────────────────────────────────────────────────────────────────────
 
 # Rastreia salas que já possuem um job ativo para rejeitar dispatches duplicados.
@@ -1598,6 +1663,11 @@ async def _start_specialist_in_room(
         # Quando a sessão não existe (dormente), o áudio é ignorado no cliente.
         _audio_subscribed = False
 
+        # C2: Especialista genuinamente dormente.
+        # Sem sessão Gemini, sem subscrição de áudio inicialmente.
+        session: Optional[AgentSession] = None
+        agent: Optional[SpecialistAgent] = None
+
         async def _close_session():
             """Fecha a AgentSession atual para liberar o microfone e evitar interferências/surdez."""
             nonlocal session, _audio_subscribed
@@ -1619,10 +1689,13 @@ async def _start_specialist_in_room(
                 # NÃO subscreve ao áudio aqui — será feito apenas quando ativado
                 break
             except (asyncio.TimeoutError, Exception) as conn_err:
-                retry_delay = RETRY_BASE_DELAY * (2 ** (attempt - 1))
+                # Jitter aleatório para evitar thundering herd quando múltiplos
+                # especialistas falham ao mesmo tempo e tentam reconectar juntos.
+                jitter = random.uniform(0, SPECIALIST_RETRY_JITTER_MAX)
+                retry_delay = RETRY_BASE_DELAY * (2 ** (attempt - 1)) + jitter
                 logger.warning(
                     f"[{name}] Room tentativa {attempt}/{MAX_RETRIES} falhou: {conn_err}. "
-                    f"Retentando em {retry_delay}s..."
+                    f"Retentando em {retry_delay:.1f}s (base+jitter)..."
                 )
                 if attempt < MAX_RETRIES:
                     await asyncio.sleep(retry_delay)
@@ -1641,6 +1714,14 @@ async def _start_specialist_in_room(
                 )
             except Exception:
                 pass
+            # P4: Sinaliza o Readiness Gate do host como "falhou", para não
+            # travar o HostAgent por SPECIALIST_READY_WAIT_SECONDS (70s).
+            # O HostAgent trata result=None como falha e reporta ao usuário.
+            if hasattr(blackboard, "_specialist_ready_events_ref"):
+                ev = blackboard._specialist_ready_events_ref.get(spec_id)
+                if ev is not None and not ev.is_set():
+                    ev.set()
+                    logger.warning(f"[{name}] Readiness Gate sinalizado como FALHOU (liberando host).")
             return None
 
         logger.info(f"[{name}] Room conectado.")
@@ -1699,7 +1780,7 @@ async def _start_specialist_in_room(
                     text = event.text or ""
 
                 text = text.strip()
-                if not text:
+                if not text or _should_ignore_user_transcript(text):
                     return
 
                 if role == "assistant":
@@ -1717,11 +1798,19 @@ async def _start_specialist_in_room(
                 elif role == "user":
                     if not _audio_subscribed:
                         return
+                    
+                    # Log amigável para o desenvolvedor
+                    logger.info(f"[{name}] Usuário fala (Gemini Realtime STT): {text}")
+                    
+                    # Incrementa contador de msgs para controle de handover/handoff
+                    agent_instance._user_messages_since_activation += 1
+                    
+                    # Atualiza atividade global (previne silêncio global)
                     blackboard.mark_user_activity()
-                    if _should_ignore_user_transcript(text):
-                        return
-
-                    logger.info(f"[{name}] Usuário fala (Gemini STT): {text}")
+                    
+                    # Adiciona ao Blackboard se ainda não foi adicionado
+                    # (Nathália/HostAgent também adiciona via user_input_transcribed,
+                    # mas o especialista precisa garantir que sua visão do Gemini esteja sincronizada)
                     blackboard.add_message("Usuário", text)
                     if not blackboard.user_query:
                         blackboard.user_query = text
@@ -1799,18 +1888,25 @@ async def _start_specialist_in_room(
             
             session_started = False
             for attempt in range(1, MAX_RETRIES + 1):
+                if _gemini_circuit_breaker.is_open:
+                    raise Exception(f"Circuit breaker ABERTO — 429 recente. Aguardando reset.")
+
                 try:
                     await asyncio.wait_for(
                         new_session.start(new_agent, room=room),
                         timeout=15.0,
                     )
                     session_started = True
+                    _gemini_circuit_breaker.record_success(agent_name=name)
                     break
                 except (asyncio.TimeoutError, Exception) as start_err:
-                    retry_delay = RETRY_BASE_DELAY * (2 ** (attempt - 1))
+                    _gemini_circuit_breaker.record_failure(agent_name=name)
+                    # P5b: Adiciona jitter no retry da sessão para evitar 429 simultâneos
+                    jitter = random.uniform(0, SPECIALIST_RETRY_JITTER_MAX)
+                    retry_delay = RETRY_BASE_DELAY * (2 ** (attempt - 1)) + jitter
                     logger.warning(
                         f"[{name}] AgentSession.start() tentativa {attempt}/{MAX_RETRIES} "
-                        f"falhou: {start_err}. Retentando em {retry_delay}s..."
+                        f"falhou: {start_err}. Retentando em {retry_delay:.1f}s (base+jitter)..."
                     )
                     if attempt < MAX_RETRIES:
                         await asyncio.sleep(retry_delay)
@@ -1824,12 +1920,7 @@ async def _start_specialist_in_room(
             blackboard.specialist_sessions[spec_id] = new_session
             return new_agent, new_session
 
-        # ── C2: Especialista genuinamente dormente ───────────────────────
-        # Sem sessão Gemini, sem subscrição de áudio.
-        # Tudo será criado/subscrito no momento EXATO da ativação.
-        agent: Optional[SpecialistAgent] = None
-        session: Optional[AgentSession] = None
-        logger.info(f"[{name}] Especialista dormente. Sessão e áudio serão criados na ativação.")
+        logger.info(f"[{name}] Especialista pronto para ser ativado (aguardando ativação).")
 
         # C3: Publica health-check data packet para o frontend
         try:
@@ -1898,12 +1989,28 @@ async def _start_specialist_in_room(
                     await _emit("agent_error", {"error": str(e)})
                     return
 
-                # ── PASSO 2: Áudio já está subscrito pelo auto_subscribe do Room ──
-                # A AgentSession recém criada automaticamente pega a track já existente.
+                # ── PASSO 2: Garante subscrição de áudio do usuário ──
+                # Embora o Room use auto_subscribe, forçamos aqui para garantir que
+                # a AgentSession fresca detecte e se vincule às tracks de áudio.
                 nonlocal _audio_subscribed
                 _audio_subscribed = True
+                
+                subscribed_count = 0
+                for p in room.remote_participants.values():
+                    if p.identity.startswith("user-") or p.identity.startswith("guest-"):
+                        for pub in p.track_publications.values():
+                            if pub.kind == rtc.TrackKind.KIND_AUDIO:
+                                pub.set_subscribed(True)
+                                subscribed_count += 1
+                                logger.info(f"[{name}] Forçando subscrição de áudio para: {p.identity}")
+
+                if subscribed_count == 0:
+                    logger.warning(f"[{name}] Nenhuma track de áudio de usuário encontrada para subscrever!")
+                else:
+                    logger.info(f"[{name}] {subscribed_count} track(s) de áudio subscrita(s) com sucesso.")
+
                 # Pequena espera para o RealtimeModel registrar seus handlers de áudio
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(0.8)
 
                 # ── CRÍTICO: registra o comprimento do transcript no momento da ativação ──
                 agent._activation_transcript_len = len(blackboard.transcript)
@@ -2070,13 +2177,18 @@ async def _start_specialist_in_room(
                             _last_turn_id = turn_id
                         if _generation_task and not _generation_task.done():
                             _generation_task.cancel()
+                        # P7: Cede o loop para garantir que qualquer cleanup de _close_session 
+                        # ou cancelamento prévio seja processado antes da nova ativação.
+                        await asyncio.sleep(0)
                         _generation_task = asyncio.create_task(_handle_activation(msg))
                     else:
                         if _generation_task and not _generation_task.done():
                             _generation_task.cancel()
                             logger.info(f"[{name}] Geração CANCELADA (turno de {msg.get('agent_id')}).")
                         _generation_task = None
-                        asyncio.create_task(_close_session())
+                        if session is not None:
+                            asyncio.create_task(_close_session())
+                            await asyncio.sleep(0)  # P7: Cede o loop para _close_session iniciar cleanup antes do próximo handle
                         logger.debug(f"[{name}] DESATIVADO (ativo agora: {msg.get('agent_id')}).")
             except Exception as e:
                 logger.warning(f"[{name}] Erro ao processar data packet: {e}")
@@ -2370,7 +2482,10 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                 for sid in SPECIALIST_ORDER:
                     if not blackboard.is_active:
                         break
-                    await _start_specialist_in_room(
+                    # P4b: Só marca como "pronto" se não houver erro (retorno da função)
+                    # mas libera o evento de qualquer forma para não travar o host.
+                    # Nota: _start_specialist_in_room retorna a instância ou None em falha.
+                    res = await _start_specialist_in_room(
                         spec_id=sid,
                         blackboard=blackboard,
                         ws_url=ws_url,
@@ -2380,13 +2495,18 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                         host_room=ctx.room,
                         auto_introduce=False,
                     )
-                    # Sinaliza prontidão em-processo — desbloqueia o Readiness Gate.
-                    host_agent._ready_specialists.add(sid)
+                    
+                    if res:
+                        host_agent._ready_specialists.add(sid)
+                    
                     ev = host_agent._specialist_ready_events.get(sid)
                     if ev is not None:
                         ev.set()
-                    logger.info(f"[Retomada] {SPECIALIST_NAMES.get(sid, sid)} pronto e liberado para ativação.")
-                    await asyncio.sleep(5.0)  # Delay para respeitar rate limits do Gemini
+                    
+                    # P2: Delay com Jitter (evita conexões cravadas no mesmo milissegundo)
+                    jitter_delay = random.uniform(SPECIALIST_RECONNECT_JITTER_MIN, SPECIALIST_RECONNECT_JITTER_MAX)
+                    logger.info(f"[Retomada] {SPECIALIST_NAMES.get(sid, sid)} pronto. Aguardando {jitter_delay:.1f}s (jitter) para o próximo...")
+                    await asyncio.sleep(jitter_delay)  # Delay para respeitar rate limits do Gemini
                 logger.info("[Host] Retomada concluída. Todos os especialistas reconectados.")
 
             reconnect_task = asyncio.create_task(_reconnect_sequentially())
@@ -2453,14 +2573,17 @@ async def _run_entrypoint(ctx: JobContext) -> None:
                     except Exception as e:
                         logger.warning(f"[Apresentação] Erro ao conectar {SPECIALIST_NAMES.get(sid, sid)}: {e}")
                         results.append(e)
-                    # Delay de 3s entre conexões: respeita rate limits do Gemini e
+                        
+                    # P1: Delay com Jitter entre conexões (respeita rate limits do Gemini e
                     # garante que o room do especialista anterior já está estável
-                    # antes do próximo conectar (crítico para Rodrigo e Ana).
+                    # antes do próximo conectar).
                     if i < len(SPECIALIST_ORDER) - 1:
-                        await asyncio.sleep(3.0)
+                        jitter_delay = random.uniform(SPECIALIST_CONNECT_JITTER_MIN, SPECIALIST_CONNECT_JITTER_MAX)
+                        logger.debug(f"[Apresentação] Aguardando {jitter_delay:.1f}s (jitter) para conectar o próximo...")
+                        await asyncio.sleep(jitter_delay)
                 return results
 
-            logger.info("[Apresentação] Conectando especialistas em cascata (1-2s entre cada)...")
+            logger.info("[Apresentação] Conectando especialistas em cascata (com jitter)...")
             connect_task = asyncio.create_task(_connect_sequentially())
 
             logger.info("[Host] Nathália enviando apresentação inicial (sem perguntas)...")
@@ -2489,13 +2612,17 @@ async def _run_entrypoint(ctx: JobContext) -> None:
             if not blackboard.is_active:
                 return
 
-            # Sinaliza prontidão para todos os especialistas conectados com sucesso
+            # P4: Sinaliza prontidão para todos os especialistas (mesmo os que falharam)
+            # para não travar o Readiness Gate do host.
             for sid, result in zip(SPECIALIST_ORDER, sessions):
+                # Só adiciona como "pronto" se não for exceção/None
                 if not isinstance(result, Exception) and result is not None:
                     host_agent._ready_specialists.add(sid)
-                    ev = host_agent._specialist_ready_events.get(sid)
-                    if ev is not None:
-                        ev.set()
+                
+                # Mas SEMPRE libera o evento para destravar o orquestrador Nathália
+                ev = host_agent._specialist_ready_events.get(sid)
+                if ev is not None:
+                    ev.set()
             logger.info("[Apresentação] Todos conectados. Iniciando apresentações imediatamente...")
 
             # Executa as apresentações sequencialmente — um por vez

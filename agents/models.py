@@ -40,6 +40,26 @@ HOST_GENERATE_REPLY_TIMEOUT_SECONDS = 60.0   # Timeout para cada generate_reply 
 CONTEXT_RECENT_WINDOW = 40
 SPECIALIST_READY_WAIT_SECONDS = 70.0  # Tempo máximo aguardando agent_ready (especialistas levam até ~60s na retomada)
 
+# ── Jitter de Conexão (anti-429 / thundering herd) ─────────────────────────────
+# Delay aleatório entre conexões de especialistas para evitar que múltiplos
+# handshakes WebSocket/Gemini ocorram exatamente ao mesmo tempo.
+# Modo inicial (primeira sessão): intervalo mais curto para não atrasar o boot.
+SPECIALIST_CONNECT_JITTER_MIN: float = 2.5   # segundos
+SPECIALIST_CONNECT_JITTER_MAX: float = 5.5   # segundos
+# Modo retomada: intervalo mais conservador (especialistas reconectam com Gemini já ocupado).
+SPECIALIST_RECONNECT_JITTER_MIN: float = 4.0  # segundos
+SPECIALIST_RECONNECT_JITTER_MAX: float = 9.0  # segundos
+# Jitter adicional no backoff de room.connect() para evitar que 3+ especialistas
+# que falharam no mesmo momento tentem ao mesmo tempo.
+SPECIALIST_RETRY_JITTER_MAX: float = 2.5     # segundos (somado ao backoff exponencial)
+
+# ── Circuit Breaker (proteção global contra cascata de 429) ────────────────────
+# Após CIRCUIT_BREAKER_FAILURE_THRESHOLD falhas de AgentSession.start() consecutivas,
+# o circuito "abre" e bloqueia novas tentativas por CIRCUIT_BREAKER_RESET_SECONDS.
+# Isso impede que múltiplos especialistas sobrecarreguem o Gemini API ao mesmo tempo.
+CIRCUIT_BREAKER_FAILURE_THRESHOLD: int = 3    # falhas consecutivas para abrir
+CIRCUIT_BREAKER_RESET_SECONDS: float = 35.0   # tempo de espera antes de fechar novamente
+
 # ── Vozes por agente (Gemini TTS nativo) ───────────────────────────────────────
 AGENT_VOICES: dict[str, str] = {
     "host":  "Aoede",    # Nathália – feminina suave
