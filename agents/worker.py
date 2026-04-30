@@ -2241,25 +2241,71 @@ async def _run_entrypoint(ctx: JobContext) -> None:
 
     logger.info(f"=== ENTRYPOINT MENTORIA AI v5 – sala: {ctx.room.name} ===")
 
-    # Conecta o worker ao room (HostAgent/Nathália) sem auto-subscribe para evitar
-    # escutar a voz dos outros agentes e gerar confusão e interferência (mandarim/árabe).
+    # Conecta o worker ao room com AUDIO_ONLY para subscrever automaticamente
+    # todas as tracks de áudio. Em seguida, o handler track_subscribed cancela
+    # as tracks dos outros agentes (evita interferência de vozes) e mantém
+    # somente as tracks de user-* e guest-*.
+    # IMPORTANTE: usar track_subscribed (e não track_published) pois é o evento
+    # que o AgentSession/RealtimeModel escuta para registrar a track no pipeline
+    # de entrada de voz. track_published apenas anuncia a intenção de publicar,
+    # sem garantir que o AgentSession veja a track física.
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
     logger.info(f"Worker conectado ao room: {ctx.room.name} [Host AUDIO_ONLY]")
 
     # Garante a subscrição manual no áudio do usuário principal e convidados
+    # que já estão na sala antes do agente conectar.
     for p in ctx.room.remote_participants.values():
         if p.identity.startswith("user-") or p.identity.startswith("guest-"):
             for pub in p.track_publications.values():
                 if pub.kind == rtc.TrackKind.KIND_AUDIO:
                     pub.set_subscribed(True)
                     logger.info(f"[Host] Áudio de {p.identity} subscrito (init).")
+        else:
+            # Agente especialista — cancela a subscrição automática para evitar
+            # que a voz do agente seja processada como input do usuário.
+            for pub in p.track_publications.values():
+                if pub.kind == rtc.TrackKind.KIND_AUDIO:
+                    pub.set_subscribed(False)
 
-    # Monitora novas tracks publicadas para caso o usuário ou convidado entre depois do agente
+    # track_subscribed: disparado quando a track já foi fisicamente entregue ao
+    # room RTC e o AgentSession pode recebê-la como fonte de áudio. É aqui que
+    # o pipeline de entrada do RealtimeModel (Gemini) realmente registra a track.
+    @ctx.room.on("track_subscribed")
+    def on_track_subscribed(
+        track: rtc.Track,
+        pub: rtc.RemoteTrackPublication,
+        participant: rtc.RemoteParticipant,
+    ):
+        if pub.kind != rtc.TrackKind.KIND_AUDIO:
+            return
+        is_user = (
+            participant.identity.startswith("user-")
+            or participant.identity.startswith("guest-")
+        )
+        if is_user:
+            # Track do usuário: mantém subscrita e loga para diagnóstico.
+            logger.info(
+                f"[Host][Audio] Track do usuário {participant.identity} disponível "
+                f"no pipeline do RealtimeModel (sid={track.sid})."
+            )
+        else:
+            # Track de agente especialista: desinscreve para evitar eco/interferência.
+            pub.set_subscribed(False)
+            logger.debug(f"[Host][Audio] Track de agente {participant.identity} ignorada.")
+
+    # track_published: anuncia que um participante PUBLICOU uma nova track.
+    # Usamos apenas para inscrever tracks de usuários que entram DEPOIS do agente.
     @ctx.room.on("track_published")
     def on_track_published(pub: rtc.RemoteTrackPublication, participant: rtc.RemoteParticipant):
-        if (participant.identity.startswith("user-") or participant.identity.startswith("guest-")) and pub.kind == rtc.TrackKind.KIND_AUDIO:
+        if pub.kind != rtc.TrackKind.KIND_AUDIO:
+            return
+        is_user = (
+            participant.identity.startswith("user-")
+            or participant.identity.startswith("guest-")
+        )
+        if is_user:
             pub.set_subscribed(True)
-            logger.info(f"[Host] Áudio de {participant.identity} subscrito dinamicamente.")
+            logger.info(f"[Host][Audio] Nova track do usuário {participant.identity} solicitada para subscrição.")
 
     room_name = ctx.room.name
     # Extrair UUID do projeto a partir do _room name (ex: mentoria-<uuid>-<suffix>)
@@ -2747,6 +2793,14 @@ async def _run_entrypoint(ctx: JobContext) -> None:
         if not blackboard.is_active:
             return
 
+        # DIAGNÓSTICO: loga TODOS os eventos de STT (parciais e finais)
+        # para confirmar que o pipeline de áudio está funcionando.
+        # Remover ou rebaixar para DEBUG após validação.
+        logger.info(
+            f"[Host][STT] Evento recebido — is_final={getattr(event, 'is_final', '?')} "
+            f"texto={str(getattr(event, 'transcript', getattr(event, 'text', '?')))[:80]}"
+        )
+
         # ==========================================================
         # FILTRO 1: Apenas transcrições FINAIS são relevantes.
         # Transcrições parciais (is_final=False) são intermediárias
@@ -2933,6 +2987,15 @@ async def _run_entrypoint(ctx: JobContext) -> None:
     finally:
         blackboard.is_active = False
         logger.info("[Job] Iniciando limpeza de recursos...")
+
+        # Encerra o ProcessPoolExecutor do Marco para liberar Thread-3
+        # e permitir que o processo encerre sem ser forçado (SIGKILL).
+        try:
+            from marco_strategist import shutdown_marco_pool
+            shutdown_marco_pool()
+            logger.info("[Job] ProcessPool do Marco encerrado.")
+        except Exception as _pool_err:
+            logger.debug(f"[Job] Erro ao encerrar ProcessPool do Marco: {_pool_err}")
 
         async def persist_resume_snapshot() -> None:
             import urllib.request

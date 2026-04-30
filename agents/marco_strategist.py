@@ -47,6 +47,27 @@ def _get_pool() -> ProcessPoolExecutor:
     return _marco_pool
 
 
+def shutdown_marco_pool() -> None:
+    """
+    Encerra o ProcessPoolExecutor do Marco de forma graciosa.
+
+    Deve ser chamado no bloco finally do entrypoint do worker para liberar
+    a Thread-3 não-daemon que impede o processo de encerrar normalmente,
+    evitando o erro:
+        WARNING: non-daemon thread `Thread-3` may prevent the process from exiting
+        ERROR: process did not exit in time, killing process -10
+    """
+    global _marco_pool
+    if _marco_pool is not None:
+        try:
+            _marco_pool.shutdown(wait=False, cancel_futures=True)
+            logger.info("[Marco] ProcessPoolExecutor encerrado com sucesso.")
+        except Exception as e:
+            logger.debug(f"[Marco] Erro ao encerrar ProcessPoolExecutor: {e}")
+        finally:
+            _marco_pool = None
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # FUNÇÕES QUE RODAM NO PROCESSO FILHO (pickle-safe, sem referências ao LiveKit)
 # ═══════════════════════════════════════════════════════════════════════════════

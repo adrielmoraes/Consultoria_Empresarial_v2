@@ -44,14 +44,14 @@ SPECIALIST_READY_WAIT_SECONDS = 70.0  # Tempo máximo aguardando agent_ready (es
 # Delay aleatório entre conexões de especialistas para evitar que múltiplos
 # handshakes WebSocket/Gemini ocorram exatamente ao mesmo tempo.
 # Modo inicial (primeira sessão): intervalo mais curto para não atrasar o boot.
-SPECIALIST_CONNECT_JITTER_MIN: float = 2.5   # segundos
-SPECIALIST_CONNECT_JITTER_MAX: float = 5.5   # segundos
+SPECIALIST_CONNECT_JITTER_MIN: float = 4.0   # segundos (era 2.5)
+SPECIALIST_CONNECT_JITTER_MAX: float = 8.0   # segundos (era 5.5)
 # Modo retomada: intervalo mais conservador (especialistas reconectam com Gemini já ocupado).
-SPECIALIST_RECONNECT_JITTER_MIN: float = 4.0  # segundos
-SPECIALIST_RECONNECT_JITTER_MAX: float = 9.0  # segundos
+SPECIALIST_RECONNECT_JITTER_MIN: float = 8.0  # segundos (era 4.0)
+SPECIALIST_RECONNECT_JITTER_MAX: float = 15.0 # segundos (era 9.0)
 # Jitter adicional no backoff de room.connect() para evitar que 3+ especialistas
 # que falharam no mesmo momento tentem ao mesmo tempo.
-SPECIALIST_RETRY_JITTER_MAX: float = 2.5     # segundos (somado ao backoff exponencial)
+SPECIALIST_RETRY_JITTER_MAX: float = 3.0     # segundos (era 2.5)
 
 # ── Circuit Breaker (proteção global contra cascata de 429) ────────────────────
 # Após CIRCUIT_BREAKER_FAILURE_THRESHOLD falhas de AgentSession.start() consecutivas,
