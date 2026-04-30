@@ -2149,7 +2149,7 @@ async def _start_specialist_in_room(
         _last_turn_id: int = -1
 
         @room.on("data_received")
-        def _on_data(dp: rtc.DataPacket) -> None:
+        async def _on_data(dp: rtc.DataPacket) -> None:
             nonlocal _generation_task, _last_activation_at, _last_turn_id
             try:
                 msg = json.loads(dp.data.decode())
