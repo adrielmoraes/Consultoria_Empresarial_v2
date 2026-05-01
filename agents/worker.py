@@ -215,6 +215,35 @@ _gemini_circuit_breaker = _CircuitBreaker()
 # Rastreia salas que já possuem um job ativo para rejeitar dispatches duplicados.
 _active_rooms: set[str] = set()
 
+# ── Monkey Patch Anti-Crash para PublishTranscriptionError ─────────────────────
+# As transcrições publicadas internamente pelo Agent podem sofrer timeout 
+# e causar um crash de toda a sessão do agente com PublishTranscriptionError.
+# Interceptamos isso no nível do LocalParticipant.
+_original_publish_transcription = rtc.LocalParticipant.publish_transcription
+
+async def _safe_publish_transcription_monkey_patch(self, transcription, *args, **kwargs):
+    from livekit.rtc.participant import PublishTranscriptionError
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            return await _original_publish_transcription(self, transcription, *args, **kwargs)
+        except PublishTranscriptionError as e:
+            if "timeout" in str(e).lower() or "connection error" in str(e).lower():
+                logger.warning(f"[MonkeyPatch] PublishTranscriptionError (timeout) interceptado (tentativa {attempt+1}/{max_retries}).")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(0.5)
+                else:
+                    logger.error(f"[MonkeyPatch] Falha final ao publicar transcrição: {e}. Suprimindo erro para evitar crash do worker.")
+            else:
+                logger.error(f"[MonkeyPatch] Erro de transcrição desconhecido: {e}. Suprimindo para evitar crash do worker.")
+                break
+        except Exception as e:
+            logger.error(f"[MonkeyPatch] Erro genérico em publish_transcription: {e}. Suprimindo para evitar crash do worker.")
+            break
+
+rtc.LocalParticipant.publish_transcription = _safe_publish_transcription_monkey_patch
+# ──────────────────────────────────────────────────────────────────────────────
+
 async def _safe_publish_data(participant: rtc.LocalParticipant, payload: dict, max_retries: int = 3) -> None:
     """Publica data packets de forma segura com sistema de retries automatizado."""
     data_bytes = json.dumps(payload).encode()
@@ -1062,10 +1091,25 @@ class HostAgent(Agent):
                 # Delay de 8.5s permite que a Nathália termine de ler a frase ("Vou chamar o Daniel...")
                 # no TTS antes de ativarmos o microfone do Daniel.
                 await asyncio.sleep(8.5)
-                
-                # SILENCIA a Nathália garantindo que ela não ouça o eco ou a fala do Especialista
-                self._mute_host_audio()
-                await self._publish_packet(packet)
+
+                # CORREÇÃO CRÍTICA: o mute só ocorre DEPOIS da confirmação de entrega do pacote.
+                # Se o publish falhar (ConnectionError timeout), o mute NÃO é ativado e Nathália
+                # continua ouvindo o usuário — evita silêncio permanente por falha de rede.
+                try:
+                    await self._publish_packet(packet)
+                    # Só silencia APÓS confirmação de entrega bem-sucedida
+                    self._mute_host_audio()
+                except Exception as pub_err:
+                    logger.warning(
+                        f"[Host] Falha ao publicar activate_agent para {spec_id}: {pub_err}. "
+                        f"Nathália NÃO será silenciada. Abortando ativação."
+                    )
+                    # Limpa o estado do turno pois o especialista nunca receberá o pacote
+                    self._blackboard.active_agent = None
+                    self._turn_events.pop(turn_id, None)
+                    self._turn_status.pop(turn_id, None)
+                    self._blackboard.orchestration_metrics["activations_timeout"] += 1
+                    return
 
                 try:
                     await asyncio.wait_for(
@@ -1080,7 +1124,7 @@ class HostAgent(Agent):
                     self._blackboard.active_agent = None
                     self._turn_events.pop(turn_id, None)
                     self._turn_status.pop(turn_id, None)
-                    self._unmute_host_audio()  # Reativa áudio em caso de falha
+                    self._unmute_host_audio()  # Reativa áudio em caso de falha de ACK
                     logger.warning(f"[Host] Timeout aguardando ACK de {spec_id} no turno {turn_id}.")
 
             asyncio.create_task(_deferred_activation())
