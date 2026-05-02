@@ -27,7 +27,34 @@ import {
   RemoteParticipant,
   ConnectionState,
   DefaultReconnectPolicy,
+  RemoteVideoTrack,
 } from "livekit-client";
+
+type AgentTurnStatus = "idle" | "activated" | "running" | "completed" | "timeout" | "error" | "cancelled";
+
+function getTurnStatusLabel(status: AgentTurnStatus): string {
+  switch (status) {
+    case "activated": return "Ativado";
+    case "running": return "Em execução";
+    case "completed": return "Finalizado";
+    case "timeout": return "Timeout";
+    case "error": return "Erro";
+    case "cancelled": return "Cancelado";
+    default: return "Aguardando";
+  }
+}
+
+function getTurnStatusClass(status: AgentTurnStatus): string {
+  switch (status) {
+    case "activated": return "text-cyan-300 border-cyan-500/40 bg-cyan-500/15";
+    case "running": return "text-[#d4af37] border-[#d4af37]/40 bg-[#d4af37]/10";
+    case "completed": return "text-emerald-300 border-emerald-500/40 bg-emerald-500/15";
+    case "timeout": return "text-amber-300 border-amber-500/40 bg-amber-500/15";
+    case "error": return "text-red-300 border-red-500/40 bg-red-500/15";
+    case "cancelled": return "text-gray-300 border-gray-500/40 bg-gray-500/15";
+    default: return "text-gray-400 border-white/10 bg-black/40";
+  }
+}
 import {
   buildAudioCaptureOptions,
   inspectAudioInputState,
@@ -134,6 +161,7 @@ export default function GuestMentorshipPage() {
   const [connectedAgents, setConnectedAgents] = useState<Set<string>>(
     new Set()
   );
+  const [remoteParticipants, setRemoteParticipants] = useState<RemoteParticipant[]>([]);
   const [micActive, setMicActive] = useState(false);
   const [micLevel, setMicLevel] = useState(0);
   const [micError, setMicError] = useState<string | null>(null);
@@ -290,6 +318,8 @@ export default function GuestMentorshipPage() {
             await room!.startAudio();
           } catch {}
 
+          setRemoteParticipants(Array.from(room!.remoteParticipants.values()));
+
           // Identifica agentes já na sala
           for (const [, p] of room!.remoteParticipants) {
             const pid = p.identity;
@@ -375,6 +405,7 @@ export default function GuestMentorshipPage() {
         room.on(
           RoomEvent.ParticipantConnected,
           (participant: RemoteParticipant) => {
+            setRemoteParticipants(Array.from(room!.remoteParticipants.values()));
             const id = participant.identity;
             if (id.startsWith("agent-")) {
               const agentId = id.replace("agent-", "");
@@ -382,6 +413,13 @@ export default function GuestMentorshipPage() {
                 setConnectedAgents((prev) => new Set(prev).add(agentId));
               }
             }
+          }
+        );
+
+        room.on(
+          RoomEvent.ParticipantDisconnected,
+          (participant: RemoteParticipant) => {
+            setRemoteParticipants(Array.from(room!.remoteParticipants.values()));
           }
         );
 
@@ -501,18 +539,45 @@ export default function GuestMentorshipPage() {
   }
 
   const agentsList = Object.values(AGENTS_MAP);
-  const host = agentsList.find((a) => a.id === "host");
-  const others = agentsList.filter((a) => a.id !== "host");
-  const reorderedAgents =
-    host && others.length >= 4
-      ? [others[0], others[1], host, others[2], others[3]]
-      : agentsList;
-
-  const agents = reorderedAgents.map((a) => ({
+  
+  const agents = agentsList.map((a) => ({
     ...a,
+    type: "agent" as const,
     speaking: activeSpeakers.has(a.id),
     connected: connectedAgents.has(a.id),
+    turnStatus: "idle" as AgentTurnStatus,
+    videoTrack: undefined as RemoteVideoTrack | undefined,
   }));
+
+  const guests = remoteParticipants
+    .filter(p => !p.identity.startsWith("agent-") && !p.identity.startsWith("bey-"))
+    .map(p => ({
+      id: p.identity,
+      name: p.name || (p.identity.startsWith("guest-") ? p.identity.replace("guest-", "Convidado ") : p.identity),
+      role: "Membro da Equipe",
+      icon: Users,
+      gradient: "from-slate-700 to-slate-900",
+      speaking: activeSpeakers.has(p.identity),
+      connected: true,
+      type: "guest" as const,
+    }));
+
+  const hostAgent = agents.find(a => a.id === "host");
+  const otherAgents = agents.filter(a => a.id !== "host");
+  
+  let reorderedParticipants: any[] = [];
+  if (hostAgent && otherAgents.length >= 4) {
+    reorderedParticipants = [
+      otherAgents[0], 
+      otherAgents[1], 
+      hostAgent, 
+      otherAgents[2], 
+      otherAgents[3],
+      ...guests
+    ];
+  } else {
+    reorderedParticipants = [...agents, ...guests];
+  }
 
   const connectionIcon = {
     connected: <Wifi className="w-3.5 h-3.5 text-emerald-400" />,
@@ -600,20 +665,26 @@ export default function GuestMentorshipPage() {
       <div className="flex-1 flex overflow-hidden">
         {/* Agents Grid */}
         <div className="flex-1 p-3 sm:p-4 overflow-hidden">
-          <div className="hidden lg:grid grid-cols-5 gap-3 h-full">
-            {agents.map((agent) => (
-              <GuestAgentCard key={agent.id} agent={agent} />
+          {/* Layout de Grid Adaptável baseada no número total de participantes */}
+          <div className={`hidden md:grid gap-3 h-full ${
+            reorderedParticipants.length <= 3 
+              ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" 
+              : reorderedParticipants.length <= 5
+                ? "grid-cols-2 lg:grid-cols-5"
+                : reorderedParticipants.length <= 6
+                  ? "grid-cols-3 grid-rows-2"
+                  : "grid-cols-4 grid-rows-2"
+          }`}>
+            {reorderedParticipants.map((p) => (
+              <ParticipantCard key={p.id} participant={p} compact={reorderedParticipants.length > 5} />
             ))}
           </div>
-          <div className="hidden md:grid lg:hidden grid-cols-3 grid-rows-2 gap-3 h-full">
-            {agents.map((agent) => (
-              <GuestAgentCard key={agent.id} agent={agent} />
-            ))}
-          </div>
-          <div className="md:hidden grid grid-cols-2 lg:hidden gap-3 overflow-y-auto pb-4 h-full content-start">
-            {agents.map((agent) => (
-              <div key={agent.id} className={agent.id === "host" ? "col-span-2 aspect-video" : "col-span-1 aspect-square"}>
-                 <GuestAgentCard agent={agent} compact={agent.id !== "host"} />
+
+          {/* Mobile Layout */}
+          <div className="md:hidden grid grid-cols-2 gap-3 overflow-y-auto pb-4 h-full content-start">
+            {reorderedParticipants.map((p) => (
+              <div key={p.id} className={p.id === "host" ? "col-span-2 aspect-video" : "col-span-1 aspect-square"}>
+                 <ParticipantCard participant={p} compact={p.id !== "host" || reorderedParticipants.length > 4} />
               </div>
             ))}
           </div>
@@ -711,149 +782,172 @@ export default function GuestMentorshipPage() {
   );
 }
 
-// ─── GuestAgentCard ──────────────────────────────────────────────────────────
+// ─── ParticipantCard ──────────────────────────────────────────────────────────
 
-function GuestAgentCard({
-  agent,
+function ParticipantCard({
+  participant,
   compact = false,
 }: {
-  agent: Omit<AgentInfo, "speaking"> & {
+  participant: (Omit<AgentInfo, "speaking"> | { id: string; name: string; role: string; icon: any; gradient: string }) & {
     speaking: boolean;
     connected?: boolean;
+    turnStatus?: AgentTurnStatus;
+    videoTrack?: RemoteVideoTrack;
+    type?: "agent" | "guest";
   };
   compact?: boolean;
 }) {
-  const Icon = agent.icon;
+  const Icon = participant.icon;
+  const turnStatus = participant.turnStatus ?? "idle";
+  const turnLabel = getTurnStatusLabel(turnStatus);
+  const turnClass = getTurnStatusClass(turnStatus);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (participant.videoTrack && videoRef.current) {
+      participant.videoTrack.attach(videoRef.current);
+      return () => {
+        participant.videoTrack?.detach();
+      };
+    }
+  }, [participant.videoTrack]);
 
   return (
     <motion.div
       layout
-      className={`relative rounded-3xl overflow-hidden border transition-all duration-700 ease-in-out bg-black/40 backdrop-blur-md h-full ${
-        agent.speaking
-          ? "border-[#d4af37] shadow-[0_0_50px_rgba(212,175,55,0.25)] scale-[1.02] z-10"
-          : agent.connected
+      className={`relative rounded-3xl overflow-hidden border transition-all duration-700 ease-in-out bg-black/40 backdrop-blur-md h-full ${participant.speaking
+        ? "border-[#d4af37] shadow-[0_0_50px_rgba(212,175,55,0.25)] scale-[1.02] z-10"
+        : participant.connected
           ? "border-white/10 hover:border-[#d4af37]/30"
           : "border-white/5 opacity-50 grayscale-[0.5]"
-      }`}
-    >
-      <div
-        className={`absolute inset-0 bg-linear-to-br ${agent.gradient} transition-opacity duration-1000 ${
-          agent.speaking ? "opacity-20" : "opacity-5"
         }`}
+    >
+      {/* Background Glow */}
+      <div
+        className={`absolute inset-0 bg-linear-to-br ${participant.gradient} transition-opacity duration-1000 ${participant.speaking ? 'opacity-20' : 'opacity-5'
+          }`}
       />
 
+      {/* Abstract Pattern Layer */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
+
+      {/* Avatar Container */}
       <div className="absolute inset-0 flex items-center justify-center p-6 pb-20">
         <div className="relative group">
-          {agent.speaking && (
+          {/* Animated Rings for Speaking */}
+          {participant.speaking && (
             <>
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1.5, opacity: 0 }}
                 transition={{ duration: 2, repeat: Infinity }}
-                className="absolute inset-0 rounded-full border-2 border-[#d4af37]/30"
+                className={`absolute inset-0 rounded-full border-2 border-[#d4af37]/30`}
               />
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1.8, opacity: 0 }}
                 transition={{ duration: 2, repeat: Infinity, delay: 0.6 }}
-                className="absolute inset-0 rounded-full border-2 border-[#d4af37]/10"
+                className={`absolute inset-0 rounded-full border-2 border-[#d4af37]/10`}
               />
             </>
           )}
 
           <motion.div
             animate={
-              agent.speaking
-                ? {
-                    scale: 1.05,
-                    boxShadow: "0 0 40px rgba(212, 175, 55, 0.4)",
-                  }
+              participant.speaking
+                ? { scale: 1.05, boxShadow: "0 0 40px rgba(212, 175, 55, 0.4)" }
                 : { scale: 1, boxShadow: "0 0 20px rgba(0, 0, 0, 0.5)" }
             }
-            className={`${
-              compact ? "w-20 h-20 md:w-24 md:h-24" : "w-32 h-32 lg:w-40 lg:h-40"
-            } rounded-full bg-[#030712] border-2 ${
-              agent.speaking ? "border-[#d4af37]" : "border-white/10"
-            } flex items-center justify-center relative z-10 overflow-hidden`}
+            className={`${compact ? "w-20 h-20 md:w-24 md:h-24" : "w-32 h-32 lg:w-40 lg:h-40"
+              } rounded-full bg-[#030712] border-2 ${participant.speaking ? 'border-[#d4af37]' : 'border-white/10'
+              } flex items-center justify-center relative z-10 overflow-hidden group-hover:border-[#d4af37]/50 transition-colors`}
           >
-            <div
-              className={`absolute inset-0 bg-linear-to-br ${agent.gradient} opacity-20`}
-            />
-            <Icon
-              className={`${
-                compact ? "w-10 h-10 md:w-12 md:h-12" : "w-14 h-14 lg:w-20 lg:h-20"
-              } ${
-                agent.speaking ? "text-[#d4af37]" : "text-gray-400"
-              } transition-colors relative z-20`}
-            />
+            <div className={`absolute inset-0 bg-linear-to-br ${participant.gradient} opacity-[0.15] z-0`} />
+
+            {/* Feed de vídeo realista do Beyond Presence (apenas agentes) */}
+            {participant.videoTrack && (
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="absolute inset-0 w-full h-full object-cover z-10"
+              />
+            )}
+
+            {/* Ícone vetorizado clássico (Exibição Fallback ou Convidados) */}
+            {!participant.videoTrack && (
+              <Icon
+                className={`${compact ? "w-10 h-10 md:w-12 md:h-12" : "w-14 h-14 lg:w-20 lg:h-20"
+                  } ${participant.speaking ? 'text-[#d4af37]' : 'text-gray-400 group-hover:text-gray-300'} transition-colors relative z-20`}
+              />
+            )}
+
+            {/* Overlay sutil quando está falando por cima do vídeo */}
+            {participant.videoTrack && participant.speaking && (
+              <div className="absolute inset-0 bg-[#d4af37]/10 z-20 mix-blend-overlay pointer-events-none" />
+            )}
           </motion.div>
         </div>
       </div>
 
-      <div className="absolute top-4 left-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
-        <div
-          className={`w-1.5 h-1.5 rounded-full ${
-            agent.connected
-              ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]"
-              : "bg-gray-600"
-          }`}
-        />
-        <span
-          className={`text-[9px] font-bold uppercase tracking-wider ${
-            agent.connected ? "text-emerald-400" : "text-gray-500"
-          }`}
-        >
-          {agent.connected ? "Online" : "Standby"}
-        </span>
+      <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-20">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
+            <div className={`w-1.5 h-1.5 rounded-full ${participant.connected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'bg-gray-600'}`} />
+            <span className={`text-[9px] font-bold uppercase tracking-wider ${participant.connected ? 'text-emerald-400' : 'text-gray-500'}`}>
+              {participant.connected ? 'Online' : 'Standby'}
+            </span>
+          </div>
+          {participant.type === "agent" && (
+            <div className={`px-2.5 py-1 rounded-full border text-[9px] font-bold uppercase tracking-wider ${turnClass}`}>
+              {turnLabel}
+            </div>
+          )}
+        </div>
+
+        {participant.speaking && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-2 bg-[#d4af37] px-3 py-1 rounded-full shadow-[0_0_20px_rgba(212,175,55,0.3)]"
+          >
+            <div className="flex items-center gap-1">
+              {[0, 1, 2].map((i) => (
+                <motion.div
+                  key={i}
+                  animate={{ height: ["4px", "10px", "4px"] }}
+                  transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.1 }}
+                  className="w-0.5 bg-[#030712] rounded-full"
+                />
+              ))}
+            </div>
+            <span className="text-[9px] font-black uppercase text-[#030712] tracking-tighter">
+              {participant.type === "guest" ? "Falando" : "Live Insight"}
+            </span>
+          </motion.div>
+        )}
       </div>
 
-      {agent.speaking && (
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="absolute top-4 right-4 flex items-center gap-2 bg-[#d4af37] px-3 py-1 rounded-full shadow-[0_0_20px_rgba(212,175,55,0.3)]"
-        >
-          <div className="flex items-center gap-1">
-            {[0, 1, 2].map((i) => (
-              <motion.div
-                key={i}
-                animate={{ height: ["4px", "10px", "4px"] }}
-                transition={{
-                  duration: 0.5,
-                  repeat: Infinity,
-                  delay: i * 0.1,
-                }}
-                className="w-0.5 bg-[#030712] rounded-full"
-              />
-            ))}
-          </div>
-          <span className="text-[9px] font-black uppercase text-[#030712] tracking-tighter">
-            Live Insight
-          </span>
-        </motion.div>
-      )}
-
+      {/* Info Overlay */}
       <div className="absolute bottom-0 left-0 right-0 p-6 bg-linear-to-t from-[#030712] via-[#030712]/90 to-transparent">
         <div className="relative z-10 text-center">
-          <h3
-            className={`font-black text-white tracking-tight uppercase leading-none ${
-              compact ? "text-[11px]" : "text-lg"
-            }`}
-          >
-            {agent.name}
+          <h3 className={`font-black text-white tracking-tight uppercase leading-none ${compact ? "text-[11px]" : "text-lg"}`}>
+            {participant.name}
           </h3>
           <p
-            className={`font-medium text-[#d4af37] tracking-widest uppercase mt-1.5 ${
+            className={`font-medium text-[#d4af37]/80 tracking-widest uppercase mt-1 ${
               compact ? "text-[9px]" : "text-[10px]"
             }`}
           >
-            {agent.role}
+            {participant.role}
           </p>
         </div>
       </div>
 
-      {agent.speaking && (
-        <div className="absolute inset-x-0 bottom-0 h-1 gold-gradient shadow-[0_-10px_30px_rgba(212,175,55,0.5)]" />
+      {participant.speaking && (
+        <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-[#d4af37]/0 via-[#d4af37] to-[#d4af37]/0 shadow-[0_-10px_30px_rgba(212,175,55,0.5)]" />
       )}
     </motion.div>
   );

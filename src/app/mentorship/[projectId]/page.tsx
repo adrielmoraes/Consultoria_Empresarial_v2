@@ -247,6 +247,7 @@ export default function MentorshipRoomPage() {
   const [ending, setEnding] = useState(false);
   const [activeSpeakers, setActiveSpeakers] = useState<Set<string>>(new Set());
   const [activeVideoTracks, setActiveVideoTracks] = useState<Record<string, RemoteVideoTrack>>({});
+  const [remoteParticipants, setRemoteParticipants] = useState<RemoteParticipant[]>([]);
   const [transcript, setTranscript] = useState<TranscriptMessage[]>([]);
   const [showTranscript, setShowTranscript] = useState(false);
   const [maxSessionTime, setMaxSessionTime] = useState<number | null>(null);
@@ -726,6 +727,7 @@ export default function MentorshipRoomPage() {
             console.warn("[Room] Não foi possível enviar sessionId ao worker:", error);
           }
 
+          setRemoteParticipants(Array.from(room!.remoteParticipants.values()));
           for (const [, p] of room!.remoteParticipants) {
             const pid = p.identity;
             if (pid.startsWith("agent-")) {
@@ -791,6 +793,32 @@ export default function MentorshipRoomPage() {
             message,
             timestamp: new Date().toLocaleTimeString("pt-BR"),
           });
+        });
+
+        room.on(RoomEvent.ParticipantConnected, (p) => {
+          if (!room) return;
+          setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+          const pid = p.identity;
+          if (pid.startsWith("agent-")) {
+            const agId = pid.replace("agent-", "");
+            if (AGENTS_MAP[agId]) {
+              setConnectedAgents((prev) => new Set(prev).add(agId));
+            }
+          }
+        });
+
+        room.on(RoomEvent.ParticipantDisconnected, (p) => {
+          if (!room) return;
+          setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+          const pid = p.identity;
+          if (pid.startsWith("agent-")) {
+            const agId = pid.replace("agent-", "");
+            setConnectedAgents((prev) => {
+              const next = new Set(prev);
+              next.delete(agId);
+              return next;
+            });
+          }
         });
 
         room.on(RoomEvent.LocalTrackPublished, (publication) => {
@@ -1209,21 +1237,49 @@ export default function MentorshipRoomPage() {
   if (authStatus === "unauthenticated") return null;
 
   const agentsList = Object.values(AGENTS_MAP);
-  const host = agentsList.find(a => a.id === "host");
-  const others = agentsList.filter(a => a.id !== "host");
-
-  // Reordena para colocar o host no centro: 2 agentes, host, 2 agentes
-  const reorderedAgents = host && others.length >= 4
-    ? [others[0], others[1], host, others[2], others[3]]
-    : agentsList;
-
-  const agents = reorderedAgents.map((a) => ({
+  
+  // Agentes processados com estado
+  const agents = agentsList.map((a) => ({
     ...a,
+    type: "agent" as const,
     speaking: activeSpeakers.has(a.id),
     connected: connectedAgents.has(a.id),
     turnStatus: agentTurnStatus[a.id] ?? "idle",
     videoTrack: activeVideoTracks[a.id],
   }));
+
+  // Convidados processados (excluindo os próprios agentes que podem aparecer como RemoteParticipant)
+  const guests = remoteParticipants
+    .filter(p => !p.identity.startsWith("agent-") && !p.identity.startsWith("bey-"))
+    .map(p => ({
+      id: p.identity,
+      name: p.name || (p.identity.startsWith("guest-") ? p.identity.replace("guest-", "Convidado ") : p.identity),
+      role: "Membro da Equipe",
+      icon: Users,
+      gradient: "from-slate-700 to-slate-900",
+      speaking: activeSpeakers.has(p.identity),
+      connected: true,
+      type: "guest" as const,
+    }));
+
+  // Combinação final para o grid: Host (Nathália) preferencialmente no centro se houver 5 agentes
+  const hostAgent = agents.find(a => a.id === "host");
+  const otherAgents = agents.filter(a => a.id !== "host");
+  
+  let reorderedParticipants: any[] = [];
+  if (hostAgent && otherAgents.length >= 4) {
+    // Layout padrão Hive Mind: 2 especialistas | Host | 2 especialistas | Convidados
+    reorderedParticipants = [
+      otherAgents[0], 
+      otherAgents[1], 
+      hostAgent, 
+      otherAgents[2], 
+      otherAgents[3],
+      ...guests
+    ];
+  } else {
+    reorderedParticipants = [...agents, ...guests];
+  }
 
   const connectionIcon = {
     connected: <Wifi className="w-3.5 h-3.5 text-emerald-400" />,
@@ -1356,23 +1412,26 @@ export default function MentorshipRoomPage() {
       <div className="flex-1 flex overflow-hidden">
         {/* Agents Grid */}
         <div className="flex-1 p-3 sm:p-4 overflow-hidden">
-          {/* Desktop/Tablet Layout: 5 colunas formato retrato com apresentadora no centro */}
-          <div className="hidden lg:grid grid-cols-5 gap-3 h-full">
-            {agents.map((agent) => (
-              <AgentCard key={agent.id} agent={agent} />
+          {/* Layout de Grid Adaptável baseada no número total de participantes */}
+          <div className={`hidden md:grid gap-3 h-full ${
+            reorderedParticipants.length <= 3 
+              ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" 
+              : reorderedParticipants.length <= 5
+                ? "grid-cols-2 lg:grid-cols-5"
+                : reorderedParticipants.length <= 6
+                  ? "grid-cols-3 grid-rows-2"
+                  : "grid-cols-4 grid-rows-2"
+          }`}>
+            {reorderedParticipants.map((p) => (
+              <ParticipantCard key={p.id} participant={p} compact={reorderedParticipants.length > 5} />
             ))}
           </div>
-          {/* Tablet Landscape */}
-          <div className="hidden md:grid lg:hidden grid-cols-3 grid-rows-2 gap-3 h-full">
-            {agents.map((agent) => (
-              <AgentCard key={agent.id} agent={agent} />
-            ))}
-          </div>
+
           {/* Mobile Layout */}
-          <div className="md:hidden grid grid-cols-2 lg:hidden gap-3 overflow-y-auto pb-4 h-full content-start">
-            {agents.map((agent) => (
-              <div key={agent.id} className={agent.id === "host" ? "col-span-2 aspect-video" : "col-span-1 aspect-square"}>
-                 <AgentCard agent={agent} compact={agent.id !== "host"} />
+          <div className="md:hidden grid grid-cols-2 gap-3 overflow-y-auto pb-4 h-full content-start">
+            {reorderedParticipants.map((p) => (
+              <div key={p.id} className={p.id === "host" ? "col-span-2 aspect-video" : "col-span-1 aspect-square"}>
+                 <ParticipantCard participant={p} compact={p.id !== "host" || reorderedParticipants.length > 4} />
               </div>
             ))}
           </div>
@@ -2082,42 +2141,49 @@ function ChecklistView({ content }: { content: string }) {
 
 // ─── AgentCard ────────────────────────────────────────────────────────────────
 
-function AgentCard({
-  agent,
+// ─── ParticipantCard ──────────────────────────────────────────────────────────
+function ParticipantCard({
+  participant,
   compact = false,
 }: {
-  agent: AgentInfo & { connected?: boolean; turnStatus?: AgentTurnStatus; videoTrack?: RemoteVideoTrack };
+  participant: (Omit<AgentInfo, "speaking"> | { id: string; name: string; role: string; icon: any; gradient: string }) & {
+    speaking: boolean;
+    connected?: boolean;
+    turnStatus?: AgentTurnStatus;
+    videoTrack?: RemoteVideoTrack;
+    type?: "agent" | "guest";
+  };
   compact?: boolean;
 }) {
-  const Icon = agent.icon;
-  const turnStatus = agent.turnStatus ?? "idle";
+  const Icon = participant.icon;
+  const turnStatus = participant.turnStatus ?? "idle";
   const turnLabel = getTurnStatusLabel(turnStatus);
   const turnClass = getTurnStatusClass(turnStatus);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    if (agent.videoTrack && videoRef.current) {
-      agent.videoTrack.attach(videoRef.current);
+    if (participant.videoTrack && videoRef.current) {
+      participant.videoTrack.attach(videoRef.current);
       return () => {
-        agent.videoTrack?.detach();
+        participant.videoTrack?.detach();
       };
     }
-  }, [agent.videoTrack]);
+  }, [participant.videoTrack]);
 
   return (
     <motion.div
       layout
-      className={`relative rounded-3xl overflow-hidden border transition-all duration-700 ease-in-out bg-black/40 backdrop-blur-md h-full ${agent.speaking
-          ? "border-[#d4af37] shadow-[0_0_50px_rgba(212,175,55,0.25)] scale-[1.02] z-10"
-          : agent.connected
-            ? "border-white/10 hover:border-[#d4af37]/30"
-            : "border-white/5 opacity-50 grayscale-[0.5]"
+      className={`relative rounded-3xl overflow-hidden border transition-all duration-700 ease-in-out bg-black/40 backdrop-blur-md h-full ${participant.speaking
+        ? "border-[#d4af37] shadow-[0_0_50px_rgba(212,175,55,0.25)] scale-[1.02] z-10"
+        : participant.connected
+          ? "border-white/10 hover:border-[#d4af37]/30"
+          : "border-white/5 opacity-50 grayscale-[0.5]"
         }`}
     >
       {/* Background Glow */}
       <div
-        className={`absolute inset-0 bg-linear-to-br ${agent.gradient} transition-opacity duration-1000 ${agent.speaking ? 'opacity-20' : 'opacity-5'
+        className={`absolute inset-0 bg-linear-to-br ${participant.gradient} transition-opacity duration-1000 ${participant.speaking ? 'opacity-20' : 'opacity-5'
           }`}
       />
 
@@ -2128,37 +2194,42 @@ function AgentCard({
       <div className="absolute inset-0 flex items-center justify-center p-6 pb-20">
         <div className="relative group">
           {/* Animated Rings for Speaking */}
-          {agent.speaking && (
-            <>
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1.5, opacity: 0 }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className={`absolute inset-0 rounded-full border-2 border-[#d4af37]/30`}
-              />
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1.8, opacity: 0 }}
-                transition={{ duration: 2, repeat: Infinity, delay: 0.6 }}
-                className={`absolute inset-0 rounded-full border-2 border-[#d4af37]/10`}
-              />
-            </>
-          )}
+          <AnimatePresence>
+            {participant.speaking && (
+              <>
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1.5, opacity: 0 }}
+                  whileInView={{ scale: [0.8, 1.5], opacity: [0.8, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
+                  className={`absolute inset-0 rounded-full border-2 border-[#d4af37]/50`}
+                />
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1.8, opacity: 0 }}
+                  whileInView={{ scale: [0.8, 1.8], opacity: [0.6, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, delay: 0.6, ease: "easeOut" }}
+                  className={`absolute inset-0 rounded-full border-2 border-[#d4af37]/30`}
+                />
+              </>
+            )}
+          </AnimatePresence>
 
           <motion.div
             animate={
-              agent.speaking
+              participant.speaking
                 ? { scale: 1.05, boxShadow: "0 0 40px rgba(212, 175, 55, 0.4)" }
                 : { scale: 1, boxShadow: "0 0 20px rgba(0, 0, 0, 0.5)" }
             }
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
             className={`${compact ? "w-20 h-20 md:w-24 md:h-24" : "w-32 h-32 lg:w-40 lg:h-40"
-              } rounded-full bg-[#030712] border-2 ${agent.speaking ? 'border-[#d4af37]' : 'border-white/10'
+              } rounded-full bg-[#030712] border-2 ${participant.speaking ? 'border-[#d4af37]' : 'border-white/10'
               } flex items-center justify-center relative z-10 overflow-hidden group-hover:border-[#d4af37]/50 transition-colors`}
           >
-            <div className={`absolute inset-0 bg-linear-to-br ${agent.gradient} opacity-[0.15] z-0`} />
+            <div className={`absolute inset-0 bg-linear-to-br ${participant.gradient} opacity-[0.15] z-0`} />
 
-            {/* Feed de vídeo realista do Beyond Presence */}
-            {agent.videoTrack && (
+            {/* Feed de vídeo realista do Beyond Presence (apenas agentes) */}
+            {participant.videoTrack && (
               <video
                 ref={videoRef}
                 autoPlay
@@ -2168,16 +2239,16 @@ function AgentCard({
               />
             )}
 
-            {/* Ícone vetorizado clássico (Exibição Fallback) */}
-            {!agent.videoTrack && (
+            {/* Ícone vetorizado clássico (Exibição Fallback ou Convidados) */}
+            {!participant.videoTrack && (
               <Icon
                 className={`${compact ? "w-10 h-10 md:w-12 md:h-12" : "w-14 h-14 lg:w-20 lg:h-20"
-                  } ${agent.speaking ? 'text-[#d4af37]' : 'text-gray-400 group-hover:text-gray-300'} transition-colors relative z-20`}
+                  } ${participant.speaking ? 'text-[#d4af37]' : 'text-gray-400 group-hover:text-gray-300'} transition-colors relative z-20`}
               />
             )}
 
             {/* Overlay sutil quando está falando por cima do vídeo */}
-            {agent.videoTrack && agent.speaking && (
+            {participant.videoTrack && participant.speaking && (
               <div className="absolute inset-0 bg-[#d4af37]/10 z-20 mix-blend-overlay pointer-events-none" />
             )}
           </motion.div>
@@ -2187,17 +2258,19 @@ function AgentCard({
       <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-20">
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
-            <div className={`w-1.5 h-1.5 rounded-full ${agent.connected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'bg-gray-600'}`} />
-            <span className={`text-[9px] font-bold uppercase tracking-wider ${agent.connected ? 'text-emerald-400' : 'text-gray-500'}`}>
-              {agent.connected ? 'Online' : 'Standby'}
+            <div className={`w-1.5 h-1.5 rounded-full ${participant.connected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'bg-gray-600'}`} />
+            <span className={`text-[9px] font-bold uppercase tracking-wider ${participant.connected ? 'text-emerald-400' : 'text-gray-500'}`}>
+              {participant.connected ? 'Online' : 'Standby'}
             </span>
           </div>
-          <div className={`px-2.5 py-1 rounded-full border text-[9px] font-bold uppercase tracking-wider ${turnClass}`}>
-            {turnLabel}
-          </div>
+          {participant.type === "agent" && (
+            <div className={`px-2.5 py-1 rounded-full border text-[9px] font-bold uppercase tracking-wider ${turnClass}`}>
+              {turnLabel}
+            </div>
+          )}
         </div>
 
-        {agent.speaking && (
+        {participant.speaking && (
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -2213,7 +2286,9 @@ function AgentCard({
                 />
               ))}
             </div>
-            <span className="text-[9px] font-black uppercase text-[#030712] tracking-tighter">Live Insight</span>
+            <span className="text-[9px] font-black uppercase text-[#030712] tracking-tighter">
+              {participant.type === "guest" ? "Falando" : "Live Insight"}
+            </span>
           </motion.div>
         )}
       </div>
@@ -2222,16 +2297,16 @@ function AgentCard({
       <div className="absolute bottom-0 left-0 right-0 p-6 bg-linear-to-t from-[#030712] via-[#030712]/90 to-transparent">
         <div className="relative z-10 text-center">
           <h3 className={`font-black text-white tracking-tight uppercase leading-none ${compact ? "text-[11px]" : "text-lg"}`}>
-            {agent.name}
+            {participant.name}
           </h3>
           <p className={`font-medium text-[#d4af37] tracking-widest uppercase mt-1.5 ${compact ? "text-[9px]" : "text-[10px]"}`}>
-            {agent.role}
+            {participant.role}
           </p>
         </div>
       </div>
 
       {/* Speaking Glow Effect */}
-      {agent.speaking && (
+      {participant.speaking && (
         <div className="absolute inset-x-0 bottom-0 h-1 gold-gradient shadow-[0_-10px_30px_rgba(212,175,55,0.5)]" />
       )}
     </motion.div>

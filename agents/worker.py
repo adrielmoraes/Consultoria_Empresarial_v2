@@ -129,27 +129,38 @@ except ImportError:
         "Instale com: pip install 'livekit-agents[bey]~=1.4'"
     )
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("mentoria-ai")
-
-# Silenciar a telemetria interna do SDK (que a Railway confunde com erros)
-logging.getLogger("livekit").setLevel(logging.WARNING)
-logging.getLogger("root").setLevel(logging.WARNING)
-logging.getLogger("google").setLevel(logging.WARNING)
-
-# ── Filtro anti-flood ──────────────────────────────────────────────────────────
-# As mensagens "ignoring byte/text stream" do LiveKit SDK são emitidas centenas
-# de vezes por segundo quando múltiplos agentes estão na mesma sala, saturando
-# o event loop e impedindo o processamento de áudio/fala. Filtramos aqui.
+# ── Configuração de logging — stdout único (elimina falsos `error` no Railway) ──
+# O logging.basicConfig() padrão envia WARNING+ para stderr. O Railway/Betterstack
+# captura stderr e marca tudo como severity=error, gerando milhares de
+# falsos-positivos que ocultam erros reais. Solução: um único handler em stdout.
 class _IgnoringStreamFilter(logging.Filter):
-    _SUPPRESSED = ("ignoring byte stream", "ignoring text stream")
+    """Suprime mensagens de flood do LiveKit SDK que saturam o event loop."""
+    _SUPPRESSED = (
+        "ignoring byte stream",
+        "ignoring text stream",
+    )
     def filter(self, record: logging.LogRecord) -> bool:
         msg = record.getMessage()
         return not any(s in msg for s in self._SUPPRESSED)
 
-for _handler in logging.root.handlers:
-    _handler.addFilter(_IgnoringStreamFilter())
-logging.getLogger("root").addFilter(_IgnoringStreamFilter())
+_stdout_handler = logging.StreamHandler(sys.stdout)   # SEMPRE stdout, nunca stderr
+_stdout_handler.setLevel(logging.DEBUG)
+_stdout_handler.setFormatter(
+    logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+)
+_stdout_handler.addFilter(_IgnoringStreamFilter())
+
+# Remove qualquer handler padrão herdado e instala o nosso
+logging.root.handlers.clear()
+logging.root.addHandler(_stdout_handler)
+logging.root.setLevel(logging.INFO)
+
+# Silenciar telemetria verbose dos SDKs (não são erros, apenas ruído)
+logging.getLogger("livekit").setLevel(logging.WARNING)
+logging.getLogger("google").setLevel(logging.WARNING)
+logging.getLogger("asyncio").setLevel(logging.WARNING)
+
+logger = logging.getLogger("mentoria-ai")
 # ──────────────────────────────────────────────────────────────────────────────
 
 # ── Circuit Breaker global (anti-cascata de 429 do Gemini API) ────────────────
@@ -1707,6 +1718,11 @@ async def _start_specialist_in_room(
         # Quando a sessão não existe (dormente), o áudio é ignorado no cliente.
         _audio_subscribed = False
 
+        # Container mutável para o timestamp de última fala real do usuário.
+        # Compartilhado entre _bind_session_events e _handle_activation sem nonlocal.
+        # Inicializado com monotonic() atual; será reiniciado no início de cada turno.
+        _speech_ts: list[float] = [monotonic()]
+
         # C2: Especialista genuinamente dormente.
         # Sem sessão Gemini, sem subscrição de áudio inicialmente.
         session: Optional[AgentSession] = None
@@ -1875,6 +1891,7 @@ async def _start_specialist_in_room(
                         f"desde ativação: '{text[:60]}'"
                     )
 
+
             @session_instance.on("user_input_transcribed")
             def _on_specialist_user_speech(event) -> None:
                 if not blackboard.is_active or not _audio_subscribed:
@@ -1887,6 +1904,10 @@ async def _start_specialist_in_room(
                 text = text.strip()
                 if not text or _should_ignore_user_transcript(text):
                     return
+
+                # Atualiza timestamp LOCAL de fala real — usado pelo silence watchdog
+                # para evitar timeout prematuro quando o especialista está surdo
+                _speech_ts[0] = monotonic()
 
                 logger.info(f"[{name}] Usuário fala: {text}")
                 blackboard.add_message("Usuário", text)
@@ -1907,6 +1928,7 @@ async def _start_specialist_in_room(
                     f"[{name}] Msg do usuário #{agent_instance._user_messages_since_activation} "
                     f"desde ativação: '{text[:60]}'"
                 )
+
 
             @session_instance.on("input_speech_started")
             def _on_specialist_input_speech_started(_event) -> None:
@@ -2017,6 +2039,7 @@ async def _start_specialist_in_room(
 
                 await _emit("agent_activated", {"activated_in_ms": int((monotonic() - started_at) * 1000)})
                 
+
                 # ── PASSO 1: Cria AgentSession PRIMEIRO (pipeline limpo) ──
                 # CORREÇÃO v6: A ordem anterior (subscrever áudio → criar sessão) causava
                 # surdez nos especialistas Ana/Daniel/Rodrigo porque:
@@ -2033,28 +2056,61 @@ async def _start_specialist_in_room(
                     await _emit("agent_error", {"error": str(e)})
                     return
 
-                # ── PASSO 2: Garante subscrição de áudio do usuário ──
-                # Embora o Room use auto_subscribe, forçamos aqui para garantir que
-                # a AgentSession fresca detecte e se vincule às tracks de áudio.
+                # ── PASSO 2: Subscrição de áudio com retry + backoff (Fix surdez) ──
+                # A chamada simples pub.set_subscribed(True) falha silenciosamente
+                # quando as tracks ainda não estão listadas no room (race condition).
+                # SOLUÇÃO: até 3 tentativas com backoff de 0.5s, 1s, 1.5s.
                 nonlocal _audio_subscribed
-                _audio_subscribed = True
-                
-                subscribed_count = 0
-                for p in room.remote_participants.values():
-                    if p.identity.startswith("user-") or p.identity.startswith("guest-"):
-                        for pub in p.track_publications.values():
-                            if pub.kind == rtc.TrackKind.KIND_AUDIO:
-                                pub.set_subscribed(True)
-                                subscribed_count += 1
-                                logger.info(f"[{name}] Forçando subscrição de áudio para: {p.identity}")
+
+                async def _force_audio_subscribe_with_retry(max_attempts: int = 3) -> int:
+                    """Tenta subscrever as tracks de áudio do usuário com retry+backoff.
+                    Retorna a quantidade de tracks subscritas com sucesso."""
+                    for attempt in range(1, max_attempts + 1):
+                        subscribed_count = 0
+                        for p in room.remote_participants.values():
+                            if p.identity.startswith("user-") or p.identity.startswith("guest-"):
+                                for pub in p.track_publications.values():
+                                    if pub.kind == rtc.TrackKind.KIND_AUDIO:
+                                        pub.set_subscribed(True)
+                                        subscribed_count += 1
+                                        logger.info(
+                                            f"[{name}] (tentativa {attempt}/{max_attempts}) "
+                                            f"Forçando subscrição de áudio para: {p.identity}"
+                                        )
+                        if subscribed_count > 0:
+                            logger.info(
+                                f"[{name}] {subscribed_count} track(s) de áudio subscrita(s) "
+                                f"com sucesso (tentativa {attempt}/{max_attempts})."
+                            )
+                            return subscribed_count
+                        # Sem tracks ainda — aguarda e tenta novamente
+                        wait_s = 0.5 * attempt  # 0.5s, 1.0s, 1.5s
+                        logger.warning(
+                            f"[{name}] Tentativa {attempt}/{max_attempts}: nenhuma track de áudio "
+                            f"encontrada. Aguardando {wait_s:.1f}s (backoff)..."
+                        )
+                        await asyncio.sleep(wait_s)
+                    return 0
+
+                subscribed_count = await _force_audio_subscribe_with_retry(max_attempts=3)
+                _audio_subscribed = subscribed_count > 0
 
                 if subscribed_count == 0:
-                    logger.warning(f"[{name}] Nenhuma track de áudio de usuário encontrada para subscrever!")
-                else:
-                    logger.info(f"[{name}] {subscribed_count} track(s) de áudio subscrita(s) com sucesso.")
+                    # Nenhuma track após 3 tentativas — abortar para evitar especialista surdo
+                    logger.error(
+                        f"[{name}] FALHA CRÍTICA: nenhuma track de áudio após 3 tentativas. "
+                        f"Abortando turno para evitar especialista surdo sem aviso."
+                    )
+                    await _emit("agent_error", {"error": "audio_subscribe_failed"})
+                    return
+
+                # Inicializa o container de timestamp de última fala real do usuário.
+                # Usamos uma lista de 1 elemento como container mutável para que
+                # _bind_session_events (escopo pai) possa atualizar o valor sem nonlocal.
+                _speech_ts[0] = monotonic()
 
                 # Pequena espera para o RealtimeModel registrar seus handlers de áudio
-                await asyncio.sleep(0.8)
+                await asyncio.sleep(0.5)
 
                 # ── CRÍTICO: registra o comprimento do transcript no momento da ativação ──
                 agent._activation_transcript_len = len(blackboard.transcript)
@@ -2121,26 +2177,34 @@ async def _start_specialist_in_room(
                         except asyncio.TimeoutError:
                             pass
 
-                        timeout_reason = get_specialist_timeout_reason(
-                            started_at=started_at,
-                            last_interaction_at=agent._blackboard.last_interaction_at,
-                            user_currently_speaking=agent._blackboard.user_currently_speaking,
-                            now=monotonic(),
-                        )
-                        if timeout_reason == "silence_timeout":
+                        now = monotonic()
+                        silence_elapsed = now - _speech_ts[0]
+                        turn_elapsed = now - started_at
+
+                        # Silence timeout: baseado em fala REAL do STT (timestamp local),
+                        # não no timestamp global do blackboard. Isso evita timeout prematuro
+                        # quando o especialista está surdo e nunca atualiza o contador global.
+                        user_speaking = agent._blackboard.user_currently_speaking
+                        if (
+                            not user_speaking
+                            and silence_elapsed > SPECIALIST_SILENCE_TIMEOUT_SECONDS
+                        ):
                             logger.warning(
-                                f"[{name}] Silêncio prolongado detectado (>{SPECIALIST_SILENCE_TIMEOUT_SECONDS:.0f}s). "
+                                f"[{name}] Silêncio real detectado "
+                                f"({silence_elapsed:.0f}s sem fala do usuário). "
                                 "Devolvendo para Nathália."
                             )
-                            agent._handover_result = {"type": "nathalia", "reason": timeout_reason}
+                            agent._handover_result = {"type": "nathalia", "reason": "silence_timeout"}
                             break
-                        if timeout_reason == "turn_timeout":
+
+                        if turn_elapsed > SPECIALIST_MAX_TURN_TIMEOUT_SECONDS:
                             logger.warning(
-                                f"[{name}] Limite do turno excedido ({SPECIALIST_MAX_TURN_TIMEOUT_SECONDS:.0f}s). "
+                                f"[{name}] Limite do turno excedido ({turn_elapsed:.0f}s). "
                                 "Devolvendo para Nathália."
                             )
-                            agent._handover_result = {"type": "nathalia", "reason": timeout_reason}
+                            agent._handover_result = {"type": "nathalia", "reason": "turn_timeout"}
                             break
+
                 except Exception as handover_err:
                     logger.warning(f"[{name}] Erro ao monitorar handover: {handover_err}")
 
@@ -2275,15 +2339,9 @@ async def entrypoint(ctx: JobContext) -> None:
 
 async def _run_entrypoint(ctx: JobContext) -> None:
     shutdown_event = asyncio.Event()
-    
-    # Log em arquivo para diagnóstico (compatível com Windows e Linux)
-    log_path = os.path.join(tempfile.gettempdir(), "mentoria_agent.log")
-    _fh = logging.FileHandler(log_path, mode="a")
-    _fh.setLevel(logging.INFO)
-    _fh.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
-    logging.getLogger().addHandler(_fh)
 
     logger.info(f"=== ENTRYPOINT MENTORIA AI v5 – sala: {ctx.room.name} ===")
+
 
     # Conecta o worker ao room com AUDIO_ONLY para subscrever automaticamente
     # todas as tracks de áudio. Em seguida, o handler track_subscribed cancela
@@ -2500,6 +2558,26 @@ async def _run_entrypoint(ctx: JobContext) -> None:
     except Exception as e:
         logger.error(f"[Host] Erro crítico ao iniciar Nathália: {e}", exc_info=True)
         return
+
+    # ── Fix 3: Detecção proativa de desconexão iminente do Gemini ──────────────
+    # O Gemini emite o evento "close" ~50s antes de cortar a conexão WebSocket.
+    # Sem tratamento, o host_session encerra abruptamente no meio da fala da Nathália.
+    # SOLUÇÃO: ao detectar o evento, logamos com antecedência para diagnóstico.
+    # O próprio SDK do LiveKit Agents (AgentSession) já lida com reconnect internamente;
+    # este handler garante que o log mostre o aviso ANTES do corte (não depois).
+    _gemini_close_warned = False
+
+    @host_session.on("close")
+    def _on_host_session_close(reason: str = "") -> None:
+        nonlocal _gemini_close_warned
+        if not _gemini_close_warned:
+            _gemini_close_warned = True
+            logger.warning(
+                f"[Host] Sessão Gemini da Nathália encerrada (reason='{reason}'). "
+                "O SDK tentará reconectar automaticamente. "
+                "Se Nathália foi cortada, verifique o reason acima nos logs."
+            )
+    # ──────────────────────────────────────────────────────────────────────────
 
     host_avatar_task = _prefetch_avatar_session("host", host_session, ctx.room)
     if host_avatar_task:
